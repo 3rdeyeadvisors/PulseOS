@@ -5,13 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
-import { Loader2, Sparkles } from 'lucide-react';
+import { useChatMessages } from '@/hooks/useChatMessages';
+import { Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
 
 interface AISettings {
   aiName: string;
@@ -23,7 +20,7 @@ interface AISettings {
 export default function Chat() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, setMessages, loadingHistory, saveMessage, clearMessages } = useChatMessages(user?.id);
   const [isLoading, setIsLoading] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>({
     aiName: 'Pulse',
@@ -47,7 +44,7 @@ export default function Chat() {
         .from('preferences')
         .select('ai_name, ai_personality, ai_humor_level, ai_formality_level')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setAiSettings({
@@ -69,10 +66,13 @@ export default function Chat() {
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    const userMessage: Message = { role: 'user', content };
+    const userMessage = { role: 'user' as const, content };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
+
+    // Save user message to database
+    await saveMessage(userMessage);
 
     let assistantContent = '';
 
@@ -144,7 +144,6 @@ export default function Chat() {
               });
             }
           } catch {
-            // Incomplete JSON, put back and wait for more
             buffer = line + '\n' + buffer;
             break;
           }
@@ -179,17 +178,26 @@ export default function Chat() {
           }
         }
       }
+
+      // Save assistant response to database
+      if (assistantContent) {
+        await saveMessage({ role: 'assistant', content: assistantContent });
+      }
     } catch (error) {
       console.error('Chat error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to send message');
-      // Remove the empty assistant message if there was an error
       setMessages((prev) => prev.filter((m) => m.content !== ''));
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (loading) {
+  const handleClearChat = async () => {
+    await clearMessages();
+    toast.success('Chat history cleared');
+  };
+
+  if (loading || loadingHistory) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -205,14 +213,27 @@ export default function Chat() {
     <AppShell>
       <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50">
-          <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
-            <Sparkles className="h-5 w-5 text-accent" />
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
+              <Sparkles className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">{aiSettings.aiName}</h1>
+              <p className="text-sm text-muted-foreground">Your personal AI assistant</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">{aiSettings.aiName}</h1>
-            <p className="text-sm text-muted-foreground">Your personal AI assistant</p>
-          </div>
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearChat}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
         </div>
 
         {/* Messages */}
