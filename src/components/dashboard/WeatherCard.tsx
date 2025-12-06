@@ -1,62 +1,87 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Cloud, Sun, CloudRain, Loader2 } from 'lucide-react';
+import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface WeatherData {
   temp: number;
   condition: string;
   location: string;
+  description: string;
+  humidity: number;
+  windSpeed: number;
 }
 
 export function WeatherCard() {
   const { user } = useAuth();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [city, setCity] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchCityAndWeather() {
+    async function fetchWeather() {
       if (!user) return;
 
-      // Get user's city from profiles
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('city')
-        .eq('user_id', user.id)
-        .single();
+      try {
+        // Get user's city from profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('city')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      const userCity = profile?.city || 'New York';
-      setCity(userCity);
+        const userCity = profile?.city || 'New York';
 
-      // Simulate weather data (in production, use a real weather API)
-      // This is a placeholder until weather API is integrated
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setWeather({
-        temp: Math.floor(Math.random() * 20) + 60, // 60-80°F
-        condition: ['Sunny', 'Partly Cloudy', 'Cloudy'][Math.floor(Math.random() * 3)],
-        location: userCity,
-      });
-      
-      setLoading(false);
+        // Fetch real weather data
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-weather`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ city: userCity }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch weather');
+        }
+
+        const data = await response.json();
+        setWeather(data);
+      } catch (err) {
+        console.error('Weather fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load weather');
+      } finally {
+        setLoading(false);
+      }
     }
 
-    fetchCityAndWeather();
+    fetchWeather();
   }, [user]);
 
   const getWeatherIcon = (condition: string) => {
-    switch (condition) {
-      case 'Sunny':
-        return <Sun className="h-10 w-10 text-yellow-400" />;
-      case 'Cloudy':
-        return <Cloud className="h-10 w-10 text-muted-foreground" />;
-      case 'Rainy':
-        return <CloudRain className="h-10 w-10 text-blue-400" />;
-      default:
-        return <Cloud className="h-10 w-10 text-muted-foreground" />;
+    const lowerCondition = condition.toLowerCase();
+    if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
+      return <CloudLightning className="h-10 w-10 text-yellow-400" />;
     }
+    if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
+      return <CloudRain className="h-10 w-10 text-blue-400" />;
+    }
+    if (lowerCondition.includes('snow')) {
+      return <CloudSnow className="h-10 w-10 text-blue-200" />;
+    }
+    if (lowerCondition.includes('cloud')) {
+      return <Cloud className="h-10 w-10 text-muted-foreground" />;
+    }
+    if (lowerCondition.includes('clear') || lowerCondition.includes('sun')) {
+      return <Sun className="h-10 w-10 text-yellow-400" />;
+    }
+    return <Cloud className="h-10 w-10 text-muted-foreground" />;
   };
 
   if (loading) {
@@ -74,6 +99,15 @@ export function WeatherCard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-5 rounded-xl bg-card border border-border/50 shadow-card">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">Weather</h3>
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-5 rounded-xl bg-card border border-border/50 shadow-card">
       <h3 className="text-sm font-medium text-muted-foreground mb-3">Weather</h3>
@@ -81,11 +115,21 @@ export function WeatherCard() {
         {weather && getWeatherIcon(weather.condition)}
         <div>
           <p className="text-3xl font-bold">{weather?.temp}°F</p>
-          <p className="text-sm text-muted-foreground">
-            {weather?.condition} in {weather?.location}
+          <p className="text-sm text-muted-foreground capitalize">
+            {weather?.description} in {weather?.location}
           </p>
         </div>
       </div>
+      {weather && (
+        <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Droplets className="h-3 w-3" /> {weather.humidity}%
+          </span>
+          <span className="flex items-center gap-1">
+            <Wind className="h-3 w-3" /> {weather.windSpeed} mph
+          </span>
+        </div>
+      )}
     </div>
   );
 }
