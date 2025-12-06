@@ -22,12 +22,15 @@ serve(async (req) => {
       ? `User dietary preferences: ${dietaryPreferences.join(", ")}.`
       : "No specific dietary restrictions.";
 
-    const locationContext = city ? `User is located in ${city}.` : "";
+    const locationContext = city 
+      ? `User is located in ${city}. Include real restaurant recommendations in ${city}.` 
+      : "Suggest general meal ideas.";
 
-    const systemPrompt = `You are a helpful food recommendation assistant. Suggest 3 meal ideas for today.
+    const systemPrompt = `You are a helpful food recommendation assistant. Suggest 3 food options for today.
 ${dietaryContext}
 ${locationContext}
-Consider the time of day and suggest varied, practical meal options.`;
+
+When a city is provided, mix home cooking ideas with actual restaurant recommendations from that area. For restaurants, include the real restaurant name and a signature dish.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -39,14 +42,14 @@ Consider the time of day and suggest varied, practical meal options.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: "Give me 3 food recommendations for today. Be concise - just the dish name and a very brief description (under 10 words each)." },
+          { role: "user", content: `Give me 3 food recommendations. Include at least one local restaurant if a city is known. Be concise - dish/restaurant name and brief description (under 12 words each).` },
         ],
         tools: [
           {
             type: "function",
             function: {
               name: "recommend_foods",
-              description: "Return 3 food recommendations",
+              description: "Return 3 food recommendations including nearby restaurants",
               parameters: {
                 type: "object",
                 properties: {
@@ -55,11 +58,12 @@ Consider the time of day and suggest varied, practical meal options.`;
                     items: {
                       type: "object",
                       properties: {
-                        name: { type: "string", description: "Name of the dish" },
-                        description: { type: "string", description: "Brief description under 10 words" },
+                        name: { type: "string", description: "Name of the dish or restaurant + dish" },
+                        description: { type: "string", description: "Brief description under 12 words" },
                         mealType: { type: "string", enum: ["breakfast", "lunch", "dinner", "snack"] },
+                        isRestaurant: { type: "boolean", description: "True if this is a restaurant recommendation" },
                       },
-                      required: ["name", "description", "mealType"],
+                      required: ["name", "description", "mealType", "isRestaurant"],
                     },
                   },
                 },
@@ -95,6 +99,7 @@ Consider the time of day and suggest varied, practical meal options.`;
 
     if (toolCall?.function?.arguments) {
       const recommendations = JSON.parse(toolCall.function.arguments);
+      console.log("Food recommendations generated:", recommendations);
       return new Response(JSON.stringify(recommendations), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Utensils, Coffee, Sun, Moon, RefreshCw } from 'lucide-react';
+import { Utensils, Coffee, Sun, Moon, RefreshCw, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ interface FoodRecommendation {
   name: string;
   description: string;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  isRestaurant?: boolean;
 }
 
 const mealIcons = {
@@ -126,8 +127,10 @@ export function FoodRecommendationsCard() {
           <p className="text-sm text-muted-foreground">No recommendations available</p>
         ) : (
           recommendations.map((rec, index) => {
-            const Icon = mealIcons[rec.mealType] || Utensils;
-            const colors = mealColors[rec.mealType] || 'text-muted-foreground bg-muted';
+            const Icon = rec.isRestaurant ? MapPin : (mealIcons[rec.mealType] || Utensils);
+            const colors = rec.isRestaurant 
+              ? 'text-rose-400 bg-rose-400/10' 
+              : (mealColors[rec.mealType] || 'text-muted-foreground bg-muted');
             return (
               <div
                 key={index}
@@ -137,7 +140,12 @@ export function FoodRecommendationsCard() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm truncate">{rec.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium text-sm truncate">{rec.name}</p>
+                    {rec.isRestaurant && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 shrink-0">Nearby</span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">{rec.description}</p>
                 </div>
               </div>
