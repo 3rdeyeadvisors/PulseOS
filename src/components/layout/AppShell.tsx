@@ -1,8 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Zap, 
   LayoutDashboard, 
@@ -12,7 +14,6 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
@@ -30,9 +31,34 @@ export function AppShell({ children }: AppShellProps) {
   const { theme } = useTheme();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string>('');
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url, full_name')
+        .eq('user_id', user.id)
+        .single();
+      if (data) {
+        setAvatarUrl(data.avatar_url);
+        setFullName(data.full_name || '');
+      }
+    }
+    fetchProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const getInitials = () => {
+    if (fullName) {
+      return fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    return user?.email?.[0]?.toUpperCase() || 'U';
   };
 
   return (
@@ -72,9 +98,17 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground hidden lg:block">
-              {user?.email}
-            </span>
+            <Link to="/app/settings" className="hidden lg:flex items-center gap-2">
+              <Avatar className="h-8 w-8 border border-border">
+                <AvatarImage src={avatarUrl || undefined} alt={fullName || 'Profile'} />
+                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">
+                {fullName || user?.email}
+              </span>
+            </Link>
             <Button 
               variant="ghost" 
               size="sm" 
