@@ -8,6 +8,7 @@ import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard';
 import { AIInsightCard } from '@/components/dashboard/AIInsightCard';
 import { DailyPicksCard } from '@/components/dashboard/DailyPicksCard';
 import { NewsCard } from '@/components/dashboard/NewsCard';
+import { FoodRecommendationsCard } from '@/components/dashboard/FoodRecommendationsCard';
 import { Loader2 } from 'lucide-react';
 
 export default function Today() {
@@ -50,6 +51,9 @@ export default function Today() {
           
           {/* Daily Picks */}
           <DailyPicksCard />
+          
+          {/* Food Recommendations */}
+          <FoodRecommendationsCard />
           
           {/* News */}
           <NewsCard />
