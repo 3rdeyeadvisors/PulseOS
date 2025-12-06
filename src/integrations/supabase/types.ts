@@ -49,6 +49,7 @@ export type Database = {
           enabled_modules: string[] | null
           id: string
           interests: string[] | null
+          temperature_unit: string | null
           theme: string | null
           updated_at: string
           user_id: string
@@ -63,6 +64,7 @@ export type Database = {
           enabled_modules?: string[] | null
           id?: string
           interests?: string[] | null
+          temperature_unit?: string | null
           theme?: string | null
           updated_at?: string
           user_id: string
@@ -77,6 +79,7 @@ export type Database = {
           enabled_modules?: string[] | null
           id?: string
           interests?: string[] | null
+          temperature_unit?: string | null
           theme?: string | null
           updated_at?: string
           user_id?: string
