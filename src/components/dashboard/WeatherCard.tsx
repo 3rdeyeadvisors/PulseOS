@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 interface WeatherData {
   temp: number;
@@ -13,23 +14,37 @@ interface WeatherData {
   windSpeed: number;
 }
 
+type TempUnit = 'fahrenheit' | 'celsius';
+
 export function WeatherCard() {
   const { user } = useAuth();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tempUnit, setTempUnit] = useState<TempUnit>('fahrenheit');
 
   useEffect(() => {
-    async function fetchWeather() {
+    async function fetchWeatherAndPrefs() {
       if (!user) return;
 
       try {
-        // Get user's city from profiles
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('city')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // Get user's city and temp unit preference
+        const [{ data: profile }, { data: prefs }] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('city')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('preferences')
+            .select('temperature_unit')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+        ]);
+
+        if (prefs?.temperature_unit) {
+          setTempUnit(prefs.temperature_unit as TempUnit);
+        }
 
         const userCity = profile?.city || 'New York';
 
@@ -61,8 +76,27 @@ export function WeatherCard() {
       }
     }
 
-    fetchWeather();
+    fetchWeatherAndPrefs();
   }, [user]);
+
+  const toggleUnit = async () => {
+    const newUnit: TempUnit = tempUnit === 'fahrenheit' ? 'celsius' : 'fahrenheit';
+    setTempUnit(newUnit);
+
+    if (user) {
+      await supabase
+        .from('preferences')
+        .update({ temperature_unit: newUnit })
+        .eq('user_id', user.id);
+    }
+  };
+
+  const convertTemp = (tempF: number): number => {
+    if (tempUnit === 'celsius') {
+      return Math.round((tempF - 32) * 5 / 9);
+    }
+    return tempF;
+  };
 
   const getWeatherIcon = (condition: string) => {
     const lowerCondition = condition.toLowerCase();
@@ -108,13 +142,26 @@ export function WeatherCard() {
     );
   }
 
+  const unitSymbol = tempUnit === 'fahrenheit' ? 'F' : 'C';
+  const displayTemp = weather ? convertTemp(weather.temp) : 0;
+
   return (
     <div className="p-5 rounded-xl bg-card border border-border/50 shadow-card">
-      <h3 className="text-sm font-medium text-muted-foreground mb-3">Weather</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-muted-foreground">Weather</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+          onClick={toggleUnit}
+        >
+          °{unitSymbol}
+        </Button>
+      </div>
       <div className="flex items-center gap-4">
         {weather && getWeatherIcon(weather.condition)}
         <div>
-          <p className="text-3xl font-bold">{weather?.temp}°F</p>
+          <p className="text-3xl font-bold">{displayTemp}°{unitSymbol}</p>
           <p className="text-sm text-muted-foreground capitalize">
             {weather?.description} in {weather?.location}
           </p>
