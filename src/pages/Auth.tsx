@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,9 +32,23 @@ export default function Auth() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/app');
-    }
+    const checkOnboarding = async () => {
+      if (user && !loading) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (profile?.onboarding_completed) {
+          navigate('/app');
+        } else {
+          navigate('/onboarding');
+        }
+      }
+    };
+    
+    checkOnboarding();
   }, [user, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -64,7 +79,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Welcome back!');
-      navigate('/app');
+      // Navigation handled by useEffect
     }
   };
 
@@ -96,7 +111,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Account created! Welcome to PulseOS.');
-      navigate('/app');
+      navigate('/onboarding');
     }
   };
 
