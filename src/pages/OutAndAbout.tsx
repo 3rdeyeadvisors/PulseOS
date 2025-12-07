@@ -3,10 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
-import { Loader2, Utensils, MapPin, Calendar, Star, ExternalLink } from 'lucide-react';
+import { Loader2, Utensils, MapPin, Calendar, Star, Navigation } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getFoodPlaces, getThingsToDo, getEvents } from '@/services/placesService';
+
+// Helper function to open location in maps
+const openInMaps = (address: string, name: string) => {
+  // Encode the address for URL
+  const query = encodeURIComponent(`${name}, ${address}`);
+  
+  // Use universal Google Maps URL - works on both mobile (opens app) and desktop (opens web)
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  
+  window.open(mapsUrl, '_blank');
+};
 
 export default function OutAndAbout() {
   const navigate = useNavigate();
@@ -66,10 +77,13 @@ export default function OutAndAbout() {
   if (!user) return null;
 
   const PlaceCard = ({ place }: { place: any }) => (
-    <div className="p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+    <button
+      onClick={() => openInMaps(place.address, place.name)}
+      className="w-full text-left p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-card/80 transition-all cursor-pointer group"
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="font-semibold">{place.name}</h3>
+          <h3 className="font-semibold group-hover:text-primary transition-colors">{place.name}</h3>
           <p className="text-sm text-muted-foreground">{place.cuisine || place.type} · {place.priceRange}</p>
           <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
@@ -81,24 +95,33 @@ export default function OutAndAbout() {
           </div>
           <p className="text-xs text-primary mt-2">{place.matchReason}</p>
         </div>
+        <div className="p-2 rounded-lg bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Navigation className="h-4 w-4 text-primary" />
+        </div>
       </div>
-    </div>
+    </button>
   );
 
   const EventCard = ({ event }: { event: any }) => (
-    <div className="p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+    <button
+      onClick={() => openInMaps(event.address, event.location)}
+      className="w-full text-left p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-card/80 transition-all cursor-pointer group"
+    >
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-lg bg-primary/10 text-center shrink-0">
           <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-xs font-medium">{event.date}</p>
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold">{event.title}</h3>
+          <h3 className="font-semibold group-hover:text-primary transition-colors">{event.title}</h3>
           <p className="text-sm text-muted-foreground">{event.time} · {event.location}</p>
           <span className="inline-block mt-2 text-xs px-2 py-1 rounded-full bg-secondary">{event.price}</span>
         </div>
+        <div className="p-2 rounded-lg bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity self-center">
+          <Navigation className="h-4 w-4 text-primary" />
+        </div>
       </div>
-    </div>
+    </button>
   );
 
   return (
