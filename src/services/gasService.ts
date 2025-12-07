@@ -9,12 +9,12 @@ export interface GasStation {
   priceChange: 'up' | 'down' | 'same';
 }
 
-export async function getGasPrices(lat: number, lng: number, city?: string): Promise<{ stations: GasStation[]; note?: string }> {
+export async function getGasPrices(lat: number, lng: number, city?: string, state?: string): Promise<{ stations: GasStation[]; note?: string }> {
   try {
-    console.log(`Fetching gas prices for lat: ${lat}, lng: ${lng}`);
+    console.log(`Fetching gas prices for lat: ${lat}, lng: ${lng}, state: ${state}`);
 
     const { data, error } = await supabase.functions.invoke('gas-prices', {
-      body: { lat, lng, city }
+      body: { lat, lng, city, state }
     });
 
     if (error) throw error;

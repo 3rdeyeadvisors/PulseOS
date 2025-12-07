@@ -9,6 +9,100 @@ interface GasPriceRequest {
   lat: number;
   lng: number;
   city?: string;
+  state?: string;
+}
+
+// Regional base prices based on US gas price averages by state/region
+const regionalBasePrices: Record<string, number> = {
+  // West Coast (highest prices)
+  'california': 4.50,
+  'ca': 4.50,
+  'hawaii': 4.40,
+  'hi': 4.40,
+  'washington': 3.90,
+  'wa': 3.90,
+  'oregon': 3.80,
+  'or': 3.80,
+  'nevada': 3.70,
+  'nv': 3.70,
+  'alaska': 3.60,
+  'ak': 3.60,
+  // Northeast
+  'new york': 3.40,
+  'ny': 3.40,
+  'massachusetts': 3.35,
+  'ma': 3.35,
+  'connecticut': 3.30,
+  'ct': 3.30,
+  'pennsylvania': 3.25,
+  'pa': 3.25,
+  'new jersey': 3.20,
+  'nj': 3.20,
+  // Midwest
+  'illinois': 3.30,
+  'il': 3.30,
+  'michigan': 3.15,
+  'mi': 3.15,
+  'ohio': 2.95,
+  'oh': 2.95,
+  'indiana': 2.90,
+  'in': 2.90,
+  // South (generally lower)
+  'florida': 3.10,
+  'fl': 3.10,
+  'georgia': 2.85,
+  'ga': 2.85,
+  'north carolina': 2.90,
+  'nc': 2.90,
+  'south carolina': 2.80,
+  'sc': 2.80,
+  'virginia': 2.95,
+  'va': 2.95,
+  // Gulf states (lowest prices)
+  'texas': 2.65,
+  'tx': 2.65,
+  'louisiana': 2.60,
+  'la': 2.60,
+  'oklahoma': 2.55,
+  'ok': 2.55,
+  'mississippi': 2.55,
+  'ms': 2.55,
+  'alabama': 2.60,
+  'al': 2.60,
+  'arkansas': 2.60,
+  'ar': 2.60,
+  // Mountain states
+  'colorado': 3.10,
+  'co': 3.10,
+  'arizona': 3.20,
+  'az': 3.20,
+  'utah': 3.15,
+  'ut': 3.15,
+  'new mexico': 2.90,
+  'nm': 2.90,
+};
+
+function getRegionalBasePrice(state?: string, city?: string): number {
+  const defaultPrice = 2.95;
+  
+  if (state) {
+    const stateLower = state.toLowerCase().trim();
+    if (regionalBasePrices[stateLower]) {
+      return regionalBasePrices[stateLower];
+    }
+  }
+  
+  // Try to extract state from city if it contains state info
+  if (city) {
+    const cityLower = city.toLowerCase();
+    for (const [region, price] of Object.entries(regionalBasePrices)) {
+      if (cityLower.includes(region)) {
+        return price;
+      }
+    }
+  }
+  
+  return defaultPrice;
 }
 
 serve(async (req) => {
@@ -22,13 +116,18 @@ serve(async (req) => {
       throw new Error("HERE_API_KEY is not configured");
     }
 
-    const { lat, lng, city }: GasPriceRequest = await req.json();
+    const { lat, lng, city, state }: GasPriceRequest = await req.json();
 
     if (!lat || !lng) {
       throw new Error("Latitude and longitude are required");
     }
 
-    console.log(`Fetching gas prices for lat: ${lat}, lng: ${lng}, city: ${city || 'unknown'}`);
+    console.log(`Fetching gas prices for lat: ${lat}, lng: ${lng}, city: ${city || 'unknown'}, state: ${state || 'unknown'}`);
+
+    // Get regional base price
+    const basePrice = getRegionalBasePrice(state, city);
+    console.log(`Using regional base price: $${basePrice} for ${state || city || 'default region'}`);
+
 
     // Use HERE Fuel Prices API v3 to get nearby stations
     const url = `https://fuel.hereapi.com/v3/stations?in=circle:${lat},${lng};r=16000&showallstations=true&apiKey=${HERE_API_KEY}`;
@@ -73,9 +172,6 @@ serve(async (req) => {
       'Texaco': 0.05,
     };
 
-    // Base price around current US average (~$2.80-$3.20 range)
-    const basePrice = 2.95;
-    
     const stations = stationsData.slice(0, 15).map((station: any, index: number) => {
       const brand = station.brand || station.name || 'Gas Station';
       

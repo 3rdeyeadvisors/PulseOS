@@ -55,7 +55,7 @@ export default function Money() {
         }
 
         const [gasResult, insights, tips] = await Promise.all([
-          getGasPrices(lat, lng, city),
+          getGasPrices(lat, lng, city, state),
           getCostInsights(city),
           getBudgetSuggestions(),
         ]);
