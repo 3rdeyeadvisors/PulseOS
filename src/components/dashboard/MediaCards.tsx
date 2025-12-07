@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Music, Headphones, Film, RefreshCw, ExternalLink } from 'lucide-react';
@@ -23,10 +23,12 @@ export function MediaCard({ type }: MediaCardProps) {
   const [media, setMedia] = useState<MediaPick | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const hasFetched = useRef(false);
+  const userIdRef = useRef<string | null>(null);
 
   const { icon: Icon, label, color } = config[type];
 
-  const fetchMedia = async (isRefresh = false) => {
+  const fetchMedia = useCallback(async (isRefresh = false) => {
     if (!user) return;
 
     if (isRefresh) setRefreshing(true);
@@ -61,11 +63,16 @@ export function MediaCard({ type }: MediaCardProps) {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user, type]);
 
   useEffect(() => {
-    fetchMedia();
-  }, [user, type]);
+    // Only fetch if user exists and we haven't fetched for this user yet
+    if (user && (!hasFetched.current || userIdRef.current !== user.id)) {
+      hasFetched.current = true;
+      userIdRef.current = user.id;
+      fetchMedia();
+    }
+  }, [user, fetchMedia]);
 
   if (loading) {
     return (
