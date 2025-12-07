@@ -5,6 +5,80 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper to detect if a query needs web search
+function needsWebSearch(message: string): boolean {
+  const searchTriggers = [
+    /what is|what are|who is|who are|where is|when did|when was|how to|how do/i,
+    /latest|recent|current|today's|this week|breaking/i,
+    /tell me about|explain|define|describe/i,
+    /news about|update on|status of/i,
+    /price of|cost of|value of/i,
+    /best|top|recommend/i,
+    /\?$/,
+  ];
+  
+  // Check if message matches any search triggers
+  return searchTriggers.some(trigger => trigger.test(message));
+}
+
+// Helper to search the web using Perplexity
+async function searchWeb(query: string): Promise<string> {
+  const perplexityKey = Deno.env.get("PERPLEXITY_API_KEY");
+  
+  if (!perplexityKey) {
+    console.log("Perplexity API key not configured");
+    return "";
+  }
+
+  try {
+    console.log("Searching web for:", query);
+    
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a research assistant. Provide concise, factual answers with key details. Include relevant dates, numbers, and sources when available. Keep responses under 300 words.'
+          },
+          {
+            role: 'user',
+            content: query
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 500,
+        return_images: false,
+        return_related_questions: false,
+        search_recency_filter: 'week',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Perplexity API error:", response.status, await response.text());
+      return "";
+    }
+
+    const data = await response.json();
+    const searchResult = data.choices?.[0]?.message?.content || "";
+    
+    if (searchResult) {
+      console.log("Web search successful, got result");
+      return `\n\n## Web Search Results:\n${searchResult}\n`;
+    }
+    
+    return "";
+  } catch (error) {
+    console.error("Web search error:", error);
+    return "";
+  }
+}
+
 // Helper to fetch live data from other edge functions
 async function fetchLiveContext(city?: string, country?: string): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -156,6 +230,13 @@ serve(async (req) => {
     const userCountry = userContext?.profile?.country;
     const liveWorldContext = await fetchLiveContext(userCity, userCountry);
 
+    // Check if the latest user message needs web search
+    let webSearchContext = "";
+    const lastUserMessage = messages.filter((m: { role: string }) => m.role === "user").pop();
+    if (lastUserMessage && needsWebSearch(lastUserMessage.content)) {
+      webSearchContext = await searchWeb(lastUserMessage.content);
+    }
+
     const systemPrompt = `You are ${aiName || 'Pulse'}, a personal AI assistant for PulseOS - a life operating system that helps users optimize their daily life.
 
 ${personalityTraits[aiPersonality as keyof typeof personalityTraits] || personalityTraits.balanced}
@@ -164,15 +245,22 @@ ${humorDescription}
 ${formalityDescription}
 ${userContextSection}
 ${liveWorldContext}
+${webSearchContext}
 
 Your role is to:
 - Help users with daily planning and productivity
 - Provide personalized recommendations based on their interests, location, and dietary preferences
-- Answer questions about current events, weather, and the world using the live context provided
+- Answer questions about current events, weather, and the world using the live context and web search results provided
 - Be supportive and encouraging
 - Reference their tasks, interests, location, or current news when relevant
 
-You have access to current weather data, today's news headlines, and user-specific information. Use this knowledge to give informed, timely, and personalized responses.
+You have access to:
+- Current weather data for the user's location
+- Today's news headlines
+- User-specific information (profile, preferences, tasks)
+- Real-time web search results for factual questions
+
+When you have web search results, use them to provide accurate, up-to-date information. Always cite the source when sharing factual information from web searches.
 
 Keep responses concise but helpful. Use markdown formatting when it improves readability.`;
 
