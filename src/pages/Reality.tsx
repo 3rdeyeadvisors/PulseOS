@@ -1,19 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
-import { Loader2, Newspaper, ExternalLink, Globe, MapPin, TrendingUp, Cpu } from 'lucide-react';
+import { Loader2, Newspaper, ExternalLink, Globe, MapPin, TrendingUp, Cpu, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
+import { US_CITY_STATE_MAP } from '@/data/usStates';
 
 const categories = [
-  { id: 'all', label: 'All', icon: Newspaper },
-  { id: 'global', label: 'Global', icon: Globe },
-  { id: 'local', label: 'Local', icon: MapPin },
-  { id: 'markets', label: 'Markets', icon: TrendingUp },
-  { id: 'tech', label: 'Tech & Science', icon: Cpu },
+  { id: 'all', label: 'All', icon: Newspaper, keywords: [] },
+  { id: 'global', label: 'Global', icon: Globe, keywords: ['world', 'international', 'global'] },
+  { id: 'local', label: 'Local', icon: MapPin, keywords: [] }, // Uses city/state
+  { id: 'markets', label: 'Markets', icon: TrendingUp, keywords: ['stock market', 'economy', 'finance', 'business'] },
+  { id: 'tech', label: 'Tech & Science', icon: Cpu, keywords: ['technology', 'science', 'AI', 'innovation'] },
 ];
 
 interface NewsItem {
@@ -30,7 +31,10 @@ export default function Reality() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [dataLoading, setDataLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [newsEnabled, setNewsEnabled] = useState(true);
+  const [userProfile, setUserProfile] = useState<{ city?: string; country?: string; state?: string } | null>(null);
+  const [userInterests, setUserInterests] = useState<string[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,61 +42,112 @@ export default function Reality() {
     }
   }, [user, loading, navigate]);
 
+  // Fetch user preferences and profile once
   useEffect(() => {
-    async function fetchNews() {
+    async function fetchUserData() {
       if (!user) return;
 
-      setDataLoading(true);
-
-      try {
-        const { data: prefs } = await supabase
+      const [{ data: prefs }, { data: profile }] = await Promise.all([
+        supabase
           .from('preferences')
           .select('interests, enabled_modules')
           .eq('user_id', user.id)
-          .maybeSingle();
-
-        const modules = (prefs?.enabled_modules as string[]) || [];
-        if (!modules.includes('news')) {
-          setNewsEnabled(false);
-          setDataLoading(false);
-          return;
-        }
-
-        const { data: profile } = await supabase
+          .maybeSingle(),
+        supabase
           .from('profiles')
-          .select('city, country')
+          .select('city, country, state')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .maybeSingle(),
+      ]);
 
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-news`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({
-              interests: prefs?.interests || [],
-              country: profile?.country || 'US',
-              city: profile?.city || '',
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setNews(data.articles || []);
-        }
-      } catch (err) {
-        console.error('News fetch error:', err);
-      } finally {
+      const modules = (prefs?.enabled_modules as string[]) || [];
+      if (!modules.includes('news')) {
+        setNewsEnabled(false);
         setDataLoading(false);
+        return;
       }
+
+      setUserInterests((prefs?.interests as string[]) || []);
+      
+      const city = profile?.city || '';
+      const country = profile?.country || 'United States';
+      const isUSA = country.toLowerCase().includes('united states') || country.toLowerCase() === 'usa';
+      const state = profile?.state || (isUSA ? US_CITY_STATE_MAP[city] : undefined);
+      
+      setUserProfile({ city, country, state });
     }
 
-    fetchNews();
+    fetchUserData();
   }, [user]);
+
+  const fetchNews = useCallback(async (category: string, isRefresh = false) => {
+    if (!user || !userProfile) return;
+
+    if (isRefresh) setRefreshing(true);
+    else setDataLoading(true);
+
+    try {
+      const categoryConfig = categories.find(c => c.id === category);
+      let interests: string[] = [];
+      let city = '';
+      let state = '';
+
+      if (category === 'all') {
+        // Use user's interests
+        interests = userInterests.slice(0, 3);
+        city = userProfile.city || '';
+        state = userProfile.state || '';
+      } else if (category === 'local') {
+        // Focus on local news
+        city = userProfile.city || '';
+        state = userProfile.state || '';
+        interests = []; // No additional interests for local
+      } else if (categoryConfig?.keywords.length) {
+        // Use category-specific keywords
+        interests = categoryConfig.keywords;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-news`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            interests,
+            country: userProfile.country || 'United States',
+            city,
+            state,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setNews(data.articles || []);
+      }
+    } catch (err) {
+      console.error('News fetch error:', err);
+    } finally {
+      setDataLoading(false);
+      setRefreshing(false);
+    }
+  }, [user, userProfile, userInterests]);
+
+  // Fetch news when category changes or user profile loads
+  useEffect(() => {
+    if (userProfile && newsEnabled) {
+      fetchNews(activeCategory);
+    }
+  }, [activeCategory, userProfile, newsEnabled, fetchNews]);
+
+  const handleCategoryChange = (categoryId: string) => {
+    if (categoryId !== activeCategory) {
+      setActiveCategory(categoryId);
+    }
+  };
 
   const formatTime = (dateStr: string) => {
     try {
@@ -121,19 +176,29 @@ export default function Reality() {
         </div>
 
         {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
           {categories.map((cat) => (
             <Button
               key={cat.id}
               variant={activeCategory === cat.id ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setActiveCategory(cat.id)}
+              onClick={() => handleCategoryChange(cat.id)}
               className="shrink-0"
+              disabled={dataLoading || refreshing}
             >
               <cat.icon className="h-4 w-4 mr-1" />
               {cat.label}
             </Button>
           ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fetchNews(activeCategory, true)}
+            disabled={dataLoading || refreshing}
+            className="shrink-0 ml-auto"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
 
         {/* News List */}
