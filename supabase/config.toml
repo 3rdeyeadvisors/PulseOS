@@ -1,1 +1,7 @@
 project_id = "iypbievwbwymuuaxnljz"
+
+[functions.google-places]
+verify_jwt = false
+
+[functions.geocode]
+verify_jwt = false
