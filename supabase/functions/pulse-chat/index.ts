@@ -5,6 +5,85 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper to fetch live data from other edge functions
+async function fetchLiveContext(city?: string, country?: string): Promise<string> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  
+  if (!supabaseUrl || !serviceKey) {
+    console.log("Missing Supabase credentials for live context");
+    return "";
+  }
+
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${serviceKey}`,
+  };
+
+  let liveContext = "\n\n## Current World Context:\n";
+  const today = new Date().toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  liveContext += `**Today's Date**: ${today}\n`;
+
+  try {
+    // Fetch weather if we have location
+    if (city) {
+      const weatherRes = await fetch(`${supabaseUrl}/functions/v1/get-weather`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ city, units: "imperial" }),
+      });
+      if (weatherRes.ok) {
+        const weather = await weatherRes.json();
+        if (weather.current) {
+          liveContext += `\n**Current Weather in ${city}**:\n`;
+          liveContext += `- Temperature: ${Math.round(weather.current.temp)}°F (feels like ${Math.round(weather.current.feels_like)}°F)\n`;
+          liveContext += `- Conditions: ${weather.current.weather?.[0]?.description || 'N/A'}\n`;
+          liveContext += `- Humidity: ${weather.current.humidity}%\n`;
+        }
+      }
+    }
+
+    // Fetch latest news
+    const newsRes = await fetch(`${supabaseUrl}/functions/v1/get-news`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ category: "general", pageSize: 5 }),
+    });
+    if (newsRes.ok) {
+      const news = await newsRes.json();
+      if (news.articles?.length > 0) {
+        liveContext += `\n**Today's Top Headlines**:\n`;
+        news.articles.slice(0, 5).forEach((article: { title: string; source?: { name?: string } }, i: number) => {
+          liveContext += `${i + 1}. ${article.title} (${article.source?.name || 'News'})\n`;
+        });
+      }
+    }
+
+    // Fetch daily quote
+    const quoteRes = await fetch(`${supabaseUrl}/functions/v1/daily-quote`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({}),
+    });
+    if (quoteRes.ok) {
+      const quote = await quoteRes.json();
+      if (quote.text) {
+        liveContext += `\n**Daily Inspiration**: "${quote.text}" — ${quote.author || 'Unknown'}\n`;
+      }
+    }
+
+  } catch (error) {
+    console.error("Error fetching live context:", error);
+  }
+
+  return liveContext;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -72,6 +151,11 @@ serve(async (req) => {
       }
     }
 
+    // Fetch live world context (weather, news, etc.)
+    const userCity = userContext?.profile?.city;
+    const userCountry = userContext?.profile?.country;
+    const liveWorldContext = await fetchLiveContext(userCity, userCountry);
+
     const systemPrompt = `You are ${aiName || 'Pulse'}, a personal AI assistant for PulseOS - a life operating system that helps users optimize their daily life.
 
 ${personalityTraits[aiPersonality as keyof typeof personalityTraits] || personalityTraits.balanced}
@@ -79,15 +163,18 @@ ${personalityTraits[aiPersonality as keyof typeof personalityTraits] || personal
 ${humorDescription}
 ${formalityDescription}
 ${userContextSection}
+${liveWorldContext}
 
 Your role is to:
 - Help users with daily planning and productivity
 - Provide personalized recommendations based on their interests, location, and dietary preferences
-- Answer questions thoughtfully and helpfully using the context you know about them
+- Answer questions about current events, weather, and the world using the live context provided
 - Be supportive and encouraging
-- Reference their tasks, interests, or location when relevant to give better answers
+- Reference their tasks, interests, location, or current news when relevant
 
-Keep responses concise but helpful. Use markdown formatting when it improves readability. When making recommendations (food, activities, etc.), consider their location and preferences.`;
+You have access to current weather data, today's news headlines, and user-specific information. Use this knowledge to give informed, timely, and personalized responses.
+
+Keep responses concise but helpful. Use markdown formatting when it improves readability.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
