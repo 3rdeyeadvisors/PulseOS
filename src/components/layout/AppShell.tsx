@@ -176,7 +176,7 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 pb-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 overflow-x-hidden">
         {children}
       </main>
 

@@ -37,8 +37,8 @@ export default function Today() {
 
   return (
     <AppShell>
-      <div className="max-w-6xl mx-auto">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="max-w-6xl mx-auto overflow-x-hidden">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           <GreetingCard />
           <WeatherCard />
           <GasCard />
