@@ -77,7 +77,7 @@ export default function Money() {
     switch (trend) {
       case 'down': return <TrendingDown className="h-4 w-4 text-green-500" />;
       case 'up': return <TrendingUp className="h-4 w-4 text-red-500" />;
-      default: return <Minus className="h-4 w-4 text-muted-foreground" />;
+      default: return null; // Hide icon for "same" to avoid confusion with price
     }
   };
 

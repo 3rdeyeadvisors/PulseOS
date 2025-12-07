@@ -57,7 +57,7 @@ export function GasCard() {
     switch (trend) {
       case 'down': return <TrendingDown className="h-3 w-3 text-green-500" />;
       case 'up': return <TrendingUp className="h-3 w-3 text-red-500" />;
-      default: return <Minus className="h-3 w-3 text-muted-foreground" />;
+      default: return null; // Hide icon for "same" to avoid confusion with price
     }
   };
 
