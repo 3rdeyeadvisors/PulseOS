@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.gas-prices]
 verify_jwt = false
+
+[functions.ticketmaster-events]
+verify_jwt = false
