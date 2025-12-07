@@ -34,15 +34,33 @@ export default function Money() {
           .maybeSingle();
 
         const city = profile?.city || 'New York';
-        const state = profile?.state || undefined;
+        const state = profile?.state;
 
-        const [gas, insights, tips] = await Promise.all([
-          getGasPrices(city, state),
+        // Get coordinates for gas prices
+        let lat = 40.7128; // Default NYC
+        let lng = -74.0060;
+
+        if (city && state) {
+          try {
+            const { data: geoData } = await supabase.functions.invoke('geocode', {
+              body: { address: `${city}, ${state}` }
+            });
+            if (geoData?.lat && geoData?.lng) {
+              lat = geoData.lat;
+              lng = geoData.lng;
+            }
+          } catch (geoErr) {
+            console.error('Geocode error:', geoErr);
+          }
+        }
+
+        const [gasResult, insights, tips] = await Promise.all([
+          getGasPrices(lat, lng, city),
           getCostInsights(city),
           getBudgetSuggestions(),
         ]);
 
-        setGasStations(gas);
+        setGasStations(gasResult.stations);
         setCostInsights(insights);
         setBudgetTips(tips);
       } catch (err) {
