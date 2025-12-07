@@ -9,6 +9,9 @@ export interface MediaPick {
   spotifyUrl?: string;
   previewUrl?: string;
   albumArt?: string;
+  posterUrl?: string;
+  tmdbUrl?: string;
+  overview?: string;
 }
 
 interface MediaResponse {
@@ -21,6 +24,9 @@ interface MediaResponse {
   spotifyUrl?: string;
   previewUrl?: string;
   albumArt?: string;
+  posterUrl?: string;
+  tmdbUrl?: string;
+  overview?: string;
   error?: string;
 }
 
@@ -60,6 +66,9 @@ async function getMediaRecommendation(
         spotifyUrl: data.spotifyUrl,
         previewUrl: data.previewUrl,
         albumArt: data.albumArt,
+        posterUrl: data.posterUrl,
+        tmdbUrl: data.tmdbUrl,
+        overview: data.overview,
       };
     }
 
