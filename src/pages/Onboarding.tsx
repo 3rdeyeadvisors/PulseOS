@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { AutocompleteInput } from '@/components/ui/autocomplete-input';
+import { ALL_CITIES, COUNTRIES } from '@/data/locations';
 import { toast } from 'sonner';
 import { 
   Zap, ArrowRight, ArrowLeft, Check, Loader2, 
@@ -229,31 +231,36 @@ export default function Onboarding() {
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Your Lifestyle</h2>
               <p className="text-muted-foreground">
-                Help us tailor recommendations to your location and household.
+                Help us tailor recommendations to your location and household. All fields are optional.
               </p>
             </div>
             
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 items-end">
                 <div className="space-y-2">
                   <Label htmlFor="city" className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     City
                   </Label>
-                  <Input
+                  <AutocompleteInput
                     id="city"
                     placeholder="e.g. London"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onValueChange={setCity}
+                    suggestions={ALL_CITIES}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Input
+                  <Label htmlFor="country" className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 opacity-0" />
+                    Country
+                  </Label>
+                  <AutocompleteInput
                     id="country"
                     placeholder="e.g. UK"
                     value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    onValueChange={setCountry}
+                    suggestions={COUNTRIES}
                   />
                 </div>
               </div>
