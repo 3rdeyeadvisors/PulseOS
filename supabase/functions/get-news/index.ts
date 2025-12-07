@@ -11,34 +11,56 @@ serve(async (req) => {
   }
 
   try {
-    const { interests, country, city } = await req.json();
+    const { interests, country, city, state } = await req.json();
     const apiKey = Deno.env.get("NEWS_API_KEY");
 
     if (!apiKey) {
       throw new Error("NEWS_API_KEY not configured");
     }
 
-    // Build query based on user interests and city
+    // Map country names to NewsAPI country codes
+    const countryCodeMap: Record<string, string> = {
+      'united states': 'us',
+      'usa': 'us',
+      'united kingdom': 'gb',
+      'uk': 'gb',
+      'canada': 'ca',
+      'australia': 'au',
+      'germany': 'de',
+      'france': 'fr',
+      'india': 'in',
+      'mexico': 'mx',
+    };
+
+    const countryLower = (country || '').toLowerCase();
+    const countryCode = countryCodeMap[countryLower] || countryLower.slice(0, 2) || 'us';
+    const isUSA = countryCode === 'us';
+
     let url: string;
     
-    // Combine city and interests for more relevant results
-    const queryParts: string[] = [];
+    // Build a more specific location query with city + state for US
+    const locationQuery = isUSA && city && state 
+      ? `"${city}" "${state}"`
+      : city 
+        ? `"${city}" "${country || 'USA'}"`
+        : null;
     
-    if (city) {
-      queryParts.push(city);
-    }
-    
-    if (interests && interests.length > 0) {
-      queryParts.push(...interests.slice(0, 2));
-    }
+    // Build interest query
+    const interestQuery = interests && interests.length > 0 
+      ? interests.slice(0, 3).map((i: string) => `"${i}"`).join(' OR ')
+      : null;
 
-    if (queryParts.length > 0) {
-      // Use everything endpoint with location + interest-based query
-      const query = queryParts.join(" OR ");
-      url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
+    if (locationQuery || interestQuery) {
+      // Combine location and interests, prioritizing location news
+      const queryParts = [];
+      if (locationQuery) queryParts.push(`(${locationQuery})`);
+      if (interestQuery) queryParts.push(`(${interestQuery})`);
+      
+      const query = queryParts.join(' OR ');
+      // Add language filter for English results
+      url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=5&language=en&apiKey=${apiKey}`;
     } else {
-      // Use top headlines for general news
-      const countryCode = country?.toLowerCase().slice(0, 2) || 'us';
+      // Fallback to top headlines for the user's country
       url = `https://newsapi.org/v2/top-headlines?country=${countryCode}&pageSize=5&apiKey=${apiKey}`;
     }
 
