@@ -5,6 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FloatingAIButton } from '@/components/FloatingAIButton';
 import { 
   Zap, 
   LayoutDashboard, 
@@ -12,7 +13,10 @@ import {
   MessageCircle, 
   LogOut,
   Menu,
-  X
+  X,
+  DollarSign,
+  Newspaper,
+  MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,10 +26,9 @@ interface AppShellProps {
 
 const navItems = [
   { href: '/app', icon: LayoutDashboard, label: 'Today' },
-  { href: '/app/money', icon: Zap, label: 'Money' },
-  { href: '/app/reality', icon: Zap, label: 'Reality' },
-  { href: '/app/out-and-about', icon: Zap, label: 'Out & About' },
-  { href: '/app/chat', icon: MessageCircle, label: 'PulseAI' },
+  { href: '/app/money', icon: DollarSign, label: 'Money' },
+  { href: '/app/reality', icon: Newspaper, label: 'Reality' },
+  { href: '/app/out-and-about', icon: MapPin, label: 'Out & About' },
   { href: '/app/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -173,9 +176,12 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 pb-24">
         {children}
       </main>
+
+      {/* Floating AI Button */}
+      <FloatingAIButton aiName="Pulse" />
     </div>
   );
 }
