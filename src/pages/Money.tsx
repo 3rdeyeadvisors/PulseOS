@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
-import { Loader2, Fuel, TrendingDown, TrendingUp, Minus, Lightbulb, DollarSign } from 'lucide-react';
+import { Loader2, Fuel, TrendingDown, TrendingUp, Minus, Lightbulb, DollarSign, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getGasPrices } from '@/services/gasService';
 import { getCostInsights, getBudgetSuggestions } from '@/services/costOfLivingService';
@@ -175,10 +176,16 @@ export default function Money() {
 
         {/* Cost Insights */}
         <div className="p-5 rounded-xl bg-card border border-border/50 shadow-card">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-5 w-5 text-primary" />
             <h2 className="font-semibold">Cost of Living Summary</h2>
           </div>
+          <Alert variant="default" className="mb-4 bg-muted/50 border-muted">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs text-muted-foreground">
+              These are AI-estimated averages based on location and household type. Figures reflect general cost trends and may not match exact local prices. Use as a guide, not precise data.
+            </AlertDescription>
+          </Alert>
           
           {dataLoading ? (
             <div className="space-y-2">
@@ -202,10 +209,11 @@ export default function Money() {
 
         {/* Budget Tips */}
         <div className="p-5 rounded-xl bg-card border border-border/50 shadow-card">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-2">
             <Lightbulb className="h-5 w-5 text-primary" />
             <h2 className="font-semibold">AI Budget Suggestions</h2>
           </div>
+          <p className="text-xs text-muted-foreground mb-4">AI-generated tips personalized for your area</p>
           
           {dataLoading ? (
             <div className="space-y-2">
