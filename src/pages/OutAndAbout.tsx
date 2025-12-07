@@ -39,18 +39,22 @@ export default function OutAndAbout() {
 
       try {
         const [{ data: profile }, { data: prefs }] = await Promise.all([
-          supabase.from('profiles').select('city').eq('user_id', user.id).maybeSingle(),
+          supabase.from('profiles').select('city, state, zip_code').eq('user_id', user.id).maybeSingle(),
           supabase.from('preferences').select('dietary_preferences, interests').eq('user_id', user.id).maybeSingle(),
         ]);
 
-        const city = profile?.city || 'New York';
+        const location = {
+          city: profile?.city || 'New York',
+          state: profile?.state || '',
+          zipCode: profile?.zip_code || '',
+        };
         const diet = (prefs?.dietary_preferences as string[]) || [];
         const interests = (prefs?.interests as string[]) || [];
 
         const [food, things, evts] = await Promise.all([
-          getFoodPlaces(diet, city),
-          getThingsToDo(interests, city),
-          getEvents(city, interests),
+          getFoodPlaces(diet, location),
+          getThingsToDo(interests, location),
+          getEvents(location, interests),
         ]);
 
         setFoodPlaces(food);
