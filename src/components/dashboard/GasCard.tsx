@@ -42,7 +42,7 @@ export function GasCard() {
 
         const result = await getGasPrices(lat, lng, profile?.city, profile?.state);
         setStations(result.stations.slice(0, 3));
-        setNote(result.note);
+        setNote("Prices are regional estimates");
       } catch (err) {
         console.error('Gas fetch error:', err);
       } finally {
