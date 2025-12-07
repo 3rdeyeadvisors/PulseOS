@@ -47,6 +47,8 @@
   }
 
   /* Minimal Theme - Clean whites and grays */
+  html.theme-minimal,
+  html.theme-minimal body,
   .theme-minimal {
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
@@ -87,6 +89,8 @@
   }
 
   /* Rose Theme - Warm pinks and soft tones */
+  html.theme-rose,
+  html.theme-rose body,
   .theme-rose {
     --background: 350 20% 6%;
     --foreground: 350 20% 98%;
@@ -127,6 +131,8 @@
   }
 
   /* Gold Theme - Luxurious amber and warm tones */
+  html.theme-gold,
+  html.theme-gold body,
   .theme-gold {
     --background: 35 30% 6%;
     --foreground: 35 20% 98%;
@@ -167,6 +173,8 @@
   }
 
   /* Violet Theme - Deep purples and magentas */
+  html.theme-violet,
+  html.theme-violet body,
   .theme-violet {
     --background: 270 40% 6%;
     --foreground: 270 20% 98%;
@@ -207,6 +215,8 @@
   }
 
   /* Emerald Theme - Rich greens and teals */
+  html.theme-emerald,
+  html.theme-emerald body,
   .theme-emerald {
     --background: 160 40% 5%;
     --foreground: 160 20% 98%;
@@ -247,6 +257,8 @@
   }
 
   /* Sunset Theme - Warm oranges and coral */
+  html.theme-sunset,
+  html.theme-sunset body,
   .theme-sunset {
     --background: 15 40% 6%;
     --foreground: 15 20% 98%;
@@ -287,6 +299,8 @@
   }
 
   /* Adaptive Theme - Calm blue-grays that work day/night */
+  html.theme-adaptive,
+  html.theme-adaptive body,
   .theme-adaptive {
     --background: 220 20% 10%;
     --foreground: 220 15% 95%;
