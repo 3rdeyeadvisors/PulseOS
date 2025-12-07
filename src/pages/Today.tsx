@@ -9,6 +9,7 @@ import { AIInsightCard } from '@/components/dashboard/AIInsightCard';
 import { DailyPicksCard } from '@/components/dashboard/DailyPicksCard';
 import { NewsCard } from '@/components/dashboard/NewsCard';
 import { FoodRecommendationsCard } from '@/components/dashboard/FoodRecommendationsCard';
+import { DailyQuoteCard } from '@/components/dashboard/DailyQuoteCard';
 import { Loader2 } from 'lucide-react';
 
 export default function Today() {
@@ -40,6 +41,8 @@ export default function Today() {
           {/* Full-width greeting */}
           <GreetingCard />
           
+          {/* Daily Quote */}
+          <DailyQuoteCard />
           {/* Weather */}
           <WeatherCard />
           
