@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.ticketmaster-events]
 verify_jwt = false
+
+[functions.cost-insights]
+verify_jwt = false
+
+[functions.media-recommendations]
+verify_jwt = false
