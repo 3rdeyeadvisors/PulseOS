@@ -41,30 +41,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Remove all theme classes from both html and body
+    // Remove all theme classes from html
     const root = document.documentElement;
-    const body = document.body;
     
     themes.forEach(t => {
       root.classList.remove(`theme-${t.name}`);
-      body.classList.remove(`theme-${t.name}`);
     });
     
-    // Add current theme class to both html and body
+    // Add current theme class (night is default, no class needed)
     if (theme !== 'night') {
       root.classList.add(`theme-${theme}`);
-      body.classList.add(`theme-${theme}`);
     }
-    
-    // Also set data attribute for additional CSS targeting
-    root.setAttribute('data-theme', theme);
     
     // Save to localStorage
     localStorage.setItem('pulse-theme', theme);
   }, [theme]);
 
   const setTheme = (newTheme: ThemeName) => {
-    console.log('Setting theme to:', newTheme);
     setThemeState(newTheme);
   };
 
