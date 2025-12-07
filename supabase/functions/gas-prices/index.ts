@@ -6,7 +6,8 @@ const corsHeaders = {
 };
 
 interface GasPriceRequest {
-  state: string;
+  lat: number;
+  lng: number;
   city?: string;
 }
 
@@ -16,79 +17,70 @@ serve(async (req) => {
   }
 
   try {
-    const GAS_API_KEY = Deno.env.get("GAS_PRICES_API_KEY");
-    if (!GAS_API_KEY) {
-      throw new Error("GAS_PRICES_API_KEY is not configured");
+    const HERE_API_KEY = Deno.env.get("HERE_API_KEY");
+    if (!HERE_API_KEY) {
+      throw new Error("HERE_API_KEY is not configured");
     }
 
-    const { state, city }: GasPriceRequest = await req.json();
+    const { lat, lng, city }: GasPriceRequest = await req.json();
 
-    if (!state) {
-      throw new Error("State is required");
+    if (!lat || !lng) {
+      throw new Error("Latitude and longitude are required");
     }
 
-    console.log(`Fetching gas prices for state: ${state}, city: ${city || 'all'}`);
+    console.log(`Fetching gas prices for lat: ${lat}, lng: ${lng}, city: ${city || 'unknown'}`);
 
-    // Get state-level gas prices with city breakdown
+    // Use HERE Fuel Prices API
     const response = await fetch(
-      `https://api.collectapi.com/gasPrice/stateUsaPrice?state=${encodeURIComponent(state)}`,
+      `https://fuel.cc.api.here.com/fuel/stations.json?prox=${lat},${lng},8000&apiKey=${HERE_API_KEY}`,
       {
         headers: {
-          "authorization": `apikey ${GAS_API_KEY}`,
-          "content-type": "application/json"
+          "Accept": "application/json"
         }
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("CollectAPI error:", response.status, errorText);
+      console.error("HERE API error:", response.status, errorText);
       throw new Error(`Gas price API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log("API response:", JSON.stringify(data));
+    console.log("HERE API response stations count:", data.stations?.length || 0);
 
-    if (!data.success || !data.result) {
-      throw new Error("Invalid response from gas price API");
-    }
+    const stations = (data.stations || []).slice(0, 10).map((station: any, index: number) => {
+      // Get regular gas price (usually the first fuel type)
+      const regularFuel = station.fuels?.find((f: any) => 
+        f.type?.toLowerCase().includes('regular') || 
+        f.type?.toLowerCase().includes('unleaded') ||
+        f.type?.toLowerCase() === 'e10'
+      ) || station.fuels?.[0];
 
-    const { state: stateData, cities } = data.result;
+      const price = regularFuel?.price || null;
+      
+      return {
+        id: station.id || `station-${index}`,
+        name: station.brand || station.name || 'Gas Station',
+        address: station.address?.text || station.address?.street || 'Address unavailable',
+        distance: station.distance ? `${(station.distance / 1609.34).toFixed(1)} mi` : 'N/A',
+        price: price ? parseFloat(price) : null,
+        priceChange: 'same' as const
+      };
+    });
 
-    // Format the response with state average and city prices
-    const formattedData = {
-      stateAverage: {
-        name: stateData.name,
-        gasoline: parseFloat(stateData.gasoline),
-        midGrade: parseFloat(stateData.midGrade),
-        premium: parseFloat(stateData.premium),
-        diesel: parseFloat(stateData.diesel),
-        currency: stateData.currency
-      },
-      cities: (cities || []).map((c: any) => ({
-        name: c.name,
-        gasoline: parseFloat(c.gasoline),
-        midGrade: parseFloat(c.midGrade),
-        premium: parseFloat(c.premium),
-        diesel: parseFloat(c.diesel),
-        currency: c.currency
-      }))
-    };
-
-    // If a specific city is requested, try to find it
-    let userCity = null;
-    if (city) {
-      userCity = formattedData.cities.find(
-        (c: any) => c.name.toLowerCase() === city.toLowerCase()
-      );
-    }
+    // Sort by price (cheapest first), putting null prices at the end
+    stations.sort((a: any, b: any) => {
+      if (a.price === null) return 1;
+      if (b.price === null) return -1;
+      return a.price - b.price;
+    });
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        stateAverage: formattedData.stateAverage,
-        cities: formattedData.cities.slice(0, 10), // Return top 10 cities
-        userCity: userCity
+        stations: stations,
+        note: "Prices vary by region"
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
