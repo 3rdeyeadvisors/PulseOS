@@ -22,27 +22,67 @@ export function GasCard() {
           .eq('user_id', user.id)
           .maybeSingle();
 
-        // Get coordinates from geocode function
-        let lat = 29.4241; // Default San Antonio
-        let lng = -98.4936;
+        let lat: number | null = null;
+        let lng: number | null = null;
+        let locationSource = "default";
 
-        if (profile?.city && profile?.state) {
+        // Priority 1: Try browser geolocation
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 5000,
+              maximumAge: 300000 // Cache for 5 minutes
+            });
+          });
+          lat = position.coords.latitude;
+          lng = position.coords.longitude;
+          locationSource = "current location";
+        } catch (geoErr) {
+          console.log('Browser geolocation not available, falling back to profile');
+        }
+
+        // Priority 2: Use zip code from profile
+        if (!lat && profile?.zip_code) {
           try {
             const { data: geoData } = await supabase.functions.invoke('geocode', {
-              body: { address: `${profile.city}, ${profile.state}` }
+              body: { zipCode: profile.zip_code, state: profile.state }
             });
-            if (geoData?.lat && geoData?.lng) {
-              lat = geoData.lat;
-              lng = geoData.lng;
+            if (geoData?.latitude && geoData?.longitude) {
+              lat = geoData.latitude;
+              lng = geoData.longitude;
+              locationSource = "zip code";
             }
           } catch (geoErr) {
-            console.error('Geocode error:', geoErr);
+            console.error('Geocode by zip error:', geoErr);
           }
+        }
+
+        // Priority 3: Use city/state from profile
+        if (!lat && profile?.city && profile?.state) {
+          try {
+            const { data: geoData } = await supabase.functions.invoke('geocode', {
+              body: { city: profile.city, state: profile.state }
+            });
+            if (geoData?.latitude && geoData?.longitude) {
+              lat = geoData.latitude;
+              lng = geoData.longitude;
+              locationSource = "city";
+            }
+          } catch (geoErr) {
+            console.error('Geocode by city error:', geoErr);
+          }
+        }
+
+        // Default fallback: San Antonio
+        if (!lat || !lng) {
+          lat = 29.4241;
+          lng = -98.4936;
+          locationSource = "default";
         }
 
         const result = await getGasPrices(lat, lng, profile?.city, profile?.state);
         setStations(result.stations.slice(0, 3));
-        setNote("Prices are regional estimates");
+        setNote(locationSource === "current location" ? "Based on current location" : "Prices are regional estimates");
       } catch (err) {
         console.error('Gas fetch error:', err);
       } finally {
