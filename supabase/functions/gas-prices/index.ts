@@ -192,8 +192,9 @@ serve(async (req) => {
       // Convert distance from meters to miles
       const distanceMiles = station.distance ? (station.distance / 1609.34).toFixed(1) : null;
 
-      // Simulate price trend based on brand tier
-      const priceChange = modifier < -0.10 ? 'down' : modifier > 0.05 ? 'up' : 'same';
+      // Always return "same" since we don't have real historical price data to compare
+      // Arrows will only show when we implement actual price tracking
+      const priceChange = 'same';
 
       return {
         id: station.id || `station-${index}`,
