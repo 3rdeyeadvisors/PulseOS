@@ -98,6 +98,7 @@ export type Database = {
           household_type: string | null
           id: string
           onboarding_completed: boolean | null
+          state: string | null
           updated_at: string
           user_id: string
         }
@@ -112,6 +113,7 @@ export type Database = {
           household_type?: string | null
           id?: string
           onboarding_completed?: boolean | null
+          state?: string | null
           updated_at?: string
           user_id: string
         }
@@ -126,6 +128,7 @@ export type Database = {
           household_type?: string | null
           id?: string
           onboarding_completed?: boolean | null
+          state?: string | null
           updated_at?: string
           user_id?: string
         }
