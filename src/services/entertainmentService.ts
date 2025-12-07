@@ -6,6 +6,9 @@ export interface MediaPick {
   genre: string;
   imageUrl?: string;
   reason: string;
+  spotifyUrl?: string;
+  previewUrl?: string;
+  albumArt?: string;
 }
 
 interface MediaResponse {
@@ -15,6 +18,9 @@ interface MediaResponse {
   artist?: string;
   genre: string;
   reason: string;
+  spotifyUrl?: string;
+  previewUrl?: string;
+  albumArt?: string;
   error?: string;
 }
 
@@ -51,6 +57,9 @@ async function getMediaRecommendation(
         artist: data.artist,
         genre: data.genre,
         reason: data.reason,
+        spotifyUrl: data.spotifyUrl,
+        previewUrl: data.previewUrl,
+        albumArt: data.albumArt,
       };
     }
 

@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Music, Headphones, Film, RefreshCw } from 'lucide-react';
+import { Music, Headphones, Film, RefreshCw, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { getSongOfTheDay, getPodcastOfTheDay, getMovieOfTheDay } from '@/services/entertainmentService';
-
-interface MediaPick {
-  title: string;
-  artist?: string;
-  genre: string;
-  reason: string;
-}
+import { getSongOfTheDay, getPodcastOfTheDay, getMovieOfTheDay, MediaPick } from '@/services/entertainmentService';
 
 type MediaType = 'song' | 'podcast' | 'movie';
 
@@ -107,12 +100,36 @@ export function MediaCard({ type }: MediaCardProps) {
       </div>
 
       {media ? (
-        <div className="space-y-1">
-          <p className="font-semibold">{media.title}</p>
-          {media.artist && (
-            <p className="text-sm text-muted-foreground">{media.artist}</p>
+        <div className="flex gap-3">
+          {/* Album art for songs */}
+          {type === 'song' && media.albumArt && (
+            <img 
+              src={media.albumArt} 
+              alt={media.title}
+              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+            />
           )}
-          <p className="text-xs text-primary">{media.reason}</p>
+          
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-semibold truncate">{media.title}</p>
+              {type === 'song' && media.spotifyUrl && (
+                <a 
+                  href={media.spotifyUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 p-1 rounded-full hover:bg-green-500/20 transition-colors"
+                  title="Open in Spotify"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-green-400" />
+                </a>
+              )}
+            </div>
+            {media.artist && (
+              <p className="text-sm text-muted-foreground truncate">{media.artist}</p>
+            )}
+            <p className="text-xs text-primary truncate">{media.reason}</p>
+          </div>
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">No pick available</p>
