@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, aiName, aiPersonality, humorLevel, formalityLevel } = await req.json();
+    const { messages, aiName, aiPersonality, humorLevel, formalityLevel, userContext } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -34,20 +34,60 @@ serve(async (req) => {
       : formalityLevel > 40 ? "Use a balanced, conversational tone."
       : "Use casual, friendly language.";
 
+    // Build user context section
+    let userContextSection = "";
+    if (userContext) {
+      const { profile, preferences, tasks } = userContext;
+      
+      if (profile) {
+        const userName = profile.full_name || "this user";
+        userContextSection += `\n\n## About ${userName}:\n`;
+        if (profile.full_name) userContextSection += `- Name: ${profile.full_name}\n`;
+        if (profile.city || profile.country) {
+          userContextSection += `- Location: ${[profile.city, profile.country].filter(Boolean).join(", ")}\n`;
+        }
+        if (profile.age_range) userContextSection += `- Age range: ${profile.age_range}\n`;
+        if (profile.household_type) userContextSection += `- Household: ${profile.household_type}\n`;
+      }
+      
+      if (preferences) {
+        if (preferences.dietary_preferences?.length > 0) {
+          userContextSection += `- Dietary preferences: ${preferences.dietary_preferences.join(", ")}\n`;
+        }
+        if (preferences.interests?.length > 0) {
+          userContextSection += `- Interests: ${preferences.interests.join(", ")}\n`;
+        }
+        if (preferences.temperature_unit) {
+          userContextSection += `- Prefers temperature in: ${preferences.temperature_unit}\n`;
+        }
+      }
+      
+      if (tasks && tasks.length > 0) {
+        userContextSection += `\n## Active Tasks:\n`;
+        tasks.forEach((task: { title: string; completed: boolean; due_date?: string }) => {
+          const status = task.completed ? "✓" : "○";
+          const dueStr = task.due_date ? ` (due: ${task.due_date})` : "";
+          userContextSection += `- ${status} ${task.title}${dueStr}\n`;
+        });
+      }
+    }
+
     const systemPrompt = `You are ${aiName || 'Pulse'}, a personal AI assistant for PulseOS - a life operating system that helps users optimize their daily life.
 
 ${personalityTraits[aiPersonality as keyof typeof personalityTraits] || personalityTraits.balanced}
 
 ${humorDescription}
 ${formalityDescription}
+${userContextSection}
 
 Your role is to:
 - Help users with daily planning and productivity
-- Provide personalized recommendations based on their interests
-- Answer questions thoughtfully and helpfully
+- Provide personalized recommendations based on their interests, location, and dietary preferences
+- Answer questions thoughtfully and helpfully using the context you know about them
 - Be supportive and encouraging
+- Reference their tasks, interests, or location when relevant to give better answers
 
-Keep responses concise but helpful. Use markdown formatting when it improves readability.`;
+Keep responses concise but helpful. Use markdown formatting when it improves readability. When making recommendations (food, activities, etc.), consider their location and preferences.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
