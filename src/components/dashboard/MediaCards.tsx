@@ -101,8 +101,8 @@ export function MediaCard({ type }: MediaCardProps) {
 
       {media ? (
         <div className="flex gap-3">
-          {/* Album art for songs */}
-          {type === 'song' && media.albumArt && (
+          {/* Album art for songs or podcasts */}
+          {(type === 'song' || type === 'podcast') && media.albumArt && (
             <img 
               src={media.albumArt} 
               alt={media.title}
@@ -110,10 +110,21 @@ export function MediaCard({ type }: MediaCardProps) {
             />
           )}
           
+          {/* Movie poster */}
+          {type === 'movie' && media.posterUrl && (
+            <img 
+              src={media.posterUrl} 
+              alt={media.title}
+              className="w-14 h-20 rounded-lg object-cover flex-shrink-0"
+            />
+          )}
+          
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-start justify-between gap-2">
               <p className="font-semibold truncate">{media.title}</p>
-              {type === 'song' && media.spotifyUrl && (
+              
+              {/* Spotify link for songs and podcasts */}
+              {(type === 'song' || type === 'podcast') && media.spotifyUrl && (
                 <a 
                   href={media.spotifyUrl} 
                   target="_blank" 
@@ -122,6 +133,19 @@ export function MediaCard({ type }: MediaCardProps) {
                   title="Open in Spotify"
                 >
                   <ExternalLink className="h-3.5 w-3.5 text-green-400" />
+                </a>
+              )}
+              
+              {/* TMDb link for movies */}
+              {type === 'movie' && media.tmdbUrl && (
+                <a 
+                  href={media.tmdbUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 p-1 rounded-full hover:bg-amber-500/20 transition-colors"
+                  title="View on TMDb"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-amber-400" />
                 </a>
               )}
             </div>

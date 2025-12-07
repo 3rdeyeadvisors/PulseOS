@@ -157,7 +157,161 @@ async function getSpotifySong(interests: string[], token: string): Promise<any> 
   }
 }
 
-// Fallback to AI for podcasts and movies
+// Get podcast from Spotify using Search API
+async function getSpotifyPodcast(interests: string[], token: string): Promise<any> {
+  const searchTermMap: Record<string, string[]> = {
+    "tech": ["tech podcasts", "technology news", "startup podcasts"],
+    "fitness": ["fitness podcasts", "health wellness", "workout motivation"],
+    "travel": ["travel podcasts", "adventure stories", "travel tips"],
+    "reading": ["book podcasts", "literature discussions", "audiobooks"],
+    "finance": ["finance podcasts", "investing money", "personal finance"],
+    "nature": ["nature podcasts", "environment science", "outdoor adventures"],
+    "podcasts": ["top podcasts 2024", "popular shows"],
+  };
+
+  const searchQueries: string[] = [];
+  for (const interest of interests) {
+    const terms = searchTermMap[interest.toLowerCase()];
+    if (terms) {
+      searchQueries.push(...terms);
+    }
+  }
+
+  if (searchQueries.length === 0) {
+    searchQueries.push("top podcasts 2024", "popular podcasts", "best shows");
+  }
+
+  const query = searchQueries[Math.floor(Math.random() * searchQueries.length)];
+  console.log("Spotify Podcast - Searching for:", query);
+
+  try {
+    const params = new URLSearchParams({
+      q: query,
+      type: "show",
+      limit: "10",
+      market: "US",
+    });
+
+    const url = `https://api.spotify.com/v1/search?${params}`;
+    const response = await fetch(url, {
+      headers: { "Authorization": `Bearer ${token}` },
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error("Spotify podcast search error - status:", response.status, "body:", responseText);
+      return null;
+    }
+
+    const data = JSON.parse(responseText);
+    
+    if (!data.shows?.items || data.shows.items.length === 0) {
+      console.log("Spotify - No podcasts found");
+      return null;
+    }
+
+    console.log("Spotify - Found", data.shows.items.length, "podcasts");
+
+    const show = data.shows.items[Math.floor(Math.random() * data.shows.items.length)];
+    
+    return {
+      title: show.name,
+      artist: show.publisher,
+      genre: query.split(" ")[0].charAt(0).toUpperCase() + query.split(" ")[0].slice(1),
+      reason: `${show.total_episodes} episodes available`,
+      spotifyUrl: show.external_urls?.spotify || null,
+      albumArt: show.images?.[0]?.url || null,
+    };
+  } catch (err) {
+    console.error("Spotify podcast error:", err);
+    return null;
+  }
+}
+
+// Get movie from TMDb API
+async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any> {
+  const apiKey = Deno.env.get("TMDB_API_KEY");
+  if (!apiKey) {
+    console.log("TMDb API key not configured");
+    return null;
+  }
+
+  const genreMap: Record<string, number[]> = {
+    "tech": [878], // Sci-Fi
+    "travel": [12], // Adventure
+    "fitness": [28], // Action
+    "reading": [18], // Drama
+    "finance": [80, 53], // Crime, Thriller
+    "nature": [99], // Documentary
+    "podcasts": [35], // Comedy
+  };
+
+  let genreIds: number[] = [];
+  for (const interest of interests) {
+    const ids = genreMap[interest.toLowerCase()];
+    if (ids) {
+      genreIds.push(...ids);
+    }
+  }
+
+  if (genreIds.length === 0) {
+    genreIds = [28, 12, 878]; // Default: Action, Adventure, Sci-Fi
+  }
+
+  // Use unique genres
+  const uniqueGenres = [...new Set(genreIds)].slice(0, 3);
+  const randomPage = refresh ? Math.floor(Math.random() * 3) + 1 : 1;
+
+  try {
+    const params = new URLSearchParams({
+      api_key: apiKey,
+      language: "en-US",
+      sort_by: "popularity.desc",
+      "vote_count.gte": "100",
+      "primary_release_date.gte": "2022-01-01",
+      with_genres: uniqueGenres.join("|"),
+      page: randomPage.toString(),
+    });
+
+    const url = `https://api.themoviedb.org/3/discover/movie?${params}`;
+    console.log("TMDb - Fetching movies");
+
+    const response = await fetch(url);
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error("TMDb error - status:", response.status, "body:", responseText);
+      return null;
+    }
+
+    const data = JSON.parse(responseText);
+
+    if (!data.results || data.results.length === 0) {
+      console.log("TMDb - No movies found");
+      return null;
+    }
+
+    console.log("TMDb - Found", data.results.length, "movies");
+
+    const movie = data.results[Math.floor(Math.random() * Math.min(data.results.length, 10))];
+
+    return {
+      title: movie.title,
+      artist: movie.release_date?.split("-")[0] || "2024",
+      genre: "Movie",
+      reason: `${Math.round(movie.vote_average * 10)}% rating on TMDb`,
+      posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+      tmdbUrl: `https://www.themoviedb.org/movie/${movie.id}`,
+      overview: movie.overview?.slice(0, 100) + "...",
+    };
+  } catch (err) {
+    console.error("TMDb error:", err);
+    return null;
+  }
+}
+
+// Fallback to AI for any type
 async function getAIRecommendation(type: string, interests: string[], refresh: boolean): Promise<any> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) return null;
@@ -165,6 +319,7 @@ async function getAIRecommendation(type: string, interests: string[], refresh: b
   const interestsList = interests.length > 0 ? interests.join(", ") : "general popular content";
 
   const typePrompts: Record<string, string> = {
+    song: `Recommend ONE popular song that matches these interests: ${interestsList}.`,
     podcast: `Recommend ONE popular podcast episode or series that matches these interests: ${interestsList}. Focus on educational, entertaining, or inspiring content.`,
     movie: `Recommend ONE movie (preferably from 2022-2025) that matches these interests: ${interestsList}. Consider what's trending on streaming platforms.`,
   };
@@ -218,10 +373,26 @@ serve(async (req) => {
           console.log("Got Spotify song:", result.title);
         }
       }
+    } else if (type === "podcast") {
+      // Try Spotify for podcasts
+      const token = await getSpotifyToken();
+      if (token) {
+        result = await getSpotifyPodcast(interests, token);
+        if (result) {
+          console.log("Got Spotify podcast:", result.title);
+        }
+      }
+    } else if (type === "movie") {
+      // Try TMDb for movies
+      result = await getTMDbMovie(interests, refresh || false);
+      if (result) {
+        console.log("Got TMDb movie:", result.title);
+      }
     }
 
-    // Fallback to AI for podcasts, movies, or if Spotify failed
+    // Fallback to AI if API failed
     if (!result) {
+      console.log(`${type} API failed, falling back to AI`);
       result = await getAIRecommendation(type, interests, refresh || false);
     }
 
