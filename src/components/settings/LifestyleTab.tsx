@@ -32,6 +32,8 @@ export function LifestyleTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('');
   const [householdType, setHouseholdType] = useState('');
   const [ageRange, setAgeRange] = useState('');
@@ -42,12 +44,14 @@ export function LifestyleTab() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('city, country, household_type, age_range')
+        .select('city, state, zip_code, country, household_type, age_range')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setCity(data.city || '');
+        setState(data.state || '');
+        setZipCode(data.zip_code || '');
         setCountry(data.country || '');
         setHouseholdType(data.household_type || '');
         setAgeRange(data.age_range || '');
@@ -66,6 +70,8 @@ export function LifestyleTab() {
       .from('profiles')
       .update({
         city,
+        state,
+        zip_code: zipCode,
         country,
         household_type: householdType,
         age_range: ageRange,
@@ -97,25 +103,53 @@ export function LifestyleTab() {
         <CardDescription>Help us personalize your experience based on your lifestyle</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
-            <Input
-              id="city"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g., New York"
-            />
+        {/* Location Section */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g., San Antonio"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="state">State / Province</Label>
+              <Input
+                id="state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                placeholder="e.g., Texas"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Input
-              id="country"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              placeholder="e.g., United States"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="zipCode">ZIP / Postal Code</Label>
+              <Input
+                id="zipCode"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                placeholder="e.g., 78201"
+                maxLength={10}
+              />
+              <p className="text-xs text-muted-foreground">For more accurate local results</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="e.g., United States"
+              />
+            </div>
           </div>
         </div>
 

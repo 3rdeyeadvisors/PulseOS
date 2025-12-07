@@ -101,6 +101,7 @@ export type Database = {
           state: string | null
           updated_at: string
           user_id: string
+          zip_code: string | null
         }
         Insert: {
           age_range?: string | null
@@ -116,6 +117,7 @@ export type Database = {
           state?: string | null
           updated_at?: string
           user_id: string
+          zip_code?: string | null
         }
         Update: {
           age_range?: string | null
@@ -131,6 +133,7 @@ export type Database = {
           state?: string | null
           updated_at?: string
           user_id?: string
+          zip_code?: string | null
         }
         Relationships: []
       }
