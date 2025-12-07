@@ -51,13 +51,13 @@ export function MediaCard({ type }: MediaCardProps) {
       let data: MediaPick;
       switch (type) {
         case 'song':
-          data = await getSongOfTheDay(interests);
+          data = await getSongOfTheDay(interests, isRefresh);
           break;
         case 'podcast':
-          data = await getPodcastOfTheDay(interests);
+          data = await getPodcastOfTheDay(interests, isRefresh);
           break;
         case 'movie':
-          data = await getMovieOfTheDay(interests);
+          data = await getMovieOfTheDay(interests, isRefresh);
           break;
       }
 

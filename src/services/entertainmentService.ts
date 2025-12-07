@@ -1,5 +1,6 @@
-// Mock service for entertainment picks
-interface MediaPick {
+import { supabase } from '@/integrations/supabase/client';
+
+export interface MediaPick {
   title: string;
   artist?: string;
   genre: string;
@@ -7,41 +8,79 @@ interface MediaPick {
   reason: string;
 }
 
-export async function getSongOfTheDay(genres: string[]): Promise<MediaPick> {
-  await new Promise((r) => setTimeout(r, 200));
-  
-  const songs = [
-    { title: 'Blinding Lights', artist: 'The Weeknd', genre: 'Synth-pop', reason: 'Upbeat energy for your day' },
-    { title: 'Flowers', artist: 'Miley Cyrus', genre: 'Pop', reason: 'Feel-good anthem' },
-    { title: 'Anti-Hero', artist: 'Taylor Swift', genre: 'Pop', reason: 'Relatable lyrics' },
-    { title: 'As It Was', artist: 'Harry Styles', genre: 'Pop Rock', reason: 'Perfect morning vibes' },
-  ];
-  
-  return songs[Math.floor(Math.random() * songs.length)];
+interface MediaResponse {
+  success: boolean;
+  type: string;
+  title: string;
+  artist?: string;
+  genre: string;
+  reason: string;
+  error?: string;
 }
 
-export async function getPodcastOfTheDay(categories: string[]): Promise<MediaPick> {
-  await new Promise((r) => setTimeout(r, 200));
-  
-  const podcasts = [
-    { title: 'The Daily', artist: 'NYT', genre: 'News', reason: '20 min briefing' },
-    { title: 'Huberman Lab', artist: 'Andrew Huberman', genre: 'Science', reason: 'Brain optimization tips' },
-    { title: 'How I Built This', artist: 'NPR', genre: 'Business', reason: 'Inspiring founder stories' },
-    { title: 'Lex Fridman Podcast', artist: 'Lex Fridman', genre: 'Tech', reason: 'Deep tech conversations' },
-  ];
-  
-  return podcasts[Math.floor(Math.random() * podcasts.length)];
+export async function getSongOfTheDay(interests: string[], refresh = false): Promise<MediaPick> {
+  return getMediaRecommendation('song', interests, refresh);
 }
 
-export async function getMovieOfTheDay(genres: string[]): Promise<MediaPick> {
-  await new Promise((r) => setTimeout(r, 200));
-  
-  const movies = [
-    { title: 'Dune: Part Two', genre: 'Sci-Fi', reason: 'Epic visual experience' },
-    { title: 'Poor Things', genre: 'Comedy Drama', reason: 'Unique storytelling' },
-    { title: 'Oppenheimer', genre: 'Drama', reason: 'Masterful filmmaking' },
-    { title: 'Spider-Man: Across the Spider-Verse', genre: 'Animation', reason: 'Stunning animation' },
-  ];
-  
-  return movies[Math.floor(Math.random() * movies.length)];
+export async function getPodcastOfTheDay(interests: string[], refresh = false): Promise<MediaPick> {
+  return getMediaRecommendation('podcast', interests, refresh);
+}
+
+export async function getMovieOfTheDay(interests: string[], refresh = false): Promise<MediaPick> {
+  return getMediaRecommendation('movie', interests, refresh);
+}
+
+async function getMediaRecommendation(
+  type: 'song' | 'podcast' | 'movie',
+  interests: string[],
+  refresh: boolean
+): Promise<MediaPick> {
+  try {
+    const { data, error } = await supabase.functions.invoke<MediaResponse>('media-recommendations', {
+      body: { type, interests, refresh }
+    });
+
+    if (error) {
+      console.error(`${type} recommendation error:`, error);
+      return getFallback(type);
+    }
+
+    if (data?.title) {
+      return {
+        title: data.title,
+        artist: data.artist,
+        genre: data.genre,
+        reason: data.reason,
+      };
+    }
+
+    return getFallback(type);
+  } catch (err) {
+    console.error(`${type} recommendation error:`, err);
+    return getFallback(type);
+  }
+}
+
+function getFallback(type: 'song' | 'podcast' | 'movie'): MediaPick {
+  const fallbacks = {
+    song: { 
+      title: 'Blinding Lights', 
+      artist: 'The Weeknd', 
+      genre: 'Synth-pop', 
+      reason: 'Upbeat energy for your day' 
+    },
+    podcast: { 
+      title: 'The Daily', 
+      artist: 'NYT', 
+      genre: 'News', 
+      reason: 'Quick 20-minute briefing' 
+    },
+    movie: { 
+      title: 'Dune: Part Two', 
+      artist: 'Denis Villeneuve', 
+      genre: 'Sci-Fi', 
+      reason: 'Epic visual experience' 
+    },
+  };
+  return fallbacks[type];
 }

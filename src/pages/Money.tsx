@@ -29,7 +29,7 @@ export default function Money() {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('city, state, zip_code')
+          .select('city, state, zip_code, household_type')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -37,6 +37,7 @@ export default function Money() {
         let lng: number | null = null;
         const city = profile?.city || 'New York';
         const state = profile?.state;
+        const householdType = profile?.household_type;
 
         // Priority 1: Try browser geolocation
         try {
@@ -88,14 +89,17 @@ export default function Money() {
           lng = -74.0060;
         }
 
-        const [gasResult, insights, tips] = await Promise.all([
+        // Fetch all data in parallel - cost insights now powers budget tips too
+        const [gasResult, costData] = await Promise.all([
           getGasPrices(lat, lng, city, state),
-          getCostInsights(city),
-          getBudgetSuggestions(),
+          getCostInsights(city, state, householdType),
         ]);
 
         setGasStations(gasResult.stations);
-        setCostInsights(insights);
+        setCostInsights(costData);
+        
+        // Budget tips come from the same API call, so fetch separately
+        const tips = await getBudgetSuggestions(city, state, householdType);
         setBudgetTips(tips);
       } catch (err) {
         console.error('Money data error:', err);
