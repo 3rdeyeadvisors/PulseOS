@@ -9,8 +9,12 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Today from "./pages/Today";
+import Money from "./pages/Money";
+import Reality from "./pages/Reality";
+import OutAndAbout from "./pages/OutAndAbout";
 import Settings from "./pages/Settings";
 import Chat from "./pages/Chat";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,8 +32,13 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/app" element={<Today />} />
+              <Route path="/app/today" element={<Today />} />
+              <Route path="/app/money" element={<Money />} />
+              <Route path="/app/reality" element={<Reality />} />
+              <Route path="/app/out-and-about" element={<OutAndAbout />} />
               <Route path="/app/chat" element={<Chat />} />
               <Route path="/app/settings" element={<Settings />} />
+              <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -4,12 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { GreetingCard } from '@/components/dashboard/GreetingCard';
 import { WeatherCard } from '@/components/dashboard/WeatherCard';
-import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard';
+import { GasCard } from '@/components/dashboard/GasCard';
 import { AIInsightCard } from '@/components/dashboard/AIInsightCard';
 import { DailyPicksCard } from '@/components/dashboard/DailyPicksCard';
 import { NewsCard } from '@/components/dashboard/NewsCard';
 import { FoodRecommendationsCard } from '@/components/dashboard/FoodRecommendationsCard';
-import { DailyQuoteCard } from '@/components/dashboard/DailyQuoteCard';
+import { SongCard, PodcastCard, MovieCard } from '@/components/dashboard/MediaCards';
 import { TasksCard } from '@/components/dashboard/TasksCard';
 import { Loader2 } from 'lucide-react';
 
@@ -39,28 +39,16 @@ export default function Today() {
     <AppShell>
       <div className="max-w-6xl mx-auto">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Full-width greeting */}
           <GreetingCard />
-          
-          {/* Daily Quote */}
-          <DailyQuoteCard />
-          {/* Weather */}
           <WeatherCard />
-          
-          {/* Quick Actions */}
-          <QuickActionsCard />
-          
-          {/* Tasks */}
+          <GasCard />
           <TasksCard />
           <AIInsightCard />
-          
-          {/* Daily Picks */}
-          <DailyPicksCard />
-          
-          {/* Food Recommendations */}
           <FoodRecommendationsCard />
-          
-          {/* News */}
+          <SongCard />
+          <PodcastCard />
+          <MovieCard />
+          <DailyPicksCard />
           <NewsCard />
         </div>
       </div>

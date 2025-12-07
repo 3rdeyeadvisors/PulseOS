@@ -22,6 +22,9 @@ interface AppShellProps {
 
 const navItems = [
   { href: '/app', icon: LayoutDashboard, label: 'Today' },
+  { href: '/app/money', icon: Zap, label: 'Money' },
+  { href: '/app/reality', icon: Zap, label: 'Reality' },
+  { href: '/app/out-and-about', icon: Zap, label: 'Out & About' },
   { href: '/app/chat', icon: MessageCircle, label: 'PulseAI' },
   { href: '/app/settings', icon: Settings, label: 'Settings' },
 ];
