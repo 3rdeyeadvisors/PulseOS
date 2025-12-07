@@ -27,7 +27,7 @@ export function NewsCard() {
     else setLoading(true);
 
     try {
-      // Get user interests and country
+      // Get user interests, city and country
       const [{ data: prefs }, { data: profile }] = await Promise.all([
         supabase
           .from('preferences')
@@ -36,7 +36,7 @@ export function NewsCard() {
           .maybeSingle(),
         supabase
           .from('profiles')
-          .select('country')
+          .select('country, city')
           .eq('user_id', user.id)
           .maybeSingle(),
       ]);
@@ -52,6 +52,7 @@ export function NewsCard() {
           body: JSON.stringify({
             interests: prefs?.interests || [],
             country: profile?.country || 'US',
+            city: profile?.city || '',
           }),
         }
       );

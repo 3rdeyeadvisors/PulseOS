@@ -11,19 +11,30 @@ serve(async (req) => {
   }
 
   try {
-    const { interests, country } = await req.json();
+    const { interests, country, city } = await req.json();
     const apiKey = Deno.env.get("NEWS_API_KEY");
 
     if (!apiKey) {
       throw new Error("NEWS_API_KEY not configured");
     }
 
-    // Build query based on user interests or use top headlines
+    // Build query based on user interests and city
     let url: string;
     
+    // Combine city and interests for more relevant results
+    const queryParts: string[] = [];
+    
+    if (city) {
+      queryParts.push(city);
+    }
+    
     if (interests && interests.length > 0) {
-      // Use everything endpoint with interest-based query
-      const query = interests.slice(0, 3).join(" OR ");
+      queryParts.push(...interests.slice(0, 2));
+    }
+
+    if (queryParts.length > 0) {
+      // Use everything endpoint with location + interest-based query
+      const query = queryParts.join(" OR ");
       url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
     } else {
       // Use top headlines for general news
