@@ -26,11 +26,11 @@ export function GasCard() {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('city')
+          .select('city, state')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        const data = await getGasPrices(profile?.city || 'New York');
+        const data = await getGasPrices(profile?.city || 'New York', profile?.state || undefined);
         setStations(data.slice(0, 3));
       } catch (err) {
         console.error('Gas fetch error:', err);

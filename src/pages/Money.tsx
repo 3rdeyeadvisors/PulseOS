@@ -29,14 +29,15 @@ export default function Money() {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('city')
+          .select('city, state')
           .eq('user_id', user.id)
           .maybeSingle();
 
         const city = profile?.city || 'New York';
+        const state = profile?.state || undefined;
 
         const [gas, insights, tips] = await Promise.all([
-          getGasPrices(city),
+          getGasPrices(city, state),
           getCostInsights(city),
           getBudgetSuggestions(),
         ]);
