@@ -6,9 +6,10 @@ const corsHeaders = {
 };
 
 interface GeocodeRequest {
-  city: string;
+  city?: string;
   state?: string;
   zipCode?: string;
+  address?: string;
 }
 
 serve(async (req) => {
@@ -22,16 +23,26 @@ serve(async (req) => {
       throw new Error("GOOGLE_PLACES_API_KEY is not configured");
     }
 
-    const { city, state, zipCode }: GeocodeRequest = await req.json();
+    const body: GeocodeRequest = await req.json();
+    const { city, state, zipCode, address: providedAddress } = body;
 
-    if (!city) {
-      throw new Error("City is required");
+    // Build address string - prioritize zip code, then provided address, then city/state
+    let address = "";
+    
+    if (zipCode) {
+      // Zip code is most precise
+      address = zipCode;
+      if (state) address += `, ${state}`;
+    } else if (providedAddress) {
+      address = providedAddress;
+    } else if (city) {
+      address = city;
+      if (state) address += `, ${state}`;
+    } else {
+      throw new Error("Either zipCode, address, or city is required");
     }
 
-    // Build address string
-    let address = city;
-    if (state) address += `, ${state}`;
-    if (zipCode) address += ` ${zipCode}`;
+    console.log("Geocoding address:", address);
 
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_API_KEY}`;
 

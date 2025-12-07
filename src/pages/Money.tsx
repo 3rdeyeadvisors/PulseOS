@@ -29,29 +29,63 @@ export default function Money() {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('city, state')
+          .select('city, state, zip_code')
           .eq('user_id', user.id)
           .maybeSingle();
 
+        let lat: number | null = null;
+        let lng: number | null = null;
         const city = profile?.city || 'New York';
         const state = profile?.state;
 
-        // Get coordinates for gas prices
-        let lat = 40.7128; // Default NYC
-        let lng = -74.0060;
+        // Priority 1: Try browser geolocation
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 5000,
+              maximumAge: 300000
+            });
+          });
+          lat = position.coords.latitude;
+          lng = position.coords.longitude;
+        } catch (geoErr) {
+          console.log('Browser geolocation not available');
+        }
 
-        if (city && state) {
+        // Priority 2: Use zip code from profile
+        if (!lat && profile?.zip_code) {
           try {
             const { data: geoData } = await supabase.functions.invoke('geocode', {
-              body: { address: `${city}, ${state}` }
+              body: { zipCode: profile.zip_code, state: profile.state }
             });
-            if (geoData?.lat && geoData?.lng) {
-              lat = geoData.lat;
-              lng = geoData.lng;
+            if (geoData?.latitude && geoData?.longitude) {
+              lat = geoData.latitude;
+              lng = geoData.longitude;
             }
           } catch (geoErr) {
-            console.error('Geocode error:', geoErr);
+            console.error('Geocode by zip error:', geoErr);
           }
+        }
+
+        // Priority 3: Use city/state from profile
+        if (!lat && city && state) {
+          try {
+            const { data: geoData } = await supabase.functions.invoke('geocode', {
+              body: { city, state }
+            });
+            if (geoData?.latitude && geoData?.longitude) {
+              lat = geoData.latitude;
+              lng = geoData.longitude;
+            }
+          } catch (geoErr) {
+            console.error('Geocode by city error:', geoErr);
+          }
+        }
+
+        // Default fallback
+        if (!lat || !lng) {
+          lat = 40.7128;
+          lng = -74.0060;
         }
 
         const [gasResult, insights, tips] = await Promise.all([
