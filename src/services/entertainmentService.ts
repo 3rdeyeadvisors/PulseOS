@@ -30,23 +30,86 @@ interface MediaResponse {
   error?: string;
 }
 
-export async function getSongOfTheDay(interests: string[], refresh = false): Promise<MediaPick> {
-  return getMediaRecommendation('song', interests, refresh);
+interface CachedMedia {
+  data: MediaPick;
+  date: string; // YYYY-MM-DD format
+  interestsHash: string; // To invalidate if preferences change
 }
 
-export async function getPodcastOfTheDay(interests: string[], refresh = false): Promise<MediaPick> {
-  return getMediaRecommendation('podcast', interests, refresh);
+function getTodayDate(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
-export async function getMovieOfTheDay(interests: string[], refresh = false): Promise<MediaPick> {
-  return getMediaRecommendation('movie', interests, refresh);
+function hashInterests(interests: string[]): string {
+  return interests.sort().join(',').toLowerCase();
+}
+
+function getCacheKey(type: string, userId: string): string {
+  return `media_${type}_${userId}`;
+}
+
+function getCachedMedia(type: string, userId: string, interests: string[]): MediaPick | null {
+  try {
+    const key = getCacheKey(type, userId);
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const parsed: CachedMedia = JSON.parse(cached);
+    const today = getTodayDate();
+    const currentHash = hashInterests(interests);
+
+    // Return cached data if same day AND same preferences
+    if (parsed.date === today && parsed.interestsHash === currentHash) {
+      console.log(`Using cached ${type} for today`);
+      return parsed.data;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedMedia(type: string, userId: string, interests: string[], data: MediaPick): void {
+  try {
+    const key = getCacheKey(type, userId);
+    const cached: CachedMedia = {
+      data,
+      date: getTodayDate(),
+      interestsHash: hashInterests(interests),
+    };
+    localStorage.setItem(key, JSON.stringify(cached));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export async function getSongOfTheDay(interests: string[], refresh = false, userId?: string): Promise<MediaPick> {
+  return getMediaRecommendation('song', interests, refresh, userId);
+}
+
+export async function getPodcastOfTheDay(interests: string[], refresh = false, userId?: string): Promise<MediaPick> {
+  return getMediaRecommendation('podcast', interests, refresh, userId);
+}
+
+export async function getMovieOfTheDay(interests: string[], refresh = false, userId?: string): Promise<MediaPick> {
+  return getMediaRecommendation('movie', interests, refresh, userId);
 }
 
 async function getMediaRecommendation(
   type: 'song' | 'podcast' | 'movie',
   interests: string[],
-  refresh: boolean
+  refresh: boolean,
+  userId?: string
 ): Promise<MediaPick> {
+  // Check cache first (unless refreshing)
+  if (!refresh && userId) {
+    const cached = getCachedMedia(type, userId, interests);
+    if (cached) {
+      return cached;
+    }
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke<MediaResponse>('media-recommendations', {
       body: { type, interests, refresh }
@@ -58,7 +121,7 @@ async function getMediaRecommendation(
     }
 
     if (data?.title) {
-      return {
+      const result: MediaPick = {
         title: data.title,
         artist: data.artist,
         genre: data.genre,
@@ -70,6 +133,13 @@ async function getMediaRecommendation(
         tmdbUrl: data.tmdbUrl,
         overview: data.overview,
       };
+
+      // Cache the result for the day
+      if (userId) {
+        setCachedMedia(type, userId, interests, result);
+      }
+
+      return result;
     }
 
     return getFallback(type);
