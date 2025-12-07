@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
@@ -17,9 +17,31 @@ interface AISettings {
   formalityLevel: number;
 }
 
+interface UserContext {
+  profile: {
+    full_name: string | null;
+    city: string | null;
+    country: string | null;
+    age_range: string | null;
+    household_type: string | null;
+  } | null;
+  preferences: {
+    dietary_preferences: string[] | null;
+    interests: string[] | null;
+    temperature_unit: string | null;
+  } | null;
+  tasks: Array<{
+    title: string;
+    completed: boolean;
+    due_date: string | null;
+  }>;
+}
+
 export default function Chat() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading } = useAuth();
+  const initialMessage = (location.state as { initialMessage?: string })?.initialMessage;
   const { messages, setMessages, loadingHistory, saveMessage, clearMessages } = useChatMessages(user?.id);
   const [isLoading, setIsLoading] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>({
@@ -28,6 +50,7 @@ export default function Chat() {
     humorLevel: 50,
     formalityLevel: 50,
   });
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,27 +60,65 @@ export default function Chat() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    async function fetchAISettings() {
+    async function fetchUserData() {
       if (!user) return;
 
-      const { data } = await supabase
+      // Fetch preferences (includes AI settings)
+      const { data: prefs } = await supabase
         .from('preferences')
-        .select('ai_name, ai_personality, ai_humor_level, ai_formality_level')
+        .select('ai_name, ai_personality, ai_humor_level, ai_formality_level, dietary_preferences, interests, temperature_unit')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (data) {
+      if (prefs) {
         setAiSettings({
-          aiName: data.ai_name || 'Pulse',
-          aiPersonality: data.ai_personality || 'balanced',
-          humorLevel: data.ai_humor_level ?? 50,
-          formalityLevel: data.ai_formality_level ?? 50,
+          aiName: prefs.ai_name || 'Pulse',
+          aiPersonality: prefs.ai_personality || 'balanced',
+          humorLevel: prefs.ai_humor_level ?? 50,
+          formalityLevel: prefs.ai_formality_level ?? 50,
         });
       }
+
+      // Fetch profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, city, country, age_range, household_type')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Fetch recent incomplete tasks
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('title, completed, due_date')
+        .eq('user_id', user.id)
+        .eq('completed', false)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setUserContext({
+        profile: profile || null,
+        preferences: prefs ? {
+          dietary_preferences: prefs.dietary_preferences,
+          interests: prefs.interests,
+          temperature_unit: prefs.temperature_unit,
+        } : null,
+        tasks: tasks || [],
+      });
     }
 
-    fetchAISettings();
+    fetchUserData();
   }, [user]);
+
+  // Handle initial message from navigation state
+  const [initialMessageSent, setInitialMessageSent] = useState(false);
+  useEffect(() => {
+    if (initialMessage && !initialMessageSent && userContext && !loadingHistory) {
+      setInitialMessageSent(true);
+      // Clear the state to prevent re-sending on re-renders
+      window.history.replaceState({}, document.title);
+      sendMessage(initialMessage);
+    }
+  }, [initialMessage, initialMessageSent, userContext, loadingHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,6 +152,7 @@ export default function Chat() {
             aiPersonality: aiSettings.aiPersonality,
             humorLevel: aiSettings.humorLevel,
             formalityLevel: aiSettings.formalityLevel,
+            userContext,
           }),
         }
       );
