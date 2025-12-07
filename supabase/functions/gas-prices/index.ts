@@ -30,15 +30,16 @@ serve(async (req) => {
 
     console.log(`Fetching gas prices for lat: ${lat}, lng: ${lng}, city: ${city || 'unknown'}`);
 
-    // Use HERE Fuel Prices API
-    const response = await fetch(
-      `https://fuel.cc.api.here.com/fuel/stations.json?prox=${lat},${lng},8000&apiKey=${HERE_API_KEY}`,
-      {
-        headers: {
-          "Accept": "application/json"
-        }
+    // Use HERE Fuel Prices API v3 with fueltype=3 (Regular Unleaded) to get prices
+    // fueltype 3 = Regular Unleaded, 1 = Diesel, 27 = Premium
+    const url = `https://fuel.hereapi.com/v3/stations?in=circle:${lat},${lng};r=16000&fueltype=3&showallstations=true&apiKey=${HERE_API_KEY}`;
+    console.log("Requesting URL:", url.replace(HERE_API_KEY, "***"));
+    
+    const response = await fetch(url, {
+      headers: {
+        "Accept": "application/json"
       }
-    );
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -47,23 +48,33 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("HERE API response stations count:", data.stations?.length || 0);
+    console.log("Stations count from API:", data.count || data.stations?.length || 0);
 
-    const stations = (data.stations || []).slice(0, 10).map((station: any, index: number) => {
-      // Get regular gas price (usually the first fuel type)
-      const regularFuel = station.fuels?.find((f: any) => 
-        f.type?.toLowerCase().includes('regular') || 
-        f.type?.toLowerCase().includes('unleaded') ||
-        f.type?.toLowerCase() === 'e10'
-      ) || station.fuels?.[0];
+    // Handle response format
+    const stationsData = data.stations || [];
+
+    const stations = stationsData.slice(0, 15).map((station: any, index: number) => {
+      // Get fuel prices
+      const fuelPrices = station.fuelPrice || [];
+      const regularFuel = fuelPrices.find((f: any) => 
+        f.fuelType === '3' || f.fuelType === 3
+      ) || fuelPrices[0];
 
       const price = regularFuel?.price || null;
       
+      // Build address
+      const address = station.address;
+      const addressStr = address?.label || 
+        (address ? `${address.street || ''} ${address.houseNumber || ''}, ${address.city || ''}`.trim() : 'Address unavailable');
+
+      // Convert distance from meters to miles
+      const distanceMiles = station.distance ? (station.distance / 1609.34).toFixed(1) : null;
+
       return {
         id: station.id || `station-${index}`,
         name: station.brand || station.name || 'Gas Station',
-        address: station.address?.text || station.address?.street || 'Address unavailable',
-        distance: station.distance ? `${(station.distance / 1609.34).toFixed(1)} mi` : 'N/A',
+        address: addressStr,
+        distance: distanceMiles ? `${distanceMiles} mi` : 'Nearby',
         price: price ? parseFloat(price) : null,
         priceChange: 'same' as const
       };
@@ -76,10 +87,15 @@ serve(async (req) => {
       return a.price - b.price;
     });
 
+    // Filter to only show stations with prices first, then add some without
+    const stationsWithPrices = stations.filter((s: any) => s.price !== null);
+    const stationsWithoutPrices = stations.filter((s: any) => s.price === null).slice(0, 3);
+    const finalStations = [...stationsWithPrices.slice(0, 10), ...stationsWithoutPrices].slice(0, 10);
+
     return new Response(
       JSON.stringify({ 
         success: true,
-        stations: stations,
+        stations: finalStations,
         note: "Prices vary by region"
       }),
       {
