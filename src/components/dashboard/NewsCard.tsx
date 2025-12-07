@@ -5,6 +5,7 @@ import { Newspaper, ExternalLink, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
+import { US_CITY_STATE_MAP } from '@/data/usStates';
 
 interface NewsItem {
   title: string;
@@ -27,7 +28,7 @@ export function NewsCard() {
     else setLoading(true);
 
     try {
-      // Get user interests, city and country
+      // Get user interests, city, country and state
       const [{ data: prefs }, { data: profile }] = await Promise.all([
         supabase
           .from('preferences')
@@ -36,10 +37,16 @@ export function NewsCard() {
           .maybeSingle(),
         supabase
           .from('profiles')
-          .select('country, city')
+          .select('country, city, state')
           .eq('user_id', user.id)
           .maybeSingle(),
       ]);
+
+      // Determine state - use stored value or infer from city for US
+      const city = profile?.city || '';
+      const country = profile?.country || 'United States';
+      const isUSA = country.toLowerCase().includes('united states') || country.toLowerCase() === 'usa';
+      const state = profile?.state || (isUSA ? US_CITY_STATE_MAP[city] : undefined);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-news`,
@@ -51,8 +58,9 @@ export function NewsCard() {
           },
           body: JSON.stringify({
             interests: prefs?.interests || [],
-            country: profile?.country || 'US',
-            city: profile?.city || '',
+            country: country,
+            city: city,
+            state: state,
           }),
         }
       );
