@@ -40,7 +40,7 @@ export function GasCard() {
           }
         }
 
-        const result = await getGasPrices(lat, lng, profile?.city);
+        const result = await getGasPrices(lat, lng, profile?.city, profile?.state);
         setStations(result.stations.slice(0, 3));
         setNote(result.note);
       } catch (err) {
