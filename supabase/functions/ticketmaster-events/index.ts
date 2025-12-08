@@ -65,8 +65,42 @@ serve(async (req) => {
 
     const events = data._embedded?.events || [];
 
-    // Format the events and check for interest matches
-    const formattedEvents = events.map((event: any) => {
+    // Keywords to filter out internal/sponsor events
+    const internalKeywords = [
+      'sponsor', 'guest pass', 'voucher', 'access pass', 'courtside exp',
+      'frost club', 's&b guest', 'home guest', 'visiting guest', 'team announcement',
+      'premium experience', 'vip experience', 'suite', 'hospitality', 'corporate',
+      'employee', 'internal', 'staff only', 'private event', 'credential',
+      'media pass', 'press pass', 'comp ticket', 'complimentary'
+    ];
+
+    // Filter and format the events
+    const formattedEvents = events
+      .filter((event: any) => {
+        const eventName = (event.name || "").toLowerCase();
+        
+        // Filter out internal/sponsor events
+        const isInternal = internalKeywords.some(keyword => eventName.includes(keyword));
+        if (isInternal) {
+          console.log(`Filtering out internal event: ${event.name}`);
+          return false;
+        }
+
+        // Check for valid ticket URL - only include events with real purchasable tickets
+        const hasValidUrl = (
+          (event.url && event.url.startsWith('http')) ||
+          (event.outlets && event.outlets[0]?.url && event.outlets[0].url.startsWith('http')) ||
+          (event._links?.purchase?.href && event._links.purchase.href.startsWith('http'))
+        );
+
+        if (!hasValidUrl) {
+          console.log(`Filtering out event without ticket URL: ${event.name}`);
+          return false;
+        }
+
+        return true;
+      })
+      .map((event: any) => {
       const venue = event._embedded?.venues?.[0];
       const startDate = event.dates?.start;
       
@@ -151,22 +185,11 @@ serve(async (req) => {
         }
       }
 
-      // Get ticket URL - only use valid external URLs
-      let ticketUrl: string | null = null;
-      
-      // Check event.url first - this is the primary ticket URL
-      if (event.url && event.url.startsWith('http')) {
-        ticketUrl = event.url;
+      // Get ticket URL - we already verified a valid URL exists in the filter
+      let ticketUrl: string = event.url;
+      if (!ticketUrl?.startsWith('http')) {
+        ticketUrl = event.outlets?.[0]?.url || event._links?.purchase?.href;
       }
-      // Check for outlet URLs (some events have these)
-      else if (event.outlets && event.outlets[0]?.url && event.outlets[0].url.startsWith('http')) {
-        ticketUrl = event.outlets[0].url;
-      }
-      // Check for purchase links in _links
-      else if (event._links?.purchase?.href && event._links.purchase.href.startsWith('http')) {
-        ticketUrl = event._links.purchase.href;
-      }
-      // Don't use relative API paths or construct fake URLs - only show button if we have a real URL
 
       return {
         id: event.id,
