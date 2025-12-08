@@ -4,28 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AutocompleteInput } from '@/components/ui/autocomplete-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ALL_CITIES, COUNTRIES, STATES_PROVINCES } from '@/data/locations';
 import { toast } from 'sonner';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, MapPin, Home } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const householdTypes = [
-  { value: 'living-alone', label: 'Living Alone' },
-  { value: 'couple', label: 'Couple' },
-  { value: 'family-young', label: 'Family with Young Kids' },
-  { value: 'family-teens', label: 'Family with Teens' },
-  { value: 'roommates', label: 'Roommates' },
-  { value: 'multi-gen', label: 'Multi-generational' },
-];
-
-const ageRanges = [
-  { value: '18-24', label: '18-24' },
-  { value: '25-34', label: '25-34' },
-  { value: '35-44', label: '35-44' },
-  { value: '45-54', label: '45-54' },
-  { value: '55-64', label: '55-64' },
-  { value: '65+', label: '65+' },
-];
+const HOUSEHOLD_TYPES = ['Solo', 'Couple', 'Family', 'Roommates'];
+const AGE_RANGES = ['18-24', '25-34', '35-44', '45-54', '55+'];
 
 export function LifestyleTab() {
   const { user } = useAuth();
@@ -105,24 +92,29 @@ export function LifestyleTab() {
       <CardContent className="space-y-6">
         {/* Location Section */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Location
+          </h4>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
-              <Input
+              <AutocompleteInput
                 id="city"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
+                onValueChange={setCity}
+                suggestions={ALL_CITIES}
                 placeholder="e.g., San Antonio"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="state">State / Province</Label>
-              <Input
+              <AutocompleteInput
                 id="state"
                 value={state}
-                onChange={(e) => setState(e.target.value)}
+                onValueChange={setState}
+                suggestions={STATES_PROVINCES}
                 placeholder="e.g., Texas"
               />
             </div>
@@ -143,47 +135,63 @@ export function LifestyleTab() {
 
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Input
+              <AutocompleteInput
                 id="country"
                 value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                onValueChange={setCountry}
+                suggestions={COUNTRIES}
                 placeholder="e.g., United States"
               />
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* Household Section */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Home className="h-4 w-4" />
+            Household
+          </h4>
           <div className="space-y-2">
             <Label>Household Type</Label>
-            <Select value={householdType} onValueChange={setHouseholdType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select household type" />
-              </SelectTrigger>
-              <SelectContent>
-                {householdTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {HOUSEHOLD_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setHouseholdType(type)}
+                  className={cn(
+                    'px-4 py-3 rounded-lg border text-sm font-medium transition-all',
+                    householdType === type
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-secondary/50 border-border hover:border-primary/50'
+                  )}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label>Age Range</Label>
-            <Select value={ageRange} onValueChange={setAgeRange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select age range" />
-              </SelectTrigger>
-              <SelectContent>
-                {ageRanges.map((range) => (
-                  <SelectItem key={range.value} value={range.value}>
-                    {range.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              {AGE_RANGES.map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setAgeRange(range)}
+                  className={cn(
+                    'px-4 py-2 rounded-lg border text-sm font-medium transition-all',
+                    ageRange === range
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-secondary/50 border-border hover:border-primary/50'
+                  )}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
