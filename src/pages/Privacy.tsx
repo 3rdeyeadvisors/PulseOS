@@ -130,8 +130,8 @@ export default function Privacy() {
             <h2 className="text-2xl font-semibold mb-4 text-foreground">10. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
               If you have questions about this Privacy Policy or our data practices, please contact us at{' '}
-              <a href="mailto:privacy@pulseos.app" className="text-primary hover:underline">
-                privacy@pulseos.app
+              <a href="mailto:support@notifications.pulseos.tech" className="text-primary hover:underline">
+                support@notifications.pulseos.tech
               </a>
             </p>
           </section>
