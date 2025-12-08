@@ -152,6 +152,47 @@ serve(async (req) => {
         "PRICE_LEVEL_VERY_EXPENSIVE": "$$$$"
       };
 
+      // Determine match reason based on place type and user interests
+      let matchReason = "";
+      let isInterestMatch = false;
+      
+      if (type === "food") {
+        if (dietary?.length) {
+          matchReason = `Matches your ${dietary[0]} preference`;
+          isInterestMatch = true;
+        } else {
+          matchReason = "";
+        }
+      } else if (type === "activities") {
+        // Check if place type matches any user interest
+        const placeType = (place.primaryType || "").toLowerCase().replace(/_/g, " ");
+        const placeName = (place.displayName?.text || "").toLowerCase();
+        
+        if (interests?.length) {
+          const matchedInterest = interests.find(interest => {
+            const interestLower = interest.toLowerCase();
+            // Check if the interest matches the place type or name
+            return placeType.includes(interestLower) || 
+                   placeName.includes(interestLower) ||
+                   // Common mappings
+                   (interestLower === "tech" && (placeType.includes("museum") || placeType.includes("library"))) ||
+                   (interestLower === "music" && (placeType.includes("concert") || placeType.includes("theater") || placeType.includes("night club"))) ||
+                   (interestLower === "fitness" && (placeType.includes("gym") || placeType.includes("spa"))) ||
+                   (interestLower === "art" && (placeType.includes("gallery") || placeType.includes("museum"))) ||
+                   (interestLower === "sports" && (placeType.includes("stadium") || placeType.includes("gym") || placeType.includes("bowling"))) ||
+                   (interestLower === "nature" && (placeType.includes("park") || placeType.includes("zoo") || placeType.includes("aquarium"))) ||
+                   (interestLower === "movies" && placeType.includes("movie")) ||
+                   (interestLower === "gaming" && (placeType.includes("arcade") || placeType.includes("casino"))) ||
+                   (interestLower === "shopping" && placeType.includes("mall"));
+          });
+          
+          if (matchedInterest) {
+            matchReason = `Based on your interest in ${matchedInterest}`;
+            isInterestMatch = true;
+          }
+        }
+      }
+
       return {
         id: place.id,
         name: place.displayName?.text || "Unknown",
@@ -160,10 +201,16 @@ serve(async (req) => {
         rating: place.rating || 0,
         priceRange: priceMap[place.priceLevel] || "$$",
         distance,
-        matchReason: type === "food" 
-          ? (dietary?.length ? `Matches your ${dietary[0]} preference` : "Nearby restaurant")
-          : (interests?.length ? `Based on your interest in ${interests[0]}` : "Popular nearby")
+        matchReason,
+        isInterestMatch
       };
+    });
+
+    // Sort places: interest matches first, then by rating
+    formattedPlaces.sort((a: any, b: any) => {
+      if (a.isInterestMatch && !b.isInterestMatch) return -1;
+      if (!a.isInterestMatch && b.isInterestMatch) return 1;
+      return (b.rating || 0) - (a.rating || 0);
     });
 
     return new Response(JSON.stringify({ places: formattedPlaces }), {

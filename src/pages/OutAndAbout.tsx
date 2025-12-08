@@ -97,7 +97,9 @@ export default function OutAndAbout() {
               <MapPin className="h-3 w-3" /> {place.distance}
             </span>
           </div>
-          <p className="text-xs text-primary mt-2">{place.matchReason}</p>
+          {place.matchReason && (
+            <p className="text-xs text-primary mt-2">{place.matchReason}</p>
+          )}
         </div>
         <div className="p-2 rounded-lg bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity">
           <Navigation className="h-4 w-4 text-primary" />
@@ -107,25 +109,40 @@ export default function OutAndAbout() {
   );
 
   const EventCard = ({ event }: { event: any }) => (
-    <button
-      onClick={() => openInMaps(event.address, event.location)}
-      className="w-full text-left p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-card/80 transition-all cursor-pointer group"
-    >
+    <div className="w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all">
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-lg bg-primary/10 text-center shrink-0">
           <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-xs font-medium">{event.date}</p>
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold group-hover:text-primary transition-colors">{event.title}</h3>
+          <h3 className="font-semibold">{event.title}</h3>
           <p className="text-sm text-muted-foreground">{event.time} · {event.location}</p>
-          <span className="inline-block mt-2 text-xs px-2 py-1 rounded-full bg-secondary">{event.price}</span>
-        </div>
-        <div className="p-2 rounded-lg bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity self-center">
-          <Navigation className="h-4 w-4 text-primary" />
+          {event.matchReason && (
+            <p className="text-xs text-primary mt-1">{event.matchReason}</p>
+          )}
+          <div className="flex items-center gap-2 mt-3">
+            {event.url && (
+              <a
+                href={event.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                {event.price}
+              </a>
+            )}
+            <button
+              onClick={() => openInMaps(event.address, event.location)}
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <Navigation className="h-3 w-3" /> Directions
+            </button>
+          </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 
   return (
