@@ -164,7 +164,41 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, aiName, aiPersonality, humorLevel, formalityLevel, userContext } = await req.json();
+    const body = await req.json();
+    
+    // Input validation
+    if (!body.messages || !Array.isArray(body.messages)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid messages format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate message structure and sanitize
+    const messages = body.messages.map((msg: { role?: string; content?: string }) => {
+      if (!msg.role || !msg.content) {
+        throw new Error("Invalid message structure");
+      }
+      if (!['user', 'assistant', 'system'].includes(msg.role)) {
+        throw new Error("Invalid message role");
+      }
+      // Limit content length to prevent abuse
+      const content = String(msg.content).slice(0, 10000);
+      return { role: msg.role, content };
+    });
+
+    if (messages.length === 0 || messages.length > 50) {
+      return new Response(
+        JSON.stringify({ error: "Invalid number of messages" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const aiName = String(body.aiName || 'Pulse').slice(0, 50);
+    const aiPersonality = String(body.aiPersonality || 'balanced').slice(0, 50);
+    const humorLevel = Math.min(100, Math.max(0, Number(body.humorLevel) || 50));
+    const formalityLevel = Math.min(100, Math.max(0, Number(body.formalityLevel) || 50));
+    const userContext = body.userContext;
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
