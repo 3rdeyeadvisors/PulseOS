@@ -17,3 +17,12 @@ verify_jwt = false
 
 [functions.media-recommendations]
 verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.create-notification]
+verify_jwt = false

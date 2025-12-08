@@ -1,0 +1,95 @@
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+type NotificationType = 'welcome' | 'daily_digest' | 'event_reminder' | 'task_reminder' | 'weather_alert' | 'new_recommendation' | 'system';
+
+export function useNotifications() {
+  const { user } = useAuth();
+
+  const createNotification = async (
+    type: NotificationType,
+    title: string,
+    message: string,
+    data?: Record<string, any>
+  ) => {
+    if (!user) return { error: 'Not authenticated' };
+
+    const { data: notification, error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: user.id,
+        type,
+        title,
+        message,
+        data: data || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating notification:', error);
+      return { error: error.message };
+    }
+
+    return { data: notification };
+  };
+
+  const sendWelcomeEmail = async (email: string, fullName?: string) => {
+    if (!user) return { error: 'Not authenticated' };
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-welcome-email', {
+        body: {
+          userId: user.id,
+          email,
+          fullName,
+        },
+      });
+
+      if (error) throw error;
+      return { data };
+    } catch (error: any) {
+      console.error('Error sending welcome email:', error);
+      return { error: error.message };
+    }
+  };
+
+  const sendNotificationEmail = async (
+    email: string,
+    type: 'event_reminder' | 'task_reminder' | 'daily_digest',
+    subject: string,
+    title: string,
+    content: string,
+    ctaText?: string,
+    ctaUrl?: string
+  ) => {
+    if (!user) return { error: 'Not authenticated' };
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-notification-email', {
+        body: {
+          userId: user.id,
+          email,
+          type,
+          subject,
+          title,
+          content,
+          ctaText,
+          ctaUrl,
+        },
+      });
+
+      if (error) throw error;
+      return { data };
+    } catch (error: any) {
+      console.error('Error sending notification email:', error);
+      return { error: error.message };
+    }
+  };
+
+  return {
+    createNotification,
+    sendWelcomeEmail,
+    sendNotificationEmail,
+  };
+}

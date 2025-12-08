@@ -38,6 +38,105 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          email_type: string
+          error_message: string | null
+          id: string
+          sent_at: string
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          email_type: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string
+          status?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_preferences: {
+        Row: {
+          created_at: string
+          daily_digest: boolean
+          event_reminders: boolean
+          id: string
+          marketing_emails: boolean
+          task_reminders: boolean
+          updated_at: string
+          user_id: string
+          welcome_email: boolean
+        }
+        Insert: {
+          created_at?: string
+          daily_digest?: boolean
+          event_reminders?: boolean
+          id?: string
+          marketing_emails?: boolean
+          task_reminders?: boolean
+          updated_at?: string
+          user_id: string
+          welcome_email?: boolean
+        }
+        Update: {
+          created_at?: string
+          daily_digest?: boolean
+          event_reminders?: boolean
+          id?: string
+          marketing_emails?: boolean
+          task_reminders?: boolean
+          updated_at?: string
+          user_id?: string
+          welcome_email?: boolean
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       preferences: {
         Row: {
           ai_formality_level: number | null
@@ -203,6 +302,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      notification_type:
+        | "welcome"
+        | "daily_digest"
+        | "event_reminder"
+        | "task_reminder"
+        | "weather_alert"
+        | "new_recommendation"
+        | "system"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -331,6 +438,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      notification_type: [
+        "welcome",
+        "daily_digest",
+        "event_reminder",
+        "task_reminder",
+        "weather_alert",
+        "new_recommendation",
+        "system",
+      ],
     },
   },
 } as const

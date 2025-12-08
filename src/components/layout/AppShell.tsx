@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FloatingAIButton } from '@/components/FloatingAIButton';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { 
   Zap, 
   LayoutDashboard, 
@@ -117,7 +118,8 @@ export function AppShell({ children }: AppShellProps) {
           </nav>
 
           {/* User Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <NotificationBell />
             <Link to="/app/settings" className="hidden lg:flex items-center gap-2">
               <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage src={avatarUrl || undefined} alt={fullName || 'Profile'} />
