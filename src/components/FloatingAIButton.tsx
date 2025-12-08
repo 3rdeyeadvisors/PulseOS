@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, X, Sparkles, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,27 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Hide when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+        setIsOpen(false); // Close drawer when hiding
+      } else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleQuickQuestion = (question: string) => {
     // Navigate to chat with the question
@@ -119,7 +140,8 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'fixed bottom-14 right-4 z-50 p-4 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105',
-          isOpen && 'rotate-90'
+          isOpen && 'rotate-90',
+          !isVisible && !isOpen && 'translate-y-24 opacity-0 pointer-events-none'
         )}
       >
         {isOpen ? (
