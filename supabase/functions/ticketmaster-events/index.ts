@@ -151,12 +151,22 @@ serve(async (req) => {
         }
       }
 
-      // Get ticket URL - check multiple sources
-      const ticketUrl = event.url || 
-                        event._links?.self?.href ||
-                        (event.outlets && event.outlets[0]?.url) ||
-                        (event.seatmap?.staticUrl ? `https://www.ticketmaster.com/event/${event.id}` : null) ||
-                        `https://www.ticketmaster.com/event/${event.id}`; // Fallback to constructed URL
+      // Get ticket URL - only use valid external URLs
+      let ticketUrl: string | null = null;
+      
+      // Check event.url first - this is the primary ticket URL
+      if (event.url && event.url.startsWith('http')) {
+        ticketUrl = event.url;
+      }
+      // Check for outlet URLs (some events have these)
+      else if (event.outlets && event.outlets[0]?.url && event.outlets[0].url.startsWith('http')) {
+        ticketUrl = event.outlets[0].url;
+      }
+      // Check for purchase links in _links
+      else if (event._links?.purchase?.href && event._links.purchase.href.startsWith('http')) {
+        ticketUrl = event._links.purchase.href;
+      }
+      // Don't use relative API paths or construct fake URLs - only show button if we have a real URL
 
       return {
         id: event.id,
