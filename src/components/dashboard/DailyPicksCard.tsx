@@ -55,6 +55,68 @@ const picksByInterest: Record<string, Pick[]> = {
     { type: 'food', title: 'Homemade Pizza', subtitle: 'Weekend fun', url: 'https://www.google.com/search?q=homemade+pizza+dough+recipe' },
     { type: 'food', title: 'Buddha Bowl', subtitle: 'Nutritious', url: 'https://www.google.com/search?q=buddha+bowl+recipe' },
   ],
+  fitness: [
+    { type: 'book', title: 'Bigger Leaner Stronger', subtitle: 'Fitness Guide', url: 'https://www.goodreads.com/book/show/25333145-bigger-leaner-stronger' },
+    { type: 'music', title: 'Beast Mode', subtitle: 'Workout Mix', url: 'https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP' },
+  ],
+  tech: [
+    { type: 'book', title: 'The Pragmatic Programmer', subtitle: 'Tech Classic', url: 'https://www.goodreads.com/book/show/4099.The_Pragmatic_Programmer' },
+    { type: 'book', title: 'Clean Code', subtitle: 'Programming', url: 'https://www.goodreads.com/book/show/3735293-clean-code' },
+  ],
+  gaming: [
+    { type: 'music', title: 'Gaming Beats', subtitle: 'Focus Music', url: 'https://open.spotify.com/playlist/37i9dQZF1DWTyiBJ6yEqeu' },
+    { type: 'movie', title: 'Ready Player One', subtitle: 'Sci-Fi Adventure', url: 'https://www.themoviedb.org/movie/333339' },
+  ],
+  travel: [
+    { type: 'book', title: 'Into the Wild', subtitle: 'Adventure', url: 'https://www.goodreads.com/book/show/9594.Into_the_Wild' },
+    { type: 'movie', title: 'The Secret Life of Walter Mitty', subtitle: 'Adventure Drama', url: 'https://www.themoviedb.org/movie/116745' },
+  ],
+  art: [
+    { type: 'movie', title: 'Loving Vincent', subtitle: 'Animated Art Film', url: 'https://www.themoviedb.org/movie/339877' },
+    { type: 'book', title: 'The Story of Art', subtitle: 'Art History', url: 'https://www.goodreads.com/book/show/17440.The_Story_of_Art' },
+  ],
+  finance: [
+    { type: 'book', title: 'Rich Dad Poor Dad', subtitle: 'Personal Finance', url: 'https://www.goodreads.com/book/show/69571.Rich_Dad_Poor_Dad' },
+    { type: 'book', title: 'The Intelligent Investor', subtitle: 'Investing', url: 'https://www.goodreads.com/book/show/106835.The_Intelligent_Investor' },
+  ],
+  sports: [
+    { type: 'movie', title: 'Creed', subtitle: 'Sports Drama', url: 'https://www.themoviedb.org/movie/312221' },
+    { type: 'book', title: 'The Mamba Mentality', subtitle: 'Sports Mindset', url: 'https://www.goodreads.com/book/show/40230101-the-mamba-mentality' },
+  ],
+};
+
+// Dietary-specific food picks
+const foodByDiet: Record<string, Pick[]> = {
+  vegan: [
+    { type: 'food', title: 'Vegan Buddha Bowl', subtitle: 'Plant-based', url: 'https://www.google.com/search?q=vegan+buddha+bowl+recipe' },
+    { type: 'food', title: 'Chickpea Curry', subtitle: 'Protein-rich', url: 'https://www.google.com/search?q=vegan+chickpea+curry+recipe' },
+    { type: 'food', title: 'Lentil Soup', subtitle: 'Hearty meal', url: 'https://www.google.com/search?q=vegan+lentil+soup+recipe' },
+  ],
+  vegetarian: [
+    { type: 'food', title: 'Caprese Salad', subtitle: 'Fresh & Light', url: 'https://www.google.com/search?q=caprese+salad+recipe' },
+    { type: 'food', title: 'Veggie Stir Fry', subtitle: 'Quick & Easy', url: 'https://www.google.com/search?q=vegetarian+stir+fry+recipe' },
+    { type: 'food', title: 'Mushroom Risotto', subtitle: 'Comfort food', url: 'https://www.google.com/search?q=mushroom+risotto+recipe' },
+  ],
+  'gluten-free': [
+    { type: 'food', title: 'Quinoa Salad', subtitle: 'Gluten-free grain', url: 'https://www.google.com/search?q=gluten+free+quinoa+salad+recipe' },
+    { type: 'food', title: 'Grilled Salmon', subtitle: 'Protein-packed', url: 'https://www.google.com/search?q=gluten+free+grilled+salmon+recipe' },
+  ],
+  'dairy-free': [
+    { type: 'food', title: 'Coconut Curry', subtitle: 'Dairy-free', url: 'https://www.google.com/search?q=dairy+free+coconut+curry+recipe' },
+    { type: 'food', title: 'Avocado Toast', subtitle: 'Simple & tasty', url: 'https://www.google.com/search?q=dairy+free+avocado+toast+recipe' },
+  ],
+  keto: [
+    { type: 'food', title: 'Keto Cauliflower Rice', subtitle: 'Low-carb', url: 'https://www.google.com/search?q=keto+cauliflower+rice+recipe' },
+    { type: 'food', title: 'Bacon Wrapped Chicken', subtitle: 'High protein', url: 'https://www.google.com/search?q=keto+bacon+wrapped+chicken+recipe' },
+  ],
+  halal: [
+    { type: 'food', title: 'Lamb Kebabs', subtitle: 'Grilled perfection', url: 'https://www.google.com/search?q=halal+lamb+kebab+recipe' },
+    { type: 'food', title: 'Chicken Shawarma', subtitle: 'Middle Eastern', url: 'https://www.google.com/search?q=halal+chicken+shawarma+recipe' },
+  ],
+  kosher: [
+    { type: 'food', title: 'Matzo Ball Soup', subtitle: 'Classic comfort', url: 'https://www.google.com/search?q=kosher+matzo+ball+soup+recipe' },
+    { type: 'food', title: 'Brisket', subtitle: 'Traditional', url: 'https://www.google.com/search?q=kosher+brisket+recipe' },
+  ],
 };
 
 const defaultPicks: Pick[] = [
@@ -84,24 +146,48 @@ export function DailyPicksCard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchPicks() {
       if (!user) return;
 
       const { data } = await supabase
         .from('preferences')
-        .select('interests')
+        .select('interests, dietary_preferences')
         .eq('user_id', user.id)
         .single();
 
-      const interests = data?.interests as string[] || [];
+      if (!isMounted) return;
+
+      const rawInterests = data?.interests as string[] || [];
+      const rawDietary = data?.dietary_preferences as string[] || [];
+      
+      // Normalize and filter out "none" values
+      const interests = rawInterests.map(i => i.toLowerCase()).filter(i => i && i !== 'none');
+      const dietary = rawDietary.map(d => d.toLowerCase()).filter(d => d && d !== 'none');
+      
       const dailyIndex = getDailyIndex(7); // Rotate weekly
       
       // Generate picks based on user interests - ensure uniqueness by type
       const userPicks: Pick[] = [];
       const usedTypes = new Set<string>();
       
+      // First, add dietary-specific food pick if user has dietary preferences
+      if (dietary.length > 0) {
+        for (const diet of dietary) {
+          const dietPicks = foodByDiet[diet];
+          if (dietPicks && dietPicks.length > 0 && !usedTypes.has('food')) {
+            const pickIndex = dailyIndex % dietPicks.length;
+            userPicks.push(dietPicks[pickIndex]);
+            usedTypes.add('food');
+            break;
+          }
+        }
+      }
+      
+      // Then add picks based on interests
       for (const interest of interests) {
-        const interestPicks = picksByInterest[interest.toLowerCase()];
+        const interestPicks = picksByInterest[interest];
         if (interestPicks && interestPicks.length > 0) {
           // Get the pick for today based on daily rotation
           const pickIndex = dailyIndex % interestPicks.length;
@@ -128,6 +214,20 @@ export function DailyPicksCard() {
     }
 
     fetchPicks();
+
+    // Re-fetch when page becomes visible (e.g., returning from settings)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPicks();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   if (loading) {
