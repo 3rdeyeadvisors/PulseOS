@@ -28,7 +28,7 @@ serve(async (req: Request): Promise<Response> => {
     const displayName = fullName || email.split('@')[0];
 
     const emailResponse = await resend.emails.send({
-      from: "PulseOS <onboarding@resend.dev>",
+      from: "PulseOS <support@notifications.pulseos.tech>",
       to: [email],
       subject: "Welcome to PulseOS - Your Personal Life Dashboard 🚀",
       html: `
@@ -49,8 +49,8 @@ serve(async (req: Request): Promise<Response> => {
               <div style="display: inline-block; padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
                 <span style="font-size: 32px;">⚡</span>
               </div>
-              <h1 style="color: #ffffff; margin: 20px 0 0; font-size: 28px; font-weight: 700;">
-                Welcome to <span style="background: linear-gradient(135deg, #8b5cf6, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PulseOS</span>
+              <h1 style="margin: 20px 0 0; font-size: 28px; font-weight: 700;">
+                <span style="color: #ffffff;">Welcome to </span><span style="color: #a78bfa;">PulseOS</span>
               </h1>
             </td>
           </tr>
