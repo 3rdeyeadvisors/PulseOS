@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
+import { LocationAutocomplete, AddressComponents } from '@/components/ui/location-autocomplete';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, Save, MapPin, Home } from 'lucide-react';
@@ -47,6 +47,45 @@ export function LifestyleTab() {
 
     fetchProfile();
   }, [user]);
+
+  // Handle city selection - auto-fill state, country
+  const handleCityAddressComponents = useCallback((components: AddressComponents) => {
+    if (components.state || components.stateLong) {
+      setState(components.stateLong || components.state || '');
+    }
+    if (components.country) {
+      setCountry(components.country);
+    }
+    if (components.zipCode && !zipCode) {
+      setZipCode(components.zipCode);
+    }
+  }, [zipCode]);
+
+  // Handle zip code blur - geocode and auto-fill city, state, country
+  const handleZipCodeBlur = useCallback(async () => {
+    if (!zipCode || zipCode.length < 3) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode', {
+        body: { zipCode }
+      });
+      
+      if (error || !data?.addressComponents) return;
+      
+      const components = data.addressComponents;
+      if (components.city && !city) {
+        setCity(components.city);
+      }
+      if ((components.state || components.stateLong) && !state) {
+        setState(components.stateLong || components.state || '');
+      }
+      if (components.country && !country) {
+        setCountry(components.country);
+      }
+    } catch (err) {
+      console.error('Zip code geocoding failed:', err);
+    }
+  }, [zipCode, city, state, country]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -102,6 +141,7 @@ export function LifestyleTab() {
                 id="city"
                 value={city}
                 onValueChange={setCity}
+                onAddressComponentsChange={handleCityAddressComponents}
                 locationType="city"
                 placeholder="e.g., San Antonio, Hope Mills"
               />
@@ -126,10 +166,11 @@ export function LifestyleTab() {
                 id="zipCode"
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
+                onBlur={handleZipCodeBlur}
                 placeholder="e.g., 78201"
                 maxLength={10}
               />
-              <p className="text-xs text-muted-foreground">For more accurate local results</p>
+              <p className="text-xs text-muted-foreground">Enter to auto-fill city, state, country</p>
             </div>
 
             <div className="space-y-2">

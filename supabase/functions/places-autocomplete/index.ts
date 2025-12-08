@@ -8,6 +8,31 @@ const corsHeaders = {
 interface AutocompleteRequest {
   input: string;
   types?: string;
+  getDetails?: boolean;
+  placeId?: string;
+}
+
+// Extract address components from Places API (New) response
+function extractAddressComponents(place: any) {
+  const components: Record<string, string> = {};
+  
+  if (place.addressComponents) {
+    for (const component of place.addressComponents) {
+      const types = component.types || [];
+      if (types.includes("locality")) {
+        components.city = component.longText;
+      } else if (types.includes("administrative_area_level_1")) {
+        components.state = component.shortText;
+        components.stateLong = component.longText;
+      } else if (types.includes("country")) {
+        components.country = component.longText;
+      } else if (types.includes("postal_code")) {
+        components.zipCode = component.longText;
+      }
+    }
+  }
+  
+  return components;
 }
 
 serve(async (req) => {
@@ -22,7 +47,40 @@ serve(async (req) => {
     }
 
     const body: AutocompleteRequest = await req.json();
-    const { input, types = "(cities)" } = body;
+    const { input, types = "(cities)", getDetails = false, placeId } = body;
+
+    // If placeId is provided, fetch place details
+    if (placeId && getDetails) {
+      console.log("Fetching place details for:", placeId);
+      
+      const detailsResponse = await fetch(
+        `https://places.googleapis.com/v1/places/${placeId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": GOOGLE_API_KEY,
+            "X-Goog-FieldMask": "addressComponents,displayName",
+          },
+        }
+      );
+
+      if (!detailsResponse.ok) {
+        const errorText = await detailsResponse.text();
+        console.error("Place details error:", detailsResponse.status, errorText);
+        throw new Error(`Place details error: ${detailsResponse.status}`);
+      }
+
+      const placeData = await detailsResponse.json();
+      console.log("Place details:", JSON.stringify(placeData).substring(0, 500));
+      
+      const addressComponents = extractAddressComponents(placeData);
+      
+      return new Response(
+        JSON.stringify({ addressComponents }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!input || input.length < 2) {
       return new Response(
