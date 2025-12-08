@@ -7,13 +7,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Loader2, Save, Sun, Newspaper, Utensils, Sparkles, Film, Cloud } from 'lucide-react';
 
+import { Fuel, CheckSquare, Music, Mic, Clapperboard } from 'lucide-react';
+
 const modules = [
   { id: 'greeting', label: 'Greeting Card', description: 'Personalized welcome message', icon: Sun },
   { id: 'weather', label: 'Weather', description: 'Local weather forecast', icon: Cloud },
-  { id: 'news', label: 'News', description: 'Curated headlines', icon: Newspaper },
-  { id: 'food', label: 'Food Recommendations', description: 'Meal ideas based on your diet', icon: Utensils },
-  { id: 'daily-picks', label: 'Daily Picks', description: 'Entertainment recommendations', icon: Film },
+  { id: 'gas', label: 'Gas Prices', description: 'Nearby fuel prices', icon: Fuel },
+  { id: 'tasks', label: 'Tasks', description: 'Your to-do list', icon: CheckSquare },
   { id: 'ai-insight', label: 'AI Insight', description: 'Daily tip from your AI assistant', icon: Sparkles },
+  { id: 'food', label: 'Food Recommendations', description: 'Meal ideas based on your diet', icon: Utensils },
+  { id: 'song', label: 'Song of the Day', description: 'Daily music pick', icon: Music },
+  { id: 'podcast', label: 'Podcast of the Day', description: 'Daily podcast pick', icon: Mic },
+  { id: 'movie', label: 'Movie of the Day', description: 'Daily movie pick', icon: Clapperboard },
+  { id: 'daily-picks', label: 'Daily Picks', description: 'Entertainment recommendations', icon: Film },
+  { id: 'news', label: 'News', description: 'Curated headlines', icon: Newspaper },
 ];
 
 export function ModulesTab() {
