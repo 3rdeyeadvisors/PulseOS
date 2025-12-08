@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Newspaper, ExternalLink, RefreshCw } from 'lucide-react';
@@ -14,12 +14,26 @@ interface NewsItem {
   publishedAt: string;
 }
 
+interface CachedNews {
+  articles: NewsItem[];
+  cachedAt: number; // timestamp
+  cacheKey: string; // to invalidate if location/interests change
+}
+
+const NEWS_CACHE_KEY = 'news_cache';
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+
+function getCacheKey(city: string, state: string, interests: string[]): string {
+  return `${city}-${state}-${interests.sort().join(',')}`;
+}
+
 export function NewsCard() {
   const { user } = useAuth();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   const fetchNews = async (isRefresh = false) => {
     if (!user) return;
@@ -46,7 +60,33 @@ export function NewsCard() {
       const city = profile?.city || '';
       const country = profile?.country || 'United States';
       const isUSA = country.toLowerCase().includes('united states') || country.toLowerCase() === 'usa';
-      const state = profile?.state || (isUSA ? US_CITY_STATE_MAP[city] : undefined);
+      const state = profile?.state || (isUSA ? US_CITY_STATE_MAP[city] : undefined) || '';
+      const interests = (prefs?.interests as string[]) || [];
+      
+      const currentCacheKey = getCacheKey(city, state, interests);
+
+      // Check cache (unless refreshing)
+      if (!isRefresh) {
+        try {
+          const cached = localStorage.getItem(NEWS_CACHE_KEY);
+          if (cached) {
+            const parsed: CachedNews = JSON.parse(cached);
+            const now = Date.now();
+            
+            // Use cache if within duration and same context
+            if (parsed.cacheKey === currentCacheKey && (now - parsed.cachedAt) < CACHE_DURATION_MS) {
+              console.log('Using cached news');
+              setNews(parsed.articles);
+              setError(null);
+              setLoading(false);
+              setRefreshing(false);
+              return;
+            }
+          }
+        } catch {
+          // Ignore cache errors
+        }
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-news`,
@@ -57,7 +97,7 @@ export function NewsCard() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            interests: prefs?.interests || [],
+            interests: interests,
             country: country,
             city: city,
             state: state,
@@ -71,8 +111,21 @@ export function NewsCard() {
       }
 
       const data = await response.json();
-      setNews(data.articles || []);
+      const articles = data.articles || [];
+      setNews(articles);
       setError(null);
+      
+      // Cache the results
+      try {
+        const cacheData: CachedNews = {
+          articles,
+          cachedAt: Date.now(),
+          cacheKey: currentCacheKey,
+        };
+        localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(cacheData));
+      } catch {
+        // Ignore cache errors
+      }
     } catch (err) {
       console.error('News fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load news');
@@ -83,7 +136,10 @@ export function NewsCard() {
   };
 
   useEffect(() => {
-    fetchNews();
+    if (user && !hasFetched.current) {
+      hasFetched.current = true;
+      fetchNews();
+    }
   }, [user]);
 
   const formatTime = (dateStr: string) => {

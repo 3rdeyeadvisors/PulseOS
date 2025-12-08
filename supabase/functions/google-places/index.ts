@@ -42,14 +42,15 @@ serve(async (req) => {
         textQuery = dietary.join(" ") + " restaurant";
       }
     } else if (type === "activities") {
+      // Use a variety of activity types
       includedTypes = [
         "museum", "art_gallery", "park", "tourist_attraction",
         "movie_theater", "bowling_alley", "gym", "spa",
-        "night_club", "bar", "shopping_mall", "zoo", "aquarium"
+        "night_club", "bar", "shopping_mall", "zoo", "aquarium",
+        "amusement_park", "stadium", "library", "casino"
       ];
-      if (interests && interests.length > 0) {
-        textQuery = interests.slice(0, 3).join(" ");
-      }
+      // Don't use interest-based text query to get more variety
+      textQuery = "";
     }
 
     let places = [];
