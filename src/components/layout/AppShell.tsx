@@ -192,9 +192,20 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 overflow-x-hidden">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-32 overflow-x-hidden">
         {children}
       </main>
+
+      {/* Footer */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border/30 py-3 z-40">
+        <div className="container mx-auto px-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <span>© 2025 PulseOS</span>
+          <span className="text-border">•</span>
+          <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+          <span className="text-border">•</span>
+          <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+        </div>
+      </footer>
 
       {/* Floating AI Button */}
       <FloatingAIButton aiName={aiName} />
