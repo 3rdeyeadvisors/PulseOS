@@ -4,9 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AutocompleteInput } from '@/components/ui/autocomplete-input';
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ALL_CITIES, COUNTRIES, STATES_PROVINCES } from '@/data/locations';
 import { toast } from 'sonner';
 import { Loader2, Save, MapPin, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -99,23 +98,23 @@ export function LifestyleTab() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
-              <AutocompleteInput
+              <LocationAutocomplete
                 id="city"
                 value={city}
                 onValueChange={setCity}
-                suggestions={ALL_CITIES}
-                placeholder="e.g., San Antonio"
+                locationType="city"
+                placeholder="e.g., San Antonio, Hope Mills"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="state">State / Province</Label>
-              <AutocompleteInput
+              <LocationAutocomplete
                 id="state"
                 value={state}
                 onValueChange={setState}
-                suggestions={STATES_PROVINCES}
-                placeholder="e.g., Texas"
+                locationType="region"
+                placeholder="e.g., Texas, North Carolina"
               />
             </div>
           </div>
@@ -135,11 +134,11 @@ export function LifestyleTab() {
 
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <AutocompleteInput
+              <LocationAutocomplete
                 id="country"
                 value={country}
                 onValueChange={setCountry}
-                suggestions={COUNTRIES}
+                locationType="country"
                 placeholder="e.g., United States"
               />
             </div>
