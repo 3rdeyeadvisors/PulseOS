@@ -17,6 +17,7 @@ import Chat from "./pages/Chat";
 import Admin from "./pages/Admin";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/app" element={<Today />} />
               <Route path="/app/today" element={<Today />} />
               <Route path="/app/money" element={<Money />} />

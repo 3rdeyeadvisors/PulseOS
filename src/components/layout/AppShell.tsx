@@ -204,6 +204,8 @@ export function AppShell({ children }: AppShellProps) {
           <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           <span className="text-border">•</span>
           <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+          <span className="text-border">•</span>
+          <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
         </div>
       </footer>
 
