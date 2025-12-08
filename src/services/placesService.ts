@@ -118,23 +118,17 @@ export async function getEvents(location: LocationInfo, interests: string[]): Pr
         city: location.city,
         state: location.state,
         interests: validInterests,
-        radius: 100 // Increase radius to find more events
+        radius: 100
       }
     });
 
     if (error) throw error;
     if (!data.success) throw new Error(data.error);
     
-    // If no events found, return mock data as fallback
-    if (!data.events || data.events.length === 0) {
-      console.log('No events found from API, using mock data');
-      return getMockEvents(location);
-    }
-    
-    return data.events;
+    return data.events || [];
   } catch (err) {
     console.error('Error fetching events:', err);
-    return getMockEvents(location);
+    return []; // Return empty array instead of mock data
   }
 }
 
