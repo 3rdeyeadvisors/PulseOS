@@ -189,15 +189,15 @@ export default function Money() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 max-h-64 overflow-y-auto pr-1">
               {costInsights.map((insight) => (
                 <div key={insight.category} className="p-3 rounded-lg bg-secondary/30">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium">{insight.category}</span>
+                    <span className="font-medium truncate">{insight.category}</span>
                     {getTrendIcon(insight.trend)}
                   </div>
                   <p className="text-lg font-bold">${insight.averageCost}/mo</p>
-                  <p className="text-xs text-muted-foreground">{insight.tip}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{insight.tip}</p>
                 </div>
               ))}
             </div>
