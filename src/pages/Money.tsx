@@ -217,14 +217,14 @@ export default function Money() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
               {budgetTips.map((tip, i) => (
                 <div key={i} className="p-3 rounded-lg hover:bg-secondary/30 transition-colors">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium">{tip.title}</span>
-                    <span className="text-sm font-semibold text-green-500">Save {tip.savings}</span>
+                    <span className="font-medium truncate">{tip.title}</span>
+                    <span className="text-sm font-semibold text-green-500 shrink-0 ml-2">Save {tip.savings}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{tip.description}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{tip.description}</p>
                 </div>
               ))}
             </div>
