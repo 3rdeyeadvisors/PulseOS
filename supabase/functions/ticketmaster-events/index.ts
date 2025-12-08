@@ -83,19 +83,35 @@ serve(async (req) => {
       'media pass', 'press pass', 'comp ticket', 'complimentary'
     ];
 
-    // Get today's date for comparison (YYYY-MM-DD format)
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Get current time for comparison
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
 
     // Filter and format the events
     const formattedEvents = events
       .filter((event: any) => {
         const eventName = (event.name || "").toLowerCase();
         const eventDate = event.dates?.start?.localDate;
+        const eventTime = event.dates?.start?.localTime; // HH:mm:ss format
         
-        // Filter out past events (safety check in case API returns old events)
-        if (eventDate && eventDate < todayStr) {
-          console.log(`Filtering out past event: ${event.name} (${eventDate})`);
-          return false;
+        // Filter out past events - check both date AND time
+        if (eventDate) {
+          if (eventDate < todayStr) {
+            console.log(`Filtering out past event (past date): ${event.name} (${eventDate})`);
+            return false;
+          }
+          
+          // If event is today, also check the time
+          if (eventDate === todayStr && eventTime) {
+            const [hours, minutes] = eventTime.split(':').map(Number);
+            const eventDateTime = new Date();
+            eventDateTime.setHours(hours, minutes, 0, 0);
+            
+            if (eventDateTime < now) {
+              console.log(`Filtering out past event (past time): ${event.name} (${eventDate} ${eventTime})`);
+              return false;
+            }
+          }
         }
         
         // Filter out internal/sponsor events
