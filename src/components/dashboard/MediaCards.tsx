@@ -19,7 +19,7 @@ const config = {
 };
 
 export function MediaCard({ type }: MediaCardProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [media, setMedia] = useState<MediaPick | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -29,7 +29,7 @@ export function MediaCard({ type }: MediaCardProps) {
   const { icon: Icon, label, color } = config[type];
 
   const fetchMedia = useCallback(async (isRefresh = false) => {
-    if (!user) return;
+    if (!user || !session) return;
 
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -63,16 +63,16 @@ export function MediaCard({ type }: MediaCardProps) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user, type]);
+  }, [user, session, type]);
 
   useEffect(() => {
     // Only fetch if user exists and we haven't fetched for this user yet
-    if (user && (!hasFetched.current || userIdRef.current !== user.id)) {
+    if (user && session && (!hasFetched.current || userIdRef.current !== user.id)) {
       hasFetched.current = true;
       userIdRef.current = user.id;
       fetchMedia();
     }
-  }, [user, fetchMedia]);
+  }, [user, session, fetchMedia]);
 
   if (loading) {
     return (

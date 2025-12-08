@@ -17,7 +17,7 @@ interface WeatherData {
 type TempUnit = 'fahrenheit' | 'celsius';
 
 export function WeatherCard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function WeatherCard() {
     let isMounted = true;
 
     async function fetchWeatherAndPrefs() {
-      if (!user) return;
+      if (!user || !session) return;
 
       try {
         // Get user's city and temp unit preference
@@ -100,7 +100,7 @@ export function WeatherCard() {
       isMounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user]);
+  }, [user, session]);
 
   const toggleUnit = async () => {
     const newUnit: TempUnit = tempUnit === 'fahrenheit' ? 'celsius' : 'fahrenheit';

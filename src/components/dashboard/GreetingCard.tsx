@@ -38,7 +38,7 @@ const affirmations = [
 ];
 
 export function GreetingCard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [fullName, setFullName] = useState<string>('');
   const [greeting, setGreeting] = useState<string>('');
   const [affirmation, setAffirmation] = useState<string>('');
@@ -60,13 +60,18 @@ export function GreetingCard() {
 
   useEffect(() => {
     async function fetchProfile() {
-      if (!user) return;
+      if (!user || !session) return;
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Profile fetch error:', error);
+        return;
+      }
       
       if (data?.full_name) {
         setFullName(data.full_name.split(' ')[0]);
@@ -74,7 +79,7 @@ export function GreetingCard() {
     }
     
     fetchProfile();
-  }, [user]);
+  }, [user, session]);
 
   const displayName = fullName || user?.email?.split('@')[0] || 'there';
 

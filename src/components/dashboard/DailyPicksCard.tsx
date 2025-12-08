@@ -146,7 +146,7 @@ const colorMap = {
 };
 
 export function DailyPicksCard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [picks, setPicks] = useState<Pick[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -154,23 +154,26 @@ export function DailyPicksCard() {
     let isMounted = true;
 
     async function fetchPicks() {
-      if (!user) return;
+      if (!user || !session) return;
 
       // Fetch both preferences and profile (for location)
-      const [{ data: prefsData }, { data: profileData }] = await Promise.all([
+      const [{ data: prefsData, error: prefsError }, { data: profileData, error: profileError }] = await Promise.all([
         supabase
           .from('preferences')
           .select('interests, dietary_preferences')
           .eq('user_id', user.id)
-          .single(),
+          .maybeSingle(),
         supabase
           .from('profiles')
           .select('city, state')
           .eq('user_id', user.id)
-          .single(),
+          .maybeSingle(),
       ]);
 
       if (!isMounted) return;
+      
+      if (prefsError) console.error('Preferences fetch error:', prefsError);
+      if (profileError) console.error('Profile fetch error:', profileError);
 
       const rawInterests = prefsData?.interests as string[] || [];
       const rawDietary = prefsData?.dietary_preferences as string[] || [];
@@ -245,7 +248,7 @@ export function DailyPicksCard() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, session]);
 
   if (loading) {
     return (
