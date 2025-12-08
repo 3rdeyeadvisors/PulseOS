@@ -34,6 +34,11 @@ serve(async (req) => {
 
     console.log(`Fetching events for ${city}, ${state || ''} with interests:`, validInterests);
 
+    // Get today's date in the format required by Ticketmaster API (YYYY-MM-DDTHH:mm:ssZ)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    const startDateTime = today.toISOString().replace('.000Z', 'Z');
+
     // Build the API URL - search without keyword filters to get more results
     const baseUrl = "https://app.ticketmaster.com/discovery/v2/events.json";
     const params = new URLSearchParams({
@@ -42,7 +47,8 @@ serve(async (req) => {
       radius: radius.toString(),
       unit: "miles",
       size: "30", // Request more events
-      sort: "date,asc"
+      sort: "date,asc",
+      startDateTime: startDateTime // Only fetch events from today onwards
     });
 
     // Add state if provided
@@ -77,10 +83,20 @@ serve(async (req) => {
       'media pass', 'press pass', 'comp ticket', 'complimentary'
     ];
 
+    // Get today's date for comparison (YYYY-MM-DD format)
+    const todayStr = new Date().toISOString().split('T')[0];
+
     // Filter and format the events
     const formattedEvents = events
       .filter((event: any) => {
         const eventName = (event.name || "").toLowerCase();
+        const eventDate = event.dates?.start?.localDate;
+        
+        // Filter out past events (safety check in case API returns old events)
+        if (eventDate && eventDate < todayStr) {
+          console.log(`Filtering out past event: ${event.name} (${eventDate})`);
+          return false;
+        }
         
         // Filter out internal/sponsor events
         const isInternal = internalKeywords.some(keyword => eventName.includes(keyword));
