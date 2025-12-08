@@ -10,9 +10,18 @@ interface Prediction {
   secondaryText: string;
 }
 
+export interface AddressComponents {
+  city?: string;
+  state?: string;
+  stateLong?: string;
+  country?: string;
+  zipCode?: string;
+}
+
 interface LocationAutocompleteProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onValueChange: (value: string) => void;
+  onAddressComponentsChange?: (components: AddressComponents) => void;
   locationType?: "city" | "region" | "country";
 }
 
@@ -23,7 +32,7 @@ const typeMapping: Record<string, string> = {
 };
 
 export const LocationAutocomplete = React.forwardRef<HTMLInputElement, LocationAutocompleteProps>(
-  ({ value, onValueChange, locationType = "city", className, ...props }, ref) => {
+  ({ value, onValueChange, onAddressComponentsChange, locationType = "city", className, ...props }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [predictions, setPredictions] = React.useState<Prediction[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -88,13 +97,28 @@ export const LocationAutocomplete = React.forwardRef<HTMLInputElement, LocationA
       }, 300);
     };
 
-    const handleSelect = (prediction: Prediction) => {
+    const handleSelect = async (prediction: Prediction) => {
       // Extract just the city/region/country name from the main text
       const selectedValue = prediction.mainText;
       setInputValue(selectedValue);
       onValueChange(selectedValue);
       setIsOpen(false);
       setPredictions([]);
+
+      // Fetch address components if callback is provided
+      if (onAddressComponentsChange && prediction.placeId) {
+        try {
+          const { data, error } = await supabase.functions.invoke("places-autocomplete", {
+            body: { placeId: prediction.placeId, getDetails: true },
+          });
+
+          if (!error && data?.addressComponents) {
+            onAddressComponentsChange(data.addressComponents);
+          }
+        } catch (err) {
+          console.error("Failed to fetch address components:", err);
+        }
+      }
     };
 
     const handleFocus = () => {

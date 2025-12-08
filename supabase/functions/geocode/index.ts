@@ -58,13 +58,31 @@ serve(async (req) => {
       throw new Error(`Geocoding failed: ${data.status}`);
     }
 
-    const location = data.results[0].geometry.location;
+    const result = data.results[0];
+    const location = result.geometry.location;
+
+    // Extract address components
+    const addressComponents: Record<string, string> = {};
+    for (const component of result.address_components || []) {
+      const types = component.types || [];
+      if (types.includes("locality")) {
+        addressComponents.city = component.long_name;
+      } else if (types.includes("administrative_area_level_1")) {
+        addressComponents.state = component.short_name;
+        addressComponents.stateLong = component.long_name;
+      } else if (types.includes("country")) {
+        addressComponents.country = component.long_name;
+      } else if (types.includes("postal_code")) {
+        addressComponents.zipCode = component.long_name;
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
         latitude: location.lat, 
         longitude: location.lng,
-        formattedAddress: data.results[0].formatted_address
+        formattedAddress: result.formatted_address,
+        addressComponents
       }), 
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
