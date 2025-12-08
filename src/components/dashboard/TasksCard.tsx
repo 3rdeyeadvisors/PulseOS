@@ -14,15 +14,15 @@ interface Task {
 }
 
 export function TasksCard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    if (user) fetchTasks();
-  }, [user]);
+    if (user && session) fetchTasks();
+  }, [user, session]);
 
   const fetchTasks = async () => {
     if (!user) return;

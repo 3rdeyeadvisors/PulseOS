@@ -17,7 +17,7 @@ const insightTemplates = [
 ];
 
 export function AIInsightCard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [insight, setInsight] = useState<string>('');
   const [aiName, setAiName] = useState<string>('Pulse');
   const [loading, setLoading] = useState(true);
@@ -34,13 +34,18 @@ export function AIInsightCard() {
 
   useEffect(() => {
     async function fetchPreferences() {
-      if (!user) return;
+      if (!user || !session) return;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('preferences')
         .select('ai_name')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error('Preferences fetch error:', error);
+        return;
+      }
 
       if (data?.ai_name) {
         setAiName(data.ai_name);
@@ -49,7 +54,7 @@ export function AIInsightCard() {
 
     fetchPreferences();
     generateInsight();
-  }, [user]);
+  }, [user, session]);
 
   if (loading) {
     return (

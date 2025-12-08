@@ -35,7 +35,7 @@ const mealColors = {
 };
 
 export function FoodRecommendationsCard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [recommendations, setRecommendations] = useState<FoodRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,7 +43,7 @@ export function FoodRecommendationsCard() {
   const [userCity, setUserCity] = useState<string>('');
 
   const fetchRecommendations = async (isRefresh = false) => {
-    if (!user) return;
+    if (!user || !session) return;
 
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -111,7 +111,7 @@ export function FoodRecommendationsCard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user]);
+  }, [user, session]);
 
   const openInMaps = (name: string) => {
     const query = encodeURIComponent(`${name}${userCity ? `, ${userCity}` : ''}`);
