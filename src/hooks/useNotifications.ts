@@ -87,9 +87,37 @@ export function useNotifications() {
     }
   };
 
+  const sendTaskReminder = async (
+    taskId: string,
+    taskTitle: string,
+    dueDate?: string,
+    sendEmail: boolean = true
+  ) => {
+    if (!user) return { error: 'Not authenticated' };
+
+    try {
+      const { data, error } = await supabase.functions.invoke('task-reminders', {
+        body: {
+          userId: user.id,
+          taskId,
+          taskTitle,
+          dueDate,
+          sendEmail,
+        },
+      });
+
+      if (error) throw error;
+      return { data };
+    } catch (error: any) {
+      console.error('Error sending task reminder:', error);
+      return { error: error.message };
+    }
+  };
+
   return {
     createNotification,
     sendWelcomeEmail,
     sendNotificationEmail,
+    sendTaskReminder,
   };
 }

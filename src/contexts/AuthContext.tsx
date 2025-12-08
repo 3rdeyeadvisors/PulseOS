@@ -13,6 +13,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to send welcome email and create welcome notification
+const sendWelcomeNotifications = async (userId: string, email: string, fullName?: string) => {
+  try {
+    // Send welcome email
+    await supabase.functions.invoke('send-welcome-email', {
+      body: { userId, email, fullName },
+    });
+    console.log('Welcome email sent successfully');
+
+    // Create in-app welcome notification
+    await supabase.functions.invoke('create-notification', {
+      body: {
+        userId,
+        type: 'welcome',
+        title: 'Welcome to PulseOS! 🎉',
+        message: 'Your personal life dashboard is ready. Explore your settings to customize your experience.',
+        data: { isNew: true },
+      },
+    });
+    console.log('Welcome notification created successfully');
+  } catch (error) {
+    console.error('Error sending welcome notifications:', error);
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -25,6 +50,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Send welcome notifications on signup (SIGNED_IN event after signup)
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Check if this is a new user by looking at created_at
+          const createdAt = new Date(session.user.created_at);
+          const now = new Date();
+          const isNewUser = (now.getTime() - createdAt.getTime()) < 60000; // Within last minute
+
+          if (isNewUser) {
+            setTimeout(() => {
+              sendWelcomeNotifications(
+                session.user.id,
+                session.user.email || '',
+                session.user.user_metadata?.full_name
+              );
+            }, 0);
+          }
+        }
       }
     );
 
