@@ -47,13 +47,8 @@ const picksByInterest: Record<string, Pick[]> = {
     { type: 'book', title: 'Thinking, Fast and Slow', subtitle: 'Psychology', url: 'https://www.goodreads.com/book/show/11468377-thinking-fast-and-slow' },
   ],
   cooking: [
-    { type: 'food', title: 'Mediterranean Bowl', subtitle: 'Healthy & Quick', url: 'https://www.google.com/search?q=mediterranean+bowl+recipe' },
-    { type: 'food', title: 'Pasta Primavera', subtitle: '30 min recipe', url: 'https://www.google.com/search?q=pasta+primavera+recipe' },
-    { type: 'food', title: 'Thai Green Curry', subtitle: 'Flavorful', url: 'https://www.google.com/search?q=thai+green+curry+recipe' },
-    { type: 'food', title: 'Shakshuka', subtitle: 'Breakfast idea', url: 'https://www.google.com/search?q=shakshuka+recipe' },
-    { type: 'food', title: 'Chicken Stir Fry', subtitle: 'Quick dinner', url: 'https://www.google.com/search?q=chicken+stir+fry+recipe' },
-    { type: 'food', title: 'Homemade Pizza', subtitle: 'Weekend fun', url: 'https://www.google.com/search?q=homemade+pizza+dough+recipe' },
-    { type: 'food', title: 'Buddha Bowl', subtitle: 'Nutritious', url: 'https://www.google.com/search?q=buddha+bowl+recipe' },
+    { type: 'book', title: 'Salt, Fat, Acid, Heat', subtitle: 'Cooking Mastery', url: 'https://www.goodreads.com/book/show/30753841-salt-fat-acid-heat' },
+    { type: 'book', title: 'The Food Lab', subtitle: 'Science of Cooking', url: 'https://www.goodreads.com/book/show/24861842-the-food-lab' },
   ],
   fitness: [
     { type: 'book', title: 'Bigger Leaner Stronger', subtitle: 'Fitness Guide', url: 'https://www.goodreads.com/book/show/25333145-bigger-leaner-stronger' },
@@ -191,7 +186,7 @@ export function DailyPicksCard() {
       const userPicks: Pick[] = [];
       const usedTypes = new Set<string>();
       
-      // First, add dietary-specific food pick if user has dietary preferences (location-aware)
+      // Add location-aware food pick based on dietary preferences OR cooking interest
       if (dietary.length > 0) {
         for (const diet of dietary) {
           const dietPicks = getFoodByDiet(diet, city);
@@ -202,6 +197,18 @@ export function DailyPicksCard() {
             break;
           }
         }
+      }
+      
+      // If user has cooking interest but no dietary food pick yet, add a location-aware restaurant
+      if (interests.includes('cooking') && !usedTypes.has('food')) {
+        const cookingFoodPicks = [
+          { type: 'food' as const, title: 'Best Local Eats', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/best+restaurants${city ? `+near+${encodeURIComponent(city)}` : ''}` },
+          { type: 'food' as const, title: 'Hidden Gem Restaurant', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/hidden+gem+restaurant${city ? `+near+${encodeURIComponent(city)}` : ''}` },
+          { type: 'food' as const, title: 'Highly Rated Dining', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/highly+rated+restaurant${city ? `+near+${encodeURIComponent(city)}` : ''}` },
+        ];
+        const pickIndex = dailyIndex % cookingFoodPicks.length;
+        userPicks.push(cookingFoodPicks[pickIndex]);
+        usedTypes.add('food');
       }
       
       // Then add picks based on interests
