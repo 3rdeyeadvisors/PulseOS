@@ -37,7 +37,9 @@ interface CachedMedia {
 }
 
 function getTodayDate(): string {
-  return new Date().toISOString().split('T')[0];
+  // Use UTC date to ensure consistency across timezones and prevent premature cache invalidation
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
 }
 
 function hashInterests(interests: string[]): string {

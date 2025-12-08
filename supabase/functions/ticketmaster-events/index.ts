@@ -31,14 +31,14 @@ serve(async (req) => {
 
     console.log(`Fetching events for ${city}, ${state || ''}`);
 
-    // Build the API URL
+    // Build the API URL - search without keyword filters to get more results
     const baseUrl = "https://app.ticketmaster.com/discovery/v2/events.json";
     const params = new URLSearchParams({
       apikey: API_KEY,
       city: city,
       radius: radius.toString(),
       unit: "miles",
-      size: "10",
+      size: "20", // Request more events
       sort: "date,asc"
     });
 
@@ -47,12 +47,7 @@ serve(async (req) => {
       params.append("stateCode", getStateCode(state));
     }
 
-    // Add keyword based on interests
-    if (interests && interests.length > 0) {
-      // Use first few interests as keywords
-      const keywords = interests.slice(0, 3).join(",");
-      params.append("keyword", keywords);
-    }
+    // Don't filter by interests - get all events and let the user browse
 
     const url = `${baseUrl}?${params.toString()}`;
     console.log("Fetching from:", url.replace(API_KEY, "***"));

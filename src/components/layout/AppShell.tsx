@@ -39,21 +39,35 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string>('');
+  const [aiName, setAiName] = useState<string>('Pulse');
 
   useEffect(() => {
-    async function fetchProfile() {
+    async function fetchUserData() {
       if (!user) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('avatar_url, full_name')
-        .eq('user_id', user.id)
-        .single();
-      if (data) {
-        setAvatarUrl(data.avatar_url);
-        setFullName(data.full_name || '');
+      
+      // Fetch profile and preferences in parallel
+      const [{ data: profile }, { data: prefs }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('avatar_url, full_name')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('preferences')
+          .select('ai_name')
+          .eq('user_id', user.id)
+          .maybeSingle()
+      ]);
+      
+      if (profile) {
+        setAvatarUrl(profile.avatar_url);
+        setFullName(profile.full_name || '');
+      }
+      if (prefs?.ai_name) {
+        setAiName(prefs.ai_name);
       }
     }
-    fetchProfile();
+    fetchUserData();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -181,7 +195,7 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       {/* Floating AI Button */}
-      <FloatingAIButton aiName="Pulse" />
+      <FloatingAIButton aiName={aiName} />
     </div>
   );
 }

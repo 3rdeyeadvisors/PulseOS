@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Fuel, TrendingDown, TrendingUp, Minus, Info } from 'lucide-react';
+import { Fuel, TrendingDown, TrendingUp, Info, Navigation } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getGasPrices, GasStation } from '@/services/gasService';
+
+const openInMaps = (address: string, name: string) => {
+  const query = encodeURIComponent(`${name}, ${address}`);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  window.open(mapsUrl, '_blank');
+};
 
 export function GasCard() {
   const { user } = useAuth();
@@ -135,34 +141,49 @@ export function GasCard() {
       </div>
 
       {cheapest && cheapest.price !== null && (
-        <div className="mb-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+        <button
+          onClick={() => openInMaps(cheapest.address, cheapest.name)}
+          className="w-full mb-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors cursor-pointer group text-left"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-green-500">${cheapest.price.toFixed(2)}/gal</p>
               <p className="text-sm font-medium">{cheapest.name}</p>
               <p className="text-xs text-muted-foreground">{cheapest.distance}</p>
             </div>
-            {getTrendIcon(cheapest.priceChange)}
+            <div className="flex items-center gap-2">
+              {getTrendIcon(cheapest.priceChange)}
+              <div className="p-1.5 rounded-lg bg-green-500/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Navigation className="h-3.5 w-3.5 text-green-500" />
+              </div>
+            </div>
           </div>
-        </div>
+        </button>
       )}
 
       <div className="space-y-2">
         {stations.slice(1).map((station) => (
-          <div key={station.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/30 transition-colors">
+          <button
+            key={station.id}
+            onClick={() => openInMaps(station.address, station.name)}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer group text-left"
+          >
             <div>
               <p className="text-sm font-medium">{station.name}</p>
               <p className="text-xs text-muted-foreground">{station.distance}</p>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               {station.price !== null ? (
                 <span className="text-sm font-semibold">${station.price.toFixed(2)}</span>
               ) : (
                 <span className="text-sm text-muted-foreground">N/A</span>
               )}
               {getTrendIcon(station.priceChange)}
+              <div className="p-1 rounded bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Navigation className="h-3 w-3 text-primary" />
+              </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

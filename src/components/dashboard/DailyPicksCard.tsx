@@ -11,28 +11,55 @@ interface Pick {
   url?: string;
 }
 
+// Daily rotation using UTC date for consistency
+function getDailyIndex(arrayLength: number): number {
+  const now = new Date();
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getUTCFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+  return dayOfYear % arrayLength;
+}
+
 const picksByInterest: Record<string, Pick[]> = {
   movies: [
     { type: 'movie', title: 'Inception', subtitle: 'Sci-Fi Thriller', url: 'https://www.themoviedb.org/movie/27205' },
     { type: 'movie', title: 'The Grand Budapest Hotel', subtitle: 'Comedy Drama', url: 'https://www.themoviedb.org/movie/120467' },
+    { type: 'movie', title: 'Interstellar', subtitle: 'Sci-Fi Drama', url: 'https://www.themoviedb.org/movie/157336' },
+    { type: 'movie', title: 'Parasite', subtitle: 'Thriller', url: 'https://www.themoviedb.org/movie/496243' },
+    { type: 'movie', title: 'The Dark Knight', subtitle: 'Action', url: 'https://www.themoviedb.org/movie/155' },
+    { type: 'movie', title: 'Pulp Fiction', subtitle: 'Crime Drama', url: 'https://www.themoviedb.org/movie/680' },
+    { type: 'movie', title: 'Spirited Away', subtitle: 'Animation', url: 'https://www.themoviedb.org/movie/129' },
   ],
   music: [
     { type: 'music', title: 'Chill Vibes', subtitle: 'Lo-fi Playlist', url: 'https://open.spotify.com/playlist/37i9dQZF1DX889U0CL85jj' },
     { type: 'music', title: 'Focus Flow', subtitle: 'Instrumental', url: 'https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ' },
+    { type: 'music', title: 'Morning Motivation', subtitle: 'Upbeat Mix', url: 'https://open.spotify.com/playlist/37i9dQZF1DX0vHZ8elq0UK' },
+    { type: 'music', title: 'Jazz Vibes', subtitle: 'Smooth Jazz', url: 'https://open.spotify.com/playlist/37i9dQZF1DX0SM0LYsmbMT' },
+    { type: 'music', title: 'Acoustic Covers', subtitle: 'Relaxing', url: 'https://open.spotify.com/playlist/37i9dQZF1DWXmlLSKkfdAk' },
+    { type: 'music', title: 'Deep House', subtitle: 'Electronic', url: 'https://open.spotify.com/playlist/37i9dQZF1DX2TRYkJECvfC' },
+    { type: 'music', title: 'Classical Focus', subtitle: 'Orchestra', url: 'https://open.spotify.com/playlist/37i9dQZF1DWWEJlAGA9gs0' },
   ],
   reading: [
     { type: 'book', title: 'Atomic Habits', subtitle: 'Self Improvement', url: 'https://www.goodreads.com/book/show/40121378-atomic-habits' },
     { type: 'book', title: 'Project Hail Mary', subtitle: 'Sci-Fi Novel', url: 'https://www.goodreads.com/book/show/54493401-project-hail-mary' },
+    { type: 'book', title: 'The Psychology of Money', subtitle: 'Finance', url: 'https://www.goodreads.com/book/show/41881472-the-psychology-of-money' },
+    { type: 'book', title: 'Sapiens', subtitle: 'History', url: 'https://www.goodreads.com/book/show/23692271-sapiens' },
+    { type: 'book', title: 'Deep Work', subtitle: 'Productivity', url: 'https://www.goodreads.com/book/show/25744928-deep-work' },
+    { type: 'book', title: 'The Midnight Library', subtitle: 'Fiction', url: 'https://www.goodreads.com/book/show/52578297-the-midnight-library' },
+    { type: 'book', title: 'Thinking, Fast and Slow', subtitle: 'Psychology', url: 'https://www.goodreads.com/book/show/11468377-thinking-fast-and-slow' },
   ],
   cooking: [
     { type: 'food', title: 'Mediterranean Bowl', subtitle: 'Healthy & Quick', url: 'https://www.google.com/search?q=mediterranean+bowl+recipe' },
     { type: 'food', title: 'Pasta Primavera', subtitle: '30 min recipe', url: 'https://www.google.com/search?q=pasta+primavera+recipe' },
+    { type: 'food', title: 'Thai Green Curry', subtitle: 'Flavorful', url: 'https://www.google.com/search?q=thai+green+curry+recipe' },
+    { type: 'food', title: 'Shakshuka', subtitle: 'Breakfast idea', url: 'https://www.google.com/search?q=shakshuka+recipe' },
+    { type: 'food', title: 'Chicken Stir Fry', subtitle: 'Quick dinner', url: 'https://www.google.com/search?q=chicken+stir+fry+recipe' },
+    { type: 'food', title: 'Homemade Pizza', subtitle: 'Weekend fun', url: 'https://www.google.com/search?q=homemade+pizza+dough+recipe' },
+    { type: 'food', title: 'Buddha Bowl', subtitle: 'Nutritious', url: 'https://www.google.com/search?q=buddha+bowl+recipe' },
   ],
 };
 
 const defaultPicks: Pick[] = [
   { type: 'movie', title: 'The Shawshank Redemption', subtitle: 'Classic Drama', url: 'https://www.themoviedb.org/movie/278' },
-  { type: 'music', title: 'Today\'s Top Hits', subtitle: 'Popular Playlist', url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M' },
+  { type: 'music', title: "Today's Top Hits", subtitle: 'Popular Playlist', url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M' },
   { type: 'book', title: 'The Alchemist', subtitle: 'Fiction', url: 'https://www.goodreads.com/book/show/18144590-the-alchemist' },
   { type: 'food', title: 'Buddha Bowl', subtitle: 'Easy & Nutritious', url: 'https://www.google.com/search?q=buddha+bowl+recipe' },
 ];
@@ -67,23 +94,22 @@ export function DailyPicksCard() {
         .single();
 
       const interests = data?.interests as string[] || [];
+      const dailyIndex = getDailyIndex(7); // Rotate weekly
       
       // Generate picks based on user interests - ensure uniqueness by type
       const userPicks: Pick[] = [];
       const usedTypes = new Set<string>();
-      const usedTitles = new Set<string>();
       
       for (const interest of interests) {
         const interestPicks = picksByInterest[interest.toLowerCase()];
-        if (interestPicks) {
-          for (const pick of interestPicks) {
-            // Only add if we don't already have this type or title
-            if (!usedTypes.has(pick.type) && !usedTitles.has(pick.title)) {
-              userPicks.push(pick);
-              usedTypes.add(pick.type);
-              usedTitles.add(pick.title);
-              break; // Only one per interest
-            }
+        if (interestPicks && interestPicks.length > 0) {
+          // Get the pick for today based on daily rotation
+          const pickIndex = dailyIndex % interestPicks.length;
+          const pick = interestPicks[pickIndex];
+          
+          if (!usedTypes.has(pick.type)) {
+            userPicks.push(pick);
+            usedTypes.add(pick.type);
           }
         }
       }
@@ -91,10 +117,9 @@ export function DailyPicksCard() {
       // Fill with defaults if not enough picks (ensuring no duplicates)
       for (const defaultPick of defaultPicks) {
         if (userPicks.length >= 4) break;
-        if (!usedTypes.has(defaultPick.type) && !usedTitles.has(defaultPick.title)) {
+        if (!usedTypes.has(defaultPick.type)) {
           userPicks.push(defaultPick);
           usedTypes.add(defaultPick.type);
-          usedTitles.add(defaultPick.title);
         }
       }
 
