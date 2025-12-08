@@ -51,8 +51,15 @@ export function TasteTab() {
         .single();
 
       if (data) {
-        setDietaryPreferences(data.dietary_preferences || []);
-        setInterests(data.interests || []);
+        // Normalize to lowercase for consistent comparison with option values
+        const normalizedDietary = (data.dietary_preferences || [])
+          .map((d: string) => d.toLowerCase())
+          .filter((d: string) => d !== 'none');
+        const normalizedInterests = (data.interests || [])
+          .map((i: string) => i.toLowerCase());
+        
+        setDietaryPreferences(normalizedDietary);
+        setInterests(normalizedInterests);
       }
       setLoading(false);
     }
