@@ -241,19 +241,9 @@ export function DailyPicksCard() {
     }
 
     fetchPicks();
-
-    // Re-fetch when page becomes visible (e.g., returning from settings)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchPicks();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       isMounted = false;
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user]);
 
