@@ -98,6 +98,19 @@ export function FoodRecommendationsCard() {
 
   useEffect(() => {
     fetchRecommendations();
+
+    // Re-fetch when page becomes visible (e.g., returning from settings)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRecommendations(true);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   const openInMaps = (name: string) => {

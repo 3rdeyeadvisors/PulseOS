@@ -140,6 +140,19 @@ export function NewsCard() {
       hasFetched.current = true;
       fetchNews();
     }
+
+    // Re-fetch when page becomes visible (e.g., returning from settings)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNews(true); // Force refresh to get latest based on updated preferences
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   const formatTime = (dateStr: string) => {
