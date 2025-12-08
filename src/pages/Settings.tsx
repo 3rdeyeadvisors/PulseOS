@@ -9,7 +9,8 @@ import { TasteTab } from '@/components/settings/TasteTab';
 import { ModulesTab } from '@/components/settings/ModulesTab';
 import { ThemesTab } from '@/components/settings/ThemesTab';
 import { PulseAITab } from '@/components/settings/PulseAITab';
-import { Loader2, User, MapPin, Heart, LayoutGrid, Palette, Sparkles } from 'lucide-react';
+import { NotificationsTab } from '@/components/settings/NotificationsTab';
+import { Loader2, User, MapPin, Heart, LayoutGrid, Palette, Sparkles, Bell } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto gap-1 bg-secondary/50 p-1">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 h-auto gap-1 bg-secondary/50 p-1">
             <TabsTrigger value="profile" className="flex items-center gap-2 py-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -58,6 +59,10 @@ export default function Settings() {
             <TabsTrigger value="modules" className="flex items-center gap-2 py-2">
               <LayoutGrid className="h-4 w-4" />
               <span className="hidden sm:inline">Modules</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2 py-2">
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Alerts</span>
             </TabsTrigger>
             <TabsTrigger value="themes" className="flex items-center gap-2 py-2">
               <Palette className="h-4 w-4" />
@@ -80,6 +85,9 @@ export default function Settings() {
           </TabsContent>
           <TabsContent value="modules">
             <ModulesTab />
+          </TabsContent>
+          <TabsContent value="notifications">
+            <NotificationsTab />
           </TabsContent>
           <TabsContent value="themes">
             <ThemesTab />
