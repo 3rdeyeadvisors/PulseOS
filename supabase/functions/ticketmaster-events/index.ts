@@ -151,6 +151,13 @@ serve(async (req) => {
         }
       }
 
+      // Get ticket URL - check multiple sources
+      const ticketUrl = event.url || 
+                        event._links?.self?.href ||
+                        (event.outlets && event.outlets[0]?.url) ||
+                        (event.seatmap?.staticUrl ? `https://www.ticketmaster.com/event/${event.id}` : null) ||
+                        `https://www.ticketmaster.com/event/${event.id}`; // Fallback to constructed URL
+
       return {
         id: event.id,
         title: event.name,
@@ -161,7 +168,7 @@ serve(async (req) => {
         location: venue?.name || "Venue TBA",
         address: venue ? `${venue.name}, ${venue.city?.name || city}, ${venue.state?.stateCode || state || ''}` : city,
         price: priceStr,
-        url: event.url,
+        url: ticketUrl,
         image: event.images?.find((img: any) => img.ratio === "16_9")?.url || event.images?.[0]?.url,
         matchReason,
         isInterestMatch
