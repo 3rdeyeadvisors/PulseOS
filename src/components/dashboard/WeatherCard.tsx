@@ -24,6 +24,8 @@ export function WeatherCard() {
   const [tempUnit, setTempUnit] = useState<TempUnit>('fahrenheit');
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchWeatherAndPrefs() {
       if (!user) return;
 
@@ -41,6 +43,8 @@ export function WeatherCard() {
             .eq('user_id', user.id)
             .maybeSingle(),
         ]);
+
+        if (!isMounted) return;
 
         if (prefs?.temperature_unit) {
           setTempUnit(prefs.temperature_unit as TempUnit);
@@ -67,16 +71,35 @@ export function WeatherCard() {
         }
 
         const data = await response.json();
-        setWeather(data);
+        if (isMounted) {
+          setWeather(data);
+          setError(null);
+        }
       } catch (err) {
         console.error('Weather fetch error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load weather');
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load weather');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchWeatherAndPrefs();
+
+    // Re-fetch when page becomes visible (e.g., returning from settings)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchWeatherAndPrefs();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   const toggleUnit = async () => {

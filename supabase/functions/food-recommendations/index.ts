@@ -18,8 +18,13 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const dietaryContext = dietaryPreferences?.length > 0
-      ? `User dietary preferences: ${dietaryPreferences.join(", ")}.`
+    // Filter out "none" and empty values from dietary preferences
+    const validDietary = (dietaryPreferences || []).filter(
+      (d: string) => d && d.toLowerCase() !== 'none'
+    );
+
+    const dietaryContext = validDietary.length > 0
+      ? `User dietary preferences: ${validDietary.join(", ")}. Only suggest foods that match these dietary restrictions.`
       : "No specific dietary restrictions.";
 
     const locationContext = city 
