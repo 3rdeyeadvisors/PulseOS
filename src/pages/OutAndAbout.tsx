@@ -214,6 +214,12 @@ export default function OutAndAbout() {
           <TabsContent value="events" className="mt-4 space-y-3">
             {dataLoading ? (
               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full" />)
+            ) : events.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No events found in your area</p>
+                <p className="text-sm">Try expanding your search radius in settings</p>
+              </div>
             ) : (
               events.map((event) => <EventCard key={event.id} event={event} />)
             )}

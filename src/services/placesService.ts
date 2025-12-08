@@ -110,19 +110,28 @@ export async function getThingsToDo(interests: string[], location: LocationInfo)
 
 export async function getEvents(location: LocationInfo, interests: string[]): Promise<Event[]> {
   try {
+    // Filter out "none" and empty values from interests
+    const validInterests = interests.filter(i => i && i.toLowerCase() !== 'none');
+    
     const { data, error } = await supabase.functions.invoke('ticketmaster-events', {
       body: {
         city: location.city,
         state: location.state,
-        interests: interests,
-        radius: 50
+        interests: validInterests,
+        radius: 100 // Increase radius to find more events
       }
     });
 
     if (error) throw error;
     if (!data.success) throw new Error(data.error);
     
-    return data.events || [];
+    // If no events found, return mock data as fallback
+    if (!data.events || data.events.length === 0) {
+      console.log('No events found from API, using mock data');
+      return getMockEvents(location);
+    }
+    
+    return data.events;
   } catch (err) {
     console.error('Error fetching events:', err);
     return getMockEvents(location);

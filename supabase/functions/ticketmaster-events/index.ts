@@ -23,13 +23,16 @@ serve(async (req) => {
       throw new Error("TICKETMASTER_API_KEY is not configured");
     }
 
-    const { city, state, interests, radius = 50 }: EventsRequest = await req.json();
+    const { city, state, interests, radius = 100 }: EventsRequest = await req.json();
 
     if (!city) {
       throw new Error("City is required");
     }
 
-    console.log(`Fetching events for ${city}, ${state || ''}`);
+    // Filter out "none" and empty values from interests
+    const validInterests = interests?.filter(i => i && i.toLowerCase() !== 'none') || [];
+
+    console.log(`Fetching events for ${city}, ${state || ''} with interests:`, validInterests);
 
     // Build the API URL - search without keyword filters to get more results
     const baseUrl = "https://app.ticketmaster.com/discovery/v2/events.json";
@@ -38,7 +41,7 @@ serve(async (req) => {
       city: city,
       radius: radius.toString(),
       unit: "miles",
-      size: "20", // Request more events
+      size: "30", // Request more events
       sort: "date,asc"
     });
 
@@ -157,8 +160,8 @@ serve(async (req) => {
         "family": { segments: ["family"], genres: ["children", "family"], keywords: ["kids", "family", "children"] }
       };
       
-      if (interests?.length) {
-        const matchedInterest = interests.find(interest => {
+      if (validInterests?.length) {
+        const matchedInterest = validInterests.find(interest => {
           const interestLower = interest.toLowerCase();
           const mapping = interestMappings[interestLower];
           
