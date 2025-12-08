@@ -10,9 +10,9 @@ export function GreetingCard() {
 
   useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good morning');
-    else if (hour < 17) setGreeting('Good afternoon');
-    else setGreeting('Good evening');
+    if (hour < 12) setGreeting('Grand Rising');
+    else if (hour < 17) setGreeting('Bright afternoon to you');
+    else setGreeting('May your evening be peaceful');
   }, []);
 
   useEffect(() => {
