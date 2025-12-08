@@ -156,6 +156,7 @@ serve(async (req) => {
         title: event.name,
         type: event.classifications?.[0]?.segment?.name || "Event",
         date: dateStr,
+        rawDate: startDate?.localDate || "9999-99-99", // For sorting
         time: timeStr,
         location: venue?.name || "Venue TBA",
         address: venue ? `${venue.name}, ${venue.city?.name || city}, ${venue.state?.stateCode || state || ''}` : city,
@@ -167,11 +168,12 @@ serve(async (req) => {
       };
     });
 
-    // Sort events: interest matches first, then by date
+    // Sort events: interest matches first, then by date (closest first)
     formattedEvents.sort((a: any, b: any) => {
       if (a.isInterestMatch && !b.isInterestMatch) return -1;
       if (!a.isInterestMatch && b.isInterestMatch) return 1;
-      return 0; // Keep date order for same interest status
+      // Sort by date ascending (closest dates first)
+      return a.rawDate.localeCompare(b.rawDate);
     });
 
     return new Response(
