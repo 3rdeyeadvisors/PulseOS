@@ -48,7 +48,7 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
       {/* Chat Drawer */}
       <div
         className={cn(
-          'fixed bottom-20 right-4 w-[calc(100%-2rem)] max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl z-50 transition-all duration-300',
+          'fixed bottom-28 right-4 w-[calc(100%-2rem)] max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl z-50 transition-all duration-300',
           isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         )}
       >
@@ -114,11 +114,11 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
         </div>
       </div>
 
-      {/* Floating Button */}
+      {/* Floating Button - positioned above footer */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'fixed bottom-4 right-4 z-50 p-4 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105',
+          'fixed bottom-14 right-4 z-50 p-4 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105',
           isOpen && 'rotate-90'
         )}
       >
