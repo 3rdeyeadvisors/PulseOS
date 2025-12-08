@@ -144,10 +144,10 @@ export default function Money() {
           
           {dataLoading ? (
             <div className="space-y-2">
-              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {gasStations.map((station, i) => (
                 <div
                   key={station.id}
@@ -155,11 +155,11 @@ export default function Money() {
                     i === 0 ? 'bg-green-500/10 border border-green-500/20' : 'hover:bg-secondary/30'
                   } transition-colors`}
                 >
-                  <div>
-                    <p className="font-medium">{station.name}</p>
-                    <p className="text-sm text-muted-foreground">{station.address} · {station.distance}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{station.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">{station.address} · {station.distance}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-3 shrink-0">
                     <span className={`text-lg font-bold ${i === 0 ? 'text-green-500' : ''}`}>
                       ${station.price.toFixed(2)}
                     </span>
