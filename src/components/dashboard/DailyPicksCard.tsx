@@ -85,45 +85,55 @@ const picksByInterest: Record<string, Pick[]> = {
   ],
 };
 
-// Dietary-specific food picks
-const foodByDiet: Record<string, Pick[]> = {
-  vegan: [
-    { type: 'food', title: 'Vegan Buddha Bowl', subtitle: 'Plant-based', url: 'https://www.google.com/search?q=vegan+buddha+bowl+recipe' },
-    { type: 'food', title: 'Chickpea Curry', subtitle: 'Protein-rich', url: 'https://www.google.com/search?q=vegan+chickpea+curry+recipe' },
-    { type: 'food', title: 'Lentil Soup', subtitle: 'Hearty meal', url: 'https://www.google.com/search?q=vegan+lentil+soup+recipe' },
-  ],
-  vegetarian: [
-    { type: 'food', title: 'Caprese Salad', subtitle: 'Fresh & Light', url: 'https://www.google.com/search?q=caprese+salad+recipe' },
-    { type: 'food', title: 'Veggie Stir Fry', subtitle: 'Quick & Easy', url: 'https://www.google.com/search?q=vegetarian+stir+fry+recipe' },
-    { type: 'food', title: 'Mushroom Risotto', subtitle: 'Comfort food', url: 'https://www.google.com/search?q=mushroom+risotto+recipe' },
-  ],
-  'gluten-free': [
-    { type: 'food', title: 'Quinoa Salad', subtitle: 'Gluten-free grain', url: 'https://www.google.com/search?q=gluten+free+quinoa+salad+recipe' },
-    { type: 'food', title: 'Grilled Salmon', subtitle: 'Protein-packed', url: 'https://www.google.com/search?q=gluten+free+grilled+salmon+recipe' },
-  ],
-  'dairy-free': [
-    { type: 'food', title: 'Coconut Curry', subtitle: 'Dairy-free', url: 'https://www.google.com/search?q=dairy+free+coconut+curry+recipe' },
-    { type: 'food', title: 'Avocado Toast', subtitle: 'Simple & tasty', url: 'https://www.google.com/search?q=dairy+free+avocado+toast+recipe' },
-  ],
-  keto: [
-    { type: 'food', title: 'Keto Cauliflower Rice', subtitle: 'Low-carb', url: 'https://www.google.com/search?q=keto+cauliflower+rice+recipe' },
-    { type: 'food', title: 'Bacon Wrapped Chicken', subtitle: 'High protein', url: 'https://www.google.com/search?q=keto+bacon+wrapped+chicken+recipe' },
-  ],
-  halal: [
-    { type: 'food', title: 'Lamb Kebabs', subtitle: 'Grilled perfection', url: 'https://www.google.com/search?q=halal+lamb+kebab+recipe' },
-    { type: 'food', title: 'Chicken Shawarma', subtitle: 'Middle Eastern', url: 'https://www.google.com/search?q=halal+chicken+shawarma+recipe' },
-  ],
-  kosher: [
-    { type: 'food', title: 'Matzo Ball Soup', subtitle: 'Classic comfort', url: 'https://www.google.com/search?q=kosher+matzo+ball+soup+recipe' },
-    { type: 'food', title: 'Brisket', subtitle: 'Traditional', url: 'https://www.google.com/search?q=kosher+brisket+recipe' },
-  ],
+// Dietary-specific food picks - URLs will be dynamically updated with location
+const getFoodByDiet = (diet: string, city: string): Pick[] => {
+  const locationQuery = city ? `+near+${encodeURIComponent(city)}` : '';
+  
+  const foodOptions: Record<string, Pick[]> = {
+    vegan: [
+      { type: 'food', title: 'Vegan Restaurant', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/vegan+restaurant${locationQuery}` },
+      { type: 'food', title: 'Plant-Based Cafe', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/plant+based+cafe${locationQuery}` },
+    ],
+    vegetarian: [
+      { type: 'food', title: 'Vegetarian Restaurant', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/vegetarian+restaurant${locationQuery}` },
+      { type: 'food', title: 'Healthy Eatery', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/healthy+restaurant${locationQuery}` },
+    ],
+    'gluten-free': [
+      { type: 'food', title: 'Gluten-Free Dining', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/gluten+free+restaurant${locationQuery}` },
+    ],
+    'dairy-free': [
+      { type: 'food', title: 'Dairy-Free Options', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/dairy+free+restaurant${locationQuery}` },
+    ],
+    keto: [
+      { type: 'food', title: 'Keto-Friendly Spot', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/keto+friendly+restaurant${locationQuery}` },
+    ],
+    halal: [
+      { type: 'food', title: 'Halal Restaurant', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/halal+restaurant${locationQuery}` },
+    ],
+    kosher: [
+      { type: 'food', title: 'Kosher Restaurant', subtitle: `Near ${city || 'you'}`, url: `https://www.google.com/maps/search/kosher+restaurant${locationQuery}` },
+    ],
+  };
+  
+  return foodOptions[diet] || [];
 };
 
-const defaultPicks: Pick[] = [
+// Default food pick based on location
+const getDefaultFoodPick = (city: string): Pick => {
+  const locationQuery = city ? `+near+${encodeURIComponent(city)}` : '';
+  return { 
+    type: 'food', 
+    title: 'Top-Rated Restaurant', 
+    subtitle: `Near ${city || 'you'}`, 
+    url: `https://www.google.com/maps/search/top+rated+restaurant${locationQuery}` 
+  };
+};
+
+const getDefaultPicks = (city: string): Pick[] => [
   { type: 'movie', title: 'The Shawshank Redemption', subtitle: 'Classic Drama', url: 'https://www.themoviedb.org/movie/278' },
   { type: 'music', title: "Today's Top Hits", subtitle: 'Popular Playlist', url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M' },
   { type: 'book', title: 'The Alchemist', subtitle: 'Fiction', url: 'https://www.goodreads.com/book/show/18144590-the-alchemist' },
-  { type: 'food', title: 'Buddha Bowl', subtitle: 'Easy & Nutritious', url: 'https://www.google.com/search?q=buddha+bowl+recipe' },
+  getDefaultFoodPick(city),
 ];
 
 const iconMap = {
@@ -151,16 +161,25 @@ export function DailyPicksCard() {
     async function fetchPicks() {
       if (!user) return;
 
-      const { data } = await supabase
-        .from('preferences')
-        .select('interests, dietary_preferences')
-        .eq('user_id', user.id)
-        .single();
+      // Fetch both preferences and profile (for location)
+      const [{ data: prefsData }, { data: profileData }] = await Promise.all([
+        supabase
+          .from('preferences')
+          .select('interests, dietary_preferences')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('profiles')
+          .select('city, state')
+          .eq('user_id', user.id)
+          .single(),
+      ]);
 
       if (!isMounted) return;
 
-      const rawInterests = data?.interests as string[] || [];
-      const rawDietary = data?.dietary_preferences as string[] || [];
+      const rawInterests = prefsData?.interests as string[] || [];
+      const rawDietary = prefsData?.dietary_preferences as string[] || [];
+      const city = profileData?.city || '';
       
       // Normalize and filter out "none" values
       const interests = rawInterests.map(i => i.toLowerCase()).filter(i => i && i !== 'none');
@@ -172,10 +191,10 @@ export function DailyPicksCard() {
       const userPicks: Pick[] = [];
       const usedTypes = new Set<string>();
       
-      // First, add dietary-specific food pick if user has dietary preferences
+      // First, add dietary-specific food pick if user has dietary preferences (location-aware)
       if (dietary.length > 0) {
         for (const diet of dietary) {
-          const dietPicks = foodByDiet[diet];
+          const dietPicks = getFoodByDiet(diet, city);
           if (dietPicks && dietPicks.length > 0 && !usedTypes.has('food')) {
             const pickIndex = dailyIndex % dietPicks.length;
             userPicks.push(dietPicks[pickIndex]);
@@ -200,7 +219,8 @@ export function DailyPicksCard() {
         }
       }
 
-      // Fill with defaults if not enough picks (ensuring no duplicates)
+      // Fill with defaults if not enough picks (ensuring no duplicates) - location-aware
+      const defaultPicks = getDefaultPicks(city);
       for (const defaultPick of defaultPicks) {
         if (userPicks.length >= 4) break;
         if (!usedTypes.has(defaultPick.type)) {
