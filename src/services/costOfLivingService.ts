@@ -22,11 +22,22 @@ interface CostInsightsResponse {
   error?: string;
 }
 
-export async function getCostInsights(
+// Cache for cost insights to avoid duplicate API calls
+let cachedResponse: { key: string; data: CostInsightsResponse; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function fetchCostInsightsData(
   city: string,
   state?: string,
   householdType?: string
-): Promise<CostInsight[]> {
+): Promise<CostInsightsResponse | null> {
+  const cacheKey = `${city}-${state}-${householdType}`;
+  
+  // Return cached data if valid
+  if (cachedResponse && cachedResponse.key === cacheKey && Date.now() - cachedResponse.timestamp < CACHE_TTL) {
+    return cachedResponse.data;
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke<CostInsightsResponse>('cost-insights', {
       body: { city, state, householdType }
@@ -34,18 +45,28 @@ export async function getCostInsights(
 
     if (error) {
       console.error('Cost insights function error:', error);
-      return getFallbackInsights();
+      return null;
     }
 
-    if (data?.insights) {
-      return data.insights;
+    if (data) {
+      cachedResponse = { key: cacheKey, data, timestamp: Date.now() };
+      return data;
     }
 
-    return getFallbackInsights();
+    return null;
   } catch (err) {
     console.error('Cost insights error:', err);
-    return getFallbackInsights();
+    return null;
   }
+}
+
+export async function getCostInsights(
+  city: string,
+  state?: string,
+  householdType?: string
+): Promise<CostInsight[]> {
+  const data = await fetchCostInsightsData(city, state, householdType);
+  return data?.insights || getFallbackInsights();
 }
 
 export async function getBudgetSuggestions(
@@ -53,25 +74,21 @@ export async function getBudgetSuggestions(
   state?: string,
   householdType?: string
 ): Promise<BudgetSuggestion[]> {
-  try {
-    const { data, error } = await supabase.functions.invoke<CostInsightsResponse>('cost-insights', {
-      body: { city: city || 'United States', state, householdType }
-    });
+  const data = await fetchCostInsightsData(city || 'United States', state, householdType);
+  return data?.budgetTips || getFallbackBudgetTips();
+}
 
-    if (error) {
-      console.error('Budget suggestions function error:', error);
-      return getFallbackBudgetTips();
-    }
-
-    if (data?.budgetTips) {
-      return data.budgetTips;
-    }
-
-    return getFallbackBudgetTips();
-  } catch (err) {
-    console.error('Budget suggestions error:', err);
-    return getFallbackBudgetTips();
-  }
+// New combined function for efficient single fetch
+export async function getCostInsightsWithBudget(
+  city: string,
+  state?: string,
+  householdType?: string
+): Promise<{ insights: CostInsight[]; budgetTips: BudgetSuggestion[] }> {
+  const data = await fetchCostInsightsData(city, state, householdType);
+  return {
+    insights: data?.insights || getFallbackInsights(),
+    budgetTips: data?.budgetTips || getFallbackBudgetTips()
+  };
 }
 
 function getFallbackInsights(): CostInsight[] {
