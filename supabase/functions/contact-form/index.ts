@@ -92,7 +92,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Send notification email to support
     await resend.emails.send({
-      from: "PulseOS Contact <onboarding@resend.dev>",
+      from: "PulseOS <support@notifications.pulseos.tech>",
       to: ["support@notifications.pulseos.tech"],
       subject: `[Contact Form] ${safeSubject}`,
       html: `
@@ -153,7 +153,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Send confirmation email to user
     await resend.emails.send({
-      from: "PulseOS <onboarding@resend.dev>",
+      from: "PulseOS <support@notifications.pulseos.tech>",
       to: [email], // Use original email for sending (not escaped)
       subject: "We received your message - PulseOS",
       html: `

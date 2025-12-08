@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Zap, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Zap, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');
@@ -20,6 +20,9 @@ export default function Auth() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -115,10 +118,129 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const emailResult = emailSchema.safeParse(resetEmail);
+    if (!emailResult.success) {
+      toast.error(emailResult.error.errors[0].message);
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    
+    setIsSubmitting(false);
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setResetSent(true);
+      toast.success('Password reset email sent! Check your inbox.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Forgot Password View
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+        {/* Background gradient effect */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        </div>
+        
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-8 relative z-10">
+          <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+            <Zap className="h-8 w-8 text-primary" />
+          </div>
+          <span className="text-3xl font-bold text-gradient">PulseOS</span>
+        </div>
+        
+        <Card className="w-full max-w-md relative z-10 border-border/50 shadow-card">
+          <CardHeader>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetSent(false);
+                setResetEmail('');
+              }}
+              className="w-fit -ml-2 mb-2"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to login
+            </Button>
+            <CardTitle className="text-xl">Reset Password</CardTitle>
+            <CardDescription>
+              {resetSent 
+                ? "We've sent you a password reset link"
+                : "Enter your email to receive a reset link"
+              }
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            {resetSent ? (
+              <div className="text-center space-y-4">
+                <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 inline-block">
+                  <span className="text-4xl">✉️</span>
+                </div>
+                <p className="text-muted-foreground">
+                  Check your email at <strong className="text-foreground">{resetEmail}</strong> for the password reset link.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Didn't receive it? Check your spam folder or{' '}
+                  <button 
+                    onClick={() => setResetSent(false)}
+                    className="text-primary hover:underline"
+                  >
+                    try again
+                  </button>
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -172,7 +294,16 @@ export default function Auth() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Input
                       id="login-password"

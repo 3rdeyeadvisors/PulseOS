@@ -31,7 +31,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending ${type} email to ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "PulseOS <notifications@resend.dev>",
+      from: "PulseOS <support@notifications.pulseos.tech>",
       to: [email],
       subject: subject,
       html: `
