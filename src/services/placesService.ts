@@ -113,12 +113,16 @@ export async function getEvents(location: LocationInfo, interests: string[]): Pr
     // Filter out "none" and empty values from interests
     const validInterests = interests.filter(i => i && i.toLowerCase() !== 'none');
     
+    // Get user's timezone for accurate time filtering
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
     const { data, error } = await supabase.functions.invoke('ticketmaster-events', {
       body: {
         city: location.city,
         state: location.state,
         interests: validInterests,
-        radius: 100
+        radius: 100,
+        timezone: userTimezone
       }
     });
 

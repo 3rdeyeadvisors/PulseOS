@@ -10,6 +10,7 @@ interface EventsRequest {
   state?: string;
   interests?: string[];
   radius?: number;
+  timezone?: string;
 }
 
 serve(async (req) => {
@@ -23,7 +24,7 @@ serve(async (req) => {
       throw new Error("TICKETMASTER_API_KEY is not configured");
     }
 
-    const { city, state, interests, radius = 100 }: EventsRequest = await req.json();
+    const { city, state, interests, radius = 100, timezone = 'America/New_York' }: EventsRequest = await req.json();
 
     if (!city) {
       throw new Error("City is required");
@@ -32,7 +33,7 @@ serve(async (req) => {
     // Filter out "none" and empty values from interests
     const validInterests = interests?.filter(i => i && i.toLowerCase() !== 'none') || [];
 
-    console.log(`Fetching events for ${city}, ${state || ''} with interests:`, validInterests);
+    console.log(`Fetching events for ${city}, ${state || ''} with interests:`, validInterests, `timezone: ${timezone}`);
 
     // Get today's date in the format required by Ticketmaster API (YYYY-MM-DDTHH:mm:ssZ)
     const today = new Date();
@@ -83,9 +84,14 @@ serve(async (req) => {
       'media pass', 'press pass', 'comp ticket', 'complimentary'
     ];
 
-    // Get current time for comparison
+    // Get current time in user's timezone for comparison
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const userNow = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    const todayStr = userNow.toISOString().split('T')[0];
+    const currentHours = userNow.getHours();
+    const currentMinutes = userNow.getMinutes();
+
+    console.log(`Current time in ${timezone}: ${userNow.toISOString()}, ${currentHours}:${currentMinutes}`);
 
     // Filter and format the events
     const formattedEvents = events
@@ -94,7 +100,7 @@ serve(async (req) => {
         const eventDate = event.dates?.start?.localDate;
         const eventTime = event.dates?.start?.localTime; // HH:mm:ss format
         
-        // Filter out past events - check both date AND time
+        // Filter out past events - check both date AND time in user's timezone
         if (eventDate) {
           if (eventDate < todayStr) {
             console.log(`Filtering out past event (past date): ${event.name} (${eventDate})`);
@@ -104,10 +110,9 @@ serve(async (req) => {
           // If event is today, also check the time
           if (eventDate === todayStr && eventTime) {
             const [hours, minutes] = eventTime.split(':').map(Number);
-            const eventDateTime = new Date();
-            eventDateTime.setHours(hours, minutes, 0, 0);
             
-            if (eventDateTime < now) {
+            // Compare event time with current time in user's timezone
+            if (hours < currentHours || (hours === currentHours && minutes < currentMinutes)) {
               console.log(`Filtering out past event (past time): ${event.name} (${eventDate} ${eventTime})`);
               return false;
             }
