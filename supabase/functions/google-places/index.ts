@@ -164,26 +164,46 @@ serve(async (req) => {
           matchReason = "";
         }
       } else if (type === "activities") {
-        // Check if place type matches any user interest
+        // Check if place type matches any user interest with STRICT mappings
         const placeType = (place.primaryType || "").toLowerCase().replace(/_/g, " ");
         const placeName = (place.displayName?.text || "").toLowerCase();
+        
+        // Define strict interest-to-place mappings (no overlaps)
+        const interestMappings: Record<string, string[]> = {
+          "music": ["concert hall", "music venue", "live music", "jazz club", "night club"],
+          "movies": ["movie theater", "cinema", "drive in movie"],
+          "art": ["art gallery", "art museum", "art center", "art studio"],
+          "tech": ["science museum", "tech museum", "planetarium", "science center"],
+          "fitness": ["gym", "fitness center", "yoga studio", "crossfit", "pilates"],
+          "sports": ["stadium", "arena", "sports complex", "bowling alley", "golf course", "tennis court"],
+          "nature": ["park", "zoo", "aquarium", "botanical garden", "nature reserve", "hiking trail"],
+          "gaming": ["arcade", "gaming center", "esports", "laser tag"],
+          "shopping": ["shopping mall", "outlet", "shopping center"],
+          "wellness": ["spa", "massage", "wellness center", "sauna"],
+          "reading": ["library", "bookstore", "book shop"],
+          "food": ["restaurant", "cafe", "bakery", "food hall"],
+          "nightlife": ["bar", "nightclub", "lounge", "pub"],
+          "history": ["museum", "historical site", "monument", "heritage"],
+          "comedy": ["comedy club", "comedy theater", "improv"],
+          "theater": ["theater", "performing arts", "opera house", "playhouse"],
+          "photography": ["gallery", "photo studio", "camera"],
+          "travel": ["tourist attraction", "landmark", "viewpoint"],
+          "amusement": ["amusement park", "theme park", "carnival", "fair"],
+          "casino": ["casino", "gambling"]
+        };
         
         if (interests?.length) {
           const matchedInterest = interests.find(interest => {
             const interestLower = interest.toLowerCase();
-            // Check if the interest matches the place type or name
-            return placeType.includes(interestLower) || 
-                   placeName.includes(interestLower) ||
-                   // Common mappings
-                   (interestLower === "tech" && (placeType.includes("museum") || placeType.includes("library"))) ||
-                   (interestLower === "music" && (placeType.includes("concert") || placeType.includes("theater") || placeType.includes("night club"))) ||
-                   (interestLower === "fitness" && (placeType.includes("gym") || placeType.includes("spa"))) ||
-                   (interestLower === "art" && (placeType.includes("gallery") || placeType.includes("museum"))) ||
-                   (interestLower === "sports" && (placeType.includes("stadium") || placeType.includes("gym") || placeType.includes("bowling"))) ||
-                   (interestLower === "nature" && (placeType.includes("park") || placeType.includes("zoo") || placeType.includes("aquarium"))) ||
-                   (interestLower === "movies" && placeType.includes("movie")) ||
-                   (interestLower === "gaming" && (placeType.includes("arcade") || placeType.includes("casino"))) ||
-                   (interestLower === "shopping" && placeType.includes("mall"));
+            const mappedPlaceTypes = interestMappings[interestLower] || [];
+            
+            // Check if place type or name contains any of the mapped terms
+            return mappedPlaceTypes.some(mappedType => 
+              placeType.includes(mappedType) || placeName.includes(mappedType)
+            ) || 
+            // Also check direct match
+            placeType.includes(interestLower) || 
+            placeName.includes(interestLower);
           });
           
           if (matchedInterest) {
