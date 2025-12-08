@@ -7,7 +7,7 @@ import { Loader2, Fuel, TrendingDown, TrendingUp, Minus, Lightbulb, DollarSign, 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getGasPrices } from '@/services/gasService';
-import { getCostInsights, getBudgetSuggestions } from '@/services/costOfLivingService';
+import { getCostInsightsWithBudget } from '@/services/costOfLivingService';
 
 export default function Money() {
   const navigate = useNavigate();
@@ -90,18 +90,15 @@ export default function Money() {
           lng = -74.0060;
         }
 
-        // Fetch all data in parallel - cost insights now powers budget tips too
+        // Fetch all data in parallel - single API call for cost insights + budget tips
         const [gasResult, costData] = await Promise.all([
           getGasPrices(lat, lng, city, state),
-          getCostInsights(city, state, householdType),
+          getCostInsightsWithBudget(city, state, householdType),
         ]);
 
         setGasStations(gasResult.stations);
-        setCostInsights(costData);
-        
-        // Budget tips come from the same API call, so fetch separately
-        const tips = await getBudgetSuggestions(city, state, householdType);
-        setBudgetTips(tips);
+        setCostInsights(costData.insights);
+        setBudgetTips(costData.budgetTips);
       } catch (err) {
         console.error('Money data error:', err);
       } finally {
