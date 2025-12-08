@@ -65,7 +65,7 @@ serve(async (req) => {
 
     const events = data._embedded?.events || [];
 
-    // Format the events
+    // Format the events and check for interest matches
     const formattedEvents = events.map((event: any) => {
       const venue = event._embedded?.venues?.[0];
       const startDate = event.dates?.start;
@@ -98,6 +98,35 @@ serve(async (req) => {
         }
       }
 
+      // Check if event matches user interests
+      const eventType = (event.classifications?.[0]?.segment?.name || "").toLowerCase();
+      const eventGenre = (event.classifications?.[0]?.genre?.name || "").toLowerCase();
+      const eventName = (event.name || "").toLowerCase();
+      
+      let matchReason = "";
+      let isInterestMatch = false;
+      
+      if (interests?.length) {
+        const matchedInterest = interests.find(interest => {
+          const interestLower = interest.toLowerCase();
+          return eventType.includes(interestLower) || 
+                 eventGenre.includes(interestLower) ||
+                 eventName.includes(interestLower) ||
+                 // Common mappings
+                 (interestLower === "music" && eventType === "music") ||
+                 (interestLower === "sports" && eventType === "sports") ||
+                 (interestLower === "art" && (eventType === "arts & theatre" || eventGenre.includes("art"))) ||
+                 (interestLower === "comedy" && eventGenre.includes("comedy")) ||
+                 (interestLower === "movies" && eventType === "film") ||
+                 (interestLower === "tech" && eventName.includes("tech"));
+        });
+        
+        if (matchedInterest) {
+          matchReason = `Based on your interest in ${matchedInterest}`;
+          isInterestMatch = true;
+        }
+      }
+
       return {
         id: event.id,
         title: event.name,
@@ -108,8 +137,17 @@ serve(async (req) => {
         address: venue ? `${venue.name}, ${venue.city?.name || city}, ${venue.state?.stateCode || state || ''}` : city,
         price: priceStr,
         url: event.url,
-        image: event.images?.find((img: any) => img.ratio === "16_9")?.url || event.images?.[0]?.url
+        image: event.images?.find((img: any) => img.ratio === "16_9")?.url || event.images?.[0]?.url,
+        matchReason,
+        isInterestMatch
       };
+    });
+
+    // Sort events: interest matches first, then by date
+    formattedEvents.sort((a: any, b: any) => {
+      if (a.isInterestMatch && !b.isInterestMatch) return -1;
+      if (!a.isInterestMatch && b.isInterestMatch) return 1;
+      return 0; // Keep date order for same interest status
     });
 
     return new Response(
