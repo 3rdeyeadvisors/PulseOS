@@ -37,9 +37,10 @@ serve(async (req) => {
     
     if (type === "food") {
       includedTypes = ["restaurant", "cafe", "bakery", "meal_takeaway"];
-      // Add dietary preferences to query
-      if (dietary && dietary.length > 0) {
-        textQuery = dietary.join(" ") + " restaurant";
+      // Filter out "none" and empty values, then add dietary preferences to query
+      const validDietary = dietary?.filter(d => d && d.toLowerCase() !== 'none') || [];
+      if (validDietary.length > 0) {
+        textQuery = validDietary.join(" ") + " restaurant";
       }
     } else if (type === "activities") {
       // Use a variety of activity types
@@ -157,11 +158,11 @@ serve(async (req) => {
       let isInterestMatch = false;
       
       if (type === "food") {
-        if (dietary?.length) {
-          matchReason = `Matches your ${dietary[0]} preference`;
+        // Filter out "none" values and use valid preferences
+        const validDietary = dietary?.filter(d => d && d.toLowerCase() !== 'none') || [];
+        if (validDietary.length > 0) {
+          matchReason = `Matches your ${validDietary.join(', ')} preference`;
           isInterestMatch = true;
-        } else {
-          matchReason = "";
         }
       } else if (type === "activities") {
         // Check if place type matches any user interest with STRICT mappings

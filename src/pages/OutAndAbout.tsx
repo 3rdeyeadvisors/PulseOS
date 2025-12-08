@@ -33,23 +33,36 @@ export default function OutAndAbout() {
     }
   }, [user, loading, navigate]);
 
+  // Refetch data whenever the page becomes visible (handles navigation back from settings)
   useEffect(() => {
+    let isMounted = true;
+    
     async function fetchData() {
       if (!user) return;
 
+      setDataLoading(true);
       try {
+        // Always fetch fresh preferences data
         const [{ data: profile }, { data: prefs }] = await Promise.all([
           supabase.from('profiles').select('city, state, zip_code').eq('user_id', user.id).maybeSingle(),
           supabase.from('preferences').select('dietary_preferences, interests').eq('user_id', user.id).maybeSingle(),
         ]);
+
+        if (!isMounted) return;
 
         const location = {
           city: profile?.city || 'New York',
           state: profile?.state || '',
           zipCode: profile?.zip_code || '',
         };
-        const diet = (prefs?.dietary_preferences as string[]) || [];
+        
+        // Filter out "none" and empty values from dietary preferences
+        const rawDiet = (prefs?.dietary_preferences as string[]) || [];
+        const diet = rawDiet.filter(d => d && d.toLowerCase() !== 'none');
+        
         const interests = (prefs?.interests as string[]) || [];
+
+        console.log('Fetching with preferences - Diet:', diet, 'Interests:', interests);
 
         const [food, things, evts] = await Promise.all([
           getFoodPlaces(diet, location),
@@ -57,17 +70,33 @@ export default function OutAndAbout() {
           getEvents(location, interests),
         ]);
 
+        if (!isMounted) return;
+
         setFoodPlaces(food);
         setActivities(things);
         setEvents(evts);
       } catch (err) {
         console.error('Out and about error:', err);
       } finally {
-        setDataLoading(false);
+        if (isMounted) setDataLoading(false);
       }
     }
 
     fetchData();
+
+    // Re-fetch when the page becomes visible (e.g., user navigates back from settings)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   if (loading) {
