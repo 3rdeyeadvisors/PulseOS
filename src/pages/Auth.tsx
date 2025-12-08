@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -292,10 +292,18 @@ export default function Auth() {
         </Tabs>
       </Card>
       
-      {/* Footer text */}
-      <p className="mt-6 text-sm text-muted-foreground text-center relative z-10">
-        Your personal AI-powered life operating system
-      </p>
+      {/* Footer */}
+      <div className="mt-6 text-center relative z-10 space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Your personal AI-powered life operating system
+        </p>
+        <p className="text-xs text-muted-foreground">
+          By signing up, you agree to our{' '}
+          <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+          {' '}and{' '}
+          <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+        </p>
+      </div>
     </div>
   );
 }

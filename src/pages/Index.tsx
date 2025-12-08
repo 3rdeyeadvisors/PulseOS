@@ -81,8 +81,12 @@ export default function Index() {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/30 py-6">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © 2025 PulseOS. Your life, optimized.
+        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© 2025 PulseOS. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </footer>
     </div>
