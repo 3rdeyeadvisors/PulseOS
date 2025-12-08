@@ -8,8 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { AutocompleteInput } from '@/components/ui/autocomplete-input';
-import { ALL_CITIES, COUNTRIES } from '@/data/locations';
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
 import { toast } from 'sonner';
 import { 
   Zap, ArrowRight, ArrowLeft, Check, Loader2, 
@@ -242,12 +241,12 @@ export default function Onboarding() {
                     <MapPin className="h-4 w-4" />
                     City
                   </Label>
-                  <AutocompleteInput
+                  <LocationAutocomplete
                     id="city"
-                    placeholder="e.g. London"
+                    placeholder="e.g. Hope Mills, London"
                     value={city}
                     onValueChange={setCity}
-                    suggestions={ALL_CITIES}
+                    locationType="city"
                   />
                 </div>
                 <div className="space-y-2">
@@ -255,12 +254,12 @@ export default function Onboarding() {
                     <MapPin className="h-4 w-4 opacity-0" />
                     Country
                   </Label>
-                  <AutocompleteInput
+                  <LocationAutocomplete
                     id="country"
-                    placeholder="e.g. UK"
+                    placeholder="e.g. United States"
                     value={country}
                     onValueChange={setCountry}
-                    suggestions={COUNTRIES}
+                    locationType="country"
                   />
                 </div>
               </div>
