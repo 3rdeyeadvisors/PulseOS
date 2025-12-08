@@ -218,7 +218,6 @@ export default function OutAndAbout() {
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No events found in your area</p>
-                <p className="text-sm">Try expanding your search radius in settings</p>
               </div>
             ) : (
               events.map((event) => <EventCard key={event.id} event={event} />)
