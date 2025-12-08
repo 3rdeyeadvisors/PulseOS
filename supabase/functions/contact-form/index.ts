@@ -15,35 +15,86 @@ interface ContactFormRequest {
   message: string;
 }
 
+// HTML encode to prevent XSS/injection
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Validate email format
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return emailRegex.test(email);
+}
+
+// Sanitize input - remove control characters and excessive whitespace
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars
+    .trim();
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { name, email, subject, message }: ContactFormRequest = await req.json();
+    const body = await req.json();
+    
+    // Extract and sanitize inputs
+    const name = sanitizeInput(String(body.name || ''));
+    const email = sanitizeInput(String(body.email || '').toLowerCase());
+    const subject = sanitizeInput(String(body.subject || ''));
+    const message = sanitizeInput(String(body.message || ''));
 
-    // Server-side validation
-    if (!name || name.trim().length === 0 || name.length > 100) {
-      throw new Error("Invalid name");
+    // Server-side validation with strict rules
+    if (!name || name.length < 2 || name.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Name must be between 2 and 100 characters" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255) {
-      throw new Error("Invalid email");
+    
+    if (!email || !isValidEmail(email) || email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: "Please provide a valid email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
-    if (!subject || subject.trim().length === 0 || subject.length > 200) {
-      throw new Error("Invalid subject");
+    
+    if (!subject || subject.length < 3 || subject.length > 200) {
+      return new Response(
+        JSON.stringify({ error: "Subject must be between 3 and 200 characters" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
-    if (!message || message.trim().length === 0 || message.length > 5000) {
-      throw new Error("Invalid message");
+    
+    if (!message || message.length < 10 || message.length > 5000) {
+      return new Response(
+        JSON.stringify({ error: "Message must be between 10 and 5000 characters" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    console.log(`Contact form submission from ${email}`);
+    // HTML-encode all user inputs before inserting into email templates
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeSubject = escapeHtml(subject);
+    const safeMessage = escapeHtml(message);
+
+    // Log without sensitive details
+    console.log(`Contact form submission received`);
 
     // Send notification email to support
     await resend.emails.send({
       from: "PulseOS Contact <onboarding@resend.dev>",
       to: ["support@notifications.pulseos.tech"],
-      subject: `[Contact Form] ${subject}`,
+      subject: `[Contact Form] ${safeSubject}`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -67,25 +118,25 @@ serve(async (req: Request): Promise<Response> => {
                 <tr>
                   <td style="padding: 10px 0; border-bottom: 1px solid rgba(139, 92, 246, 0.1);">
                     <p style="color: #8b5cf6; font-size: 12px; margin: 0 0 4px; text-transform: uppercase;">From</p>
-                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;">${name}</p>
+                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;">${safeName}</p>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; border-bottom: 1px solid rgba(139, 92, 246, 0.1);">
                     <p style="color: #8b5cf6; font-size: 12px; margin: 0 0 4px; text-transform: uppercase;">Email</p>
-                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;"><a href="mailto:${email}" style="color: #8b5cf6;">${email}</a></p>
+                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;"><a href="mailto:${safeEmail}" style="color: #8b5cf6;">${safeEmail}</a></p>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; border-bottom: 1px solid rgba(139, 92, 246, 0.1);">
                     <p style="color: #8b5cf6; font-size: 12px; margin: 0 0 4px; text-transform: uppercase;">Subject</p>
-                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;">${subject}</p>
+                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;">${safeSubject}</p>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0;">
                     <p style="color: #8b5cf6; font-size: 12px; margin: 0 0 4px; text-transform: uppercase;">Message</p>
-                    <p style="color: #94a3b8; font-size: 15px; margin: 0; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                    <p style="color: #94a3b8; font-size: 15px; margin: 0; line-height: 1.6; white-space: pre-wrap;">${safeMessage}</p>
                   </td>
                 </tr>
               </table>
@@ -103,7 +154,7 @@ serve(async (req: Request): Promise<Response> => {
     // Send confirmation email to user
     await resend.emails.send({
       from: "PulseOS <onboarding@resend.dev>",
-      to: [email],
+      to: [email], // Use original email for sending (not escaped)
       subject: "We received your message - PulseOS",
       html: `
 <!DOCTYPE html>
@@ -130,14 +181,14 @@ serve(async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 20px 40px 40px;">
               <p style="color: #e2e8f0; font-size: 18px; line-height: 1.6; margin: 0 0 20px;">
-                Hi ${name}! 👋
+                Hi ${safeName}!
               </p>
               <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
                 Thank you for reaching out to us. We've received your message and will get back to you as soon as possible, typically within 24-48 hours.
               </p>
               <div style="padding: 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2); margin-bottom: 20px;">
                 <p style="color: #8b5cf6; font-size: 14px; font-weight: 600; margin: 0 0 8px;">Your message:</p>
-                <p style="color: #94a3b8; font-size: 14px; margin: 0; font-style: italic;">"${subject}"</p>
+                <p style="color: #94a3b8; font-size: 14px; margin: 0; font-style: italic;">"${safeSubject}"</p>
               </div>
               <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 0;">
                 Best regards,<br>
@@ -167,10 +218,10 @@ serve(async (req: Request): Promise<Response> => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    console.error("Error in contact-form:", error);
+  } catch (error: unknown) {
+    console.error("Error in contact-form function");
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to send message. Please try again." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
