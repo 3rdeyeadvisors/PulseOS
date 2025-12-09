@@ -202,13 +202,12 @@ export function useFriends() {
 
     if (updateError) return { error: updateError.message };
 
-    // Create friendship (both directions for easier querying)
+    // Create friendship using database function (handles both directions)
     const { error: friendshipError } = await supabase
-      .from('friendships')
-      .insert([
-        { user_id: user.id, friend_id: senderId },
-        { user_id: senderId, friend_id: user.id },
-      ]);
+      .rpc('create_friendship', {
+        _user_id: user.id,
+        _friend_id: senderId,
+      });
 
     if (friendshipError) return { error: friendshipError.message };
 
