@@ -559,6 +559,10 @@ export type Database = {
         Args: { _friend_id: string; _user_id: string }
         Returns: boolean
       }
+      create_friendship: {
+        Args: { _friend_id: string; _user_id: string }
+        Returns: undefined
+      }
       get_friends_leaderboard: {
         Args: { _user_id: string; _week_start: string }
         Returns: {
