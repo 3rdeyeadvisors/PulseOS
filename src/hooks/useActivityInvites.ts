@@ -90,6 +90,29 @@ export function useActivityInvites() {
 
     if (error) return { error: error.message };
 
+    // Get sender's profile for the email
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('full_name, username')
+      .eq('user_id', user.id)
+      .single();
+
+    // Send email notification
+    try {
+      await supabase.functions.invoke('send-activity-invite-email', {
+        body: {
+          receiverId,
+          senderName: senderProfile?.full_name || senderProfile?.username || 'A friend',
+          activityName,
+          activityType,
+          proposedTime: proposedTime.toISOString(),
+          message,
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send activity invite email:', emailError);
+    }
+
     await fetchSentInvites();
     return { error: null };
   };
