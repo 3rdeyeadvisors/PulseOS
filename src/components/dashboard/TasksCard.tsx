@@ -59,6 +59,9 @@ export function TasksCard() {
       if (error) throw error;
       setTasks((prev) => [data, ...prev].slice(0, 5));
       setNewTask('');
+      
+      // Dispatch custom event to notify score card
+      window.dispatchEvent(new CustomEvent('task-updated'));
     } catch (err) {
       toast.error('Failed to add task');
     } finally {
@@ -74,9 +77,14 @@ export function TasksCard() {
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Update local state
       setTasks((prev) =>
         prev.map((t) => (t.id === id ? { ...t, completed: !completed } : t))
       );
+      
+      // Dispatch custom event to notify score card
+      window.dispatchEvent(new CustomEvent('task-updated'));
     } catch (err) {
       toast.error('Failed to update task');
     }

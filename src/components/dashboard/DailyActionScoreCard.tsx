@@ -101,7 +101,19 @@ export function DailyActionScoreCard() {
     fetchAndUpdateScore();
   }, [fetchAndUpdateScore]);
 
-  // Subscribe to task changes to update score in real-time
+  // Listen for custom task-updated events (more reliable than realtime for same-page updates)
+  useEffect(() => {
+    const handleTaskUpdate = () => {
+      fetchAndUpdateScore();
+    };
+    
+    window.addEventListener('task-updated', handleTaskUpdate);
+    return () => {
+      window.removeEventListener('task-updated', handleTaskUpdate);
+    };
+  }, [fetchAndUpdateScore]);
+
+  // Also subscribe to realtime changes (for cross-tab/device updates)
   useEffect(() => {
     if (!user) return;
 
@@ -116,7 +128,6 @@ export function DailyActionScoreCard() {
           filter: `user_id=eq.${user.id}`
         },
         () => {
-          // Recalculate score when tasks change
           fetchAndUpdateScore();
         }
       )
