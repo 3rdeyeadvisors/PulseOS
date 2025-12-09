@@ -72,7 +72,7 @@ serve(async (req: Request): Promise<Response> => {
         const displayName = profile.full_name || profile.email.split('@')[0];
 
         await resend.emails.send({
-          from: "PulseOS <onboarding@resend.dev>",
+          from: "PulseOS <support@notifications.pulseos.tech>",
           to: [profile.email],
           subject: `Task Reminder: ${taskTitle}`,
           html: `
@@ -112,7 +112,7 @@ serve(async (req: Request): Promise<Response> => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="https://pulse.lovable.app/app" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
+                    <a href="https://pulseos.tech/app" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
                       View Your Tasks →
                     </a>
                   </td>
@@ -124,7 +124,7 @@ serve(async (req: Request): Promise<Response> => {
             <td style="padding: 30px 40px; border-top: 1px solid rgba(139, 92, 246, 0.2);">
               <p style="color: #64748b; font-size: 14px; text-align: center; margin: 0;">
                 You're receiving this because you have task reminders enabled.<br>
-                <a href="#" style="color: #8b5cf6; text-decoration: none;">Manage email preferences</a>
+                <a href="https://pulseos.tech/app/settings" style="color: #8b5cf6; text-decoration: none;">Manage email preferences</a>
               </p>
             </td>
           </tr>

@@ -82,7 +82,7 @@ serve(async (req: Request): Promise<Response> => {
           <!-- Footer -->
           <tr>
             <td style="padding: 25px 40px; border-top: 1px solid rgba(139, 92, 246, 0.3); background: rgba(0,0,0,0.2);">
-              <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
+              <p style="color: #94a3b8; font-size: 13px; text-align: center; margin: 0;">
                 This is an automated message from PulseOS.<br>
                 Please do not reply to this email.
               </p>

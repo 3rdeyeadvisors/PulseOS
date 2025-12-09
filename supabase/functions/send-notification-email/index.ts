@@ -86,7 +86,7 @@ serve(async (req: Request): Promise<Response> => {
             <td style="padding: 25px 40px; border-top: 1px solid rgba(139, 92, 246, 0.2); background: rgba(0,0,0,0.2);">
               <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
                 You're receiving this because you have notifications enabled.<br>
-                <a href="https://pulse.lovable.app/app/settings" style="color: #8b5cf6; text-decoration: none;">Manage preferences</a>
+                <a href="https://pulseos.tech/app/settings" style="color: #8b5cf6; text-decoration: none;">Manage preferences</a>
               </p>
             </td>
           </tr>
