@@ -1,27 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, CheckCircle2, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp } from 'lucide-react';
 
 export default function Index() {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleWaitlist = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast.error('Please enter your email');
-      return;
-    }
-    setIsSubmitting(true);
-    // Simulate waitlist submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('You\'re on the list! We\'ll notify you when we launch.');
-    setEmail('');
-    setIsSubmitting(false);
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -71,24 +52,19 @@ export default function Index() {
             and personalized insights — all in one dashboard that adapts to your life.
           </p>
 
-          {/* Email Capture Form */}
-          <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12 max-w-md mx-auto">
-            <Input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 bg-card border-border/50 text-base"
-            />
-            <Button type="submit" size="lg" className="h-12 px-6 w-full sm:w-auto" disabled={isSubmitting}>
-              {isSubmitting ? 'Joining...' : 'Join Waitlist'}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </form>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <Link to="/auth">
+              <Button size="lg" className="h-12 px-8 text-base">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
 
           {/* Social Proof */}
           <p className="text-sm text-muted-foreground mb-16">
-            Join 500+ people already on the waitlist
+            Free to use • No credit card required
           </p>
           
           {/* Benefits Grid */}
