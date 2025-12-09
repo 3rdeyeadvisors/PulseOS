@@ -9,6 +9,7 @@ interface CommunityMember {
   avatar_url: string | null;
   city: string | null;
   interests_public: boolean;
+  verified: boolean | null;
   interests?: string[];
 }
 
@@ -57,7 +58,7 @@ export function useCommunity() {
     // Get public profiles in the same city
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('user_id, username, full_name, avatar_url, city, interests_public')
+      .select('user_id, username, full_name, avatar_url, city, interests_public, verified')
       .eq('profile_public', true)
       .ilike('city', city)
       .neq('user_id', user.id)

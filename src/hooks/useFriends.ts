@@ -13,12 +13,14 @@ interface FriendRequest {
     full_name: string | null;
     avatar_url: string | null;
     city: string | null;
+    verified: boolean | null;
   };
   receiver?: {
     username: string | null;
     full_name: string | null;
     avatar_url: string | null;
     city: string | null;
+    verified: boolean | null;
   };
 }
 
@@ -33,6 +35,7 @@ interface Friendship {
     full_name: string | null;
     avatar_url: string | null;
     city: string | null;
+    verified: boolean | null;
   };
 }
 
@@ -55,7 +58,7 @@ export function useFriends() {
         user_id,
         friend_id,
         created_at,
-        friend:profiles!friendships_friend_id_fkey(user_id, username, full_name, avatar_url, city)
+        friend:profiles!friendships_friend_id_fkey(user_id, username, full_name, avatar_url, city, verified)
       `)
       .eq('user_id', user.id);
 
@@ -67,7 +70,7 @@ export function useFriends() {
         user_id,
         friend_id,
         created_at,
-        friend:profiles!friendships_user_id_fkey(user_id, username, full_name, avatar_url, city)
+        friend:profiles!friendships_user_id_fkey(user_id, username, full_name, avatar_url, city, verified)
       `)
       .eq('friend_id', user.id);
 
@@ -91,7 +94,7 @@ export function useFriends() {
         receiver_id,
         status,
         created_at,
-        sender:profiles!friend_requests_sender_id_fkey(username, full_name, avatar_url, city)
+        sender:profiles!friend_requests_sender_id_fkey(username, full_name, avatar_url, city, verified)
       `)
       .eq('receiver_id', user.id)
       .eq('status', 'pending')
@@ -112,7 +115,7 @@ export function useFriends() {
         receiver_id,
         status,
         created_at,
-        receiver:profiles!friend_requests_receiver_id_fkey(username, full_name, avatar_url, city)
+        receiver:profiles!friend_requests_receiver_id_fkey(username, full_name, avatar_url, city, verified)
       `)
       .eq('sender_id', user.id)
       .eq('status', 'pending')

@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCommunity } from '@/hooks/useCommunity';
 import { useFriends } from '@/hooks/useFriends';
 import { toast } from 'sonner';
-import { MapPin, UserPlus, Users, Loader2, Globe } from 'lucide-react';
+import { MapPin, UserPlus, Users, Loader2, Globe, BadgeCheck } from 'lucide-react';
 
 export function CommunityDiscovery() {
   const { members, loading, userCity } = useCommunity();
@@ -123,9 +123,14 @@ export function CommunityDiscovery() {
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {member.full_name || member.username || 'Unknown User'}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium truncate">
+                      {member.full_name || member.username || 'Unknown User'}
+                    </p>
+                    {member.verified && (
+                      <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
+                    )}
+                  </div>
                   {member.username && (
                     <p className="text-sm text-muted-foreground truncate">
                       @{member.username}
