@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Save, Sun, Newspaper, Utensils, Sparkles, Film, Cloud, TrendingUp } from 'lucide-react';
+import { Loader2, Save, Sun, Newspaper, Utensils, Sparkles, Film, Cloud, TrendingUp, Flame } from 'lucide-react';
 
 import { Fuel, CheckSquare, Music, Mic, Clapperboard } from 'lucide-react';
 
 const modules = [
   { id: 'greeting', label: 'Greeting Card', description: 'Personalized welcome message', icon: Sun },
   { id: 'action-score', label: 'Daily Action Score', description: 'Track your daily engagement', icon: TrendingUp },
+  { id: 'streak', label: 'Activity Streak', description: 'Track consecutive days of activity', icon: Flame },
   { id: 'weather', label: 'Weather', description: 'Local weather forecast', icon: Cloud },
   { id: 'gas', label: 'Gas Prices', description: 'Nearby fuel prices', icon: Fuel },
   { id: 'tasks', label: 'Tasks', description: 'Your to-do list', icon: CheckSquare },
