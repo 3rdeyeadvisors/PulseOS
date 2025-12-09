@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
-import { Loader2, Utensils, MapPin, Calendar, Star, Navigation } from 'lucide-react';
+import { InviteFriendModal } from '@/components/social/InviteFriendModal';
+import { Loader2, Utensils, MapPin, Calendar, Star, Navigation, UserPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getFoodPlaces, getThingsToDo, getEvents } from '@/services/placesService';
 
@@ -26,6 +28,12 @@ export default function OutAndAbout() {
   const [activities, setActivities] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [inviteModal, setInviteModal] = useState<{
+    open: boolean;
+    type: string;
+    name: string;
+    data: any;
+  }>({ open: false, type: '', name: '', data: null });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -109,13 +117,13 @@ export default function OutAndAbout() {
 
   if (!user) return null;
 
-  const PlaceCard = ({ place }: { place: any }) => (
-    <button
-      onClick={() => openInMaps(place.address, place.name)}
-      className="w-full text-left p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-card/80 transition-all cursor-pointer group"
-    >
+  const PlaceCard = ({ place, type }: { place: any; type: string }) => (
+    <div className="w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all">
       <div className="flex items-start justify-between">
-        <div className="flex-1">
+        <button
+          onClick={() => openInMaps(place.address, place.name)}
+          className="flex-1 text-left group"
+        >
           <h3 className="font-semibold group-hover:text-primary transition-colors">{place.name}</h3>
           <p className="text-sm text-muted-foreground">{place.cuisine || place.type} · {place.priceRange}</p>
           <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
@@ -129,12 +137,28 @@ export default function OutAndAbout() {
           {place.matchReason && (
             <p className="text-xs text-primary mt-2">{place.matchReason}</p>
           )}
-        </div>
-        <div className="p-2 rounded-lg bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Navigation className="h-4 w-4 text-primary" />
+        </button>
+        <div className="flex flex-col gap-2 ml-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => setInviteModal({ open: true, type, name: place.name, data: place })}
+          >
+            <UserPlus className="h-3 w-3" />
+            <span className="hidden sm:inline">Invite</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1"
+            onClick={() => openInMaps(place.address, place.name)}
+          >
+            <Navigation className="h-3 w-3" />
+          </Button>
         </div>
       </div>
-    </button>
+    </div>
   );
 
   const EventCard = ({ event }: { event: any }) => (
@@ -150,7 +174,7 @@ export default function OutAndAbout() {
           {event.matchReason && (
             <p className="text-xs text-primary mt-1">{event.matchReason}</p>
           )}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
             {event.url && (
               <a
                 href={event.url}
@@ -162,6 +186,15 @@ export default function OutAndAbout() {
                 {event.price}
               </a>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-xs"
+              onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: event })}
+            >
+              <UserPlus className="h-3 w-3" />
+              Invite
+            </Button>
             <button
               onClick={() => openInMaps(event.address, event.location)}
               className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
@@ -199,7 +232,7 @@ export default function OutAndAbout() {
             {dataLoading ? (
               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full" />)
             ) : (
-              foodPlaces.map((place) => <PlaceCard key={place.id} place={place} />)
+              foodPlaces.map((place) => <PlaceCard key={place.id} place={place} type="restaurant" />)
             )}
           </TabsContent>
 
@@ -207,7 +240,7 @@ export default function OutAndAbout() {
             {dataLoading ? (
               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full" />)
             ) : (
-              activities.map((place) => <PlaceCard key={place.id} place={place} />)
+              activities.map((place) => <PlaceCard key={place.id} place={place} type="activity" />)
             )}
           </TabsContent>
 
@@ -226,6 +259,14 @@ export default function OutAndAbout() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <InviteFriendModal
+        open={inviteModal.open}
+        onOpenChange={(open) => setInviteModal(prev => ({ ...prev, open }))}
+        activityType={inviteModal.type}
+        activityName={inviteModal.name}
+        activityData={inviteModal.data}
+      />
     </AppShell>
   );
 }

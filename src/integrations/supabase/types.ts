@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_invites: {
+        Row: {
+          activity_data: Json | null
+          activity_name: string
+          activity_type: string
+          counter_count: number
+          counter_message: string | null
+          counter_time: string | null
+          created_at: string
+          id: string
+          message: string | null
+          proposed_time: string
+          receiver_id: string
+          sender_id: string
+          status: Database["public"]["Enums"]["invite_status"]
+          updated_at: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_name: string
+          activity_type: string
+          counter_count?: number
+          counter_message?: string | null
+          counter_time?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          proposed_time: string
+          receiver_id: string
+          sender_id: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          updated_at?: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_name?: string
+          activity_type?: string
+          counter_count?: number
+          counter_message?: string | null
+          counter_time?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          proposed_time?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_invites_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "activity_invites_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -513,6 +579,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       friend_request_status: "pending" | "accepted" | "declined"
+      invite_status: "pending" | "accepted" | "declined" | "countered"
       notification_type:
         | "welcome"
         | "daily_digest"
@@ -650,6 +717,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       friend_request_status: ["pending", "accepted", "declined"],
+      invite_status: ["pending", "accepted", "declined", "countered"],
       notification_type: [
         "welcome",
         "daily_digest",
