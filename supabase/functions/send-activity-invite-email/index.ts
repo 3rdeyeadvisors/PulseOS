@@ -85,56 +85,56 @@ serve(async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f0f23;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f0f23; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; border: 1px solid rgba(217, 70, 239, 0.3);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center;">
-              <div style="display: inline-block; padding: 12px; background: rgba(217, 70, 239, 0.15); border-radius: 12px; border: 1px solid rgba(217, 70, 239, 0.4);">
-                <span style="font-size: 32px;">${emoji}</span>
+            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);">
+              <div style="display: inline-block; padding: 16px; background: rgba(255, 255, 255, 0.2); border-radius: 16px;">
+                <span style="font-size: 48px;">${emoji}</span>
               </div>
-              <h1 style="margin: 20px 0 0; font-size: 28px; font-weight: 700;">
-                <span style="color: #ffffff;">Activity Invite!</span>
+              <h1 style="margin: 20px 0 0; font-size: 28px; font-weight: 700; color: #ffffff;">
+                Activity Invite!
               </h1>
             </td>
           </tr>
           
           <!-- Body -->
           <tr>
-            <td style="padding: 20px 40px 40px;">
-              <p style="color: #e2e8f0; font-size: 18px; line-height: 1.7; margin: 0 0 24px;">
+            <td style="padding: 32px 40px 40px;">
+              <p style="color: #1e293b; font-size: 18px; line-height: 1.7; margin: 0 0 24px;">
                 Hey ${displayName}! 👋
               </p>
               
-              <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-                <strong style="color: #d946ef;">${senderName}</strong> wants to do something fun with you!
+              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                <strong style="color: #7c3aed;">${senderName}</strong> wants to do something fun with you!
               </p>
               
-              <div style="padding: 24px; background: rgba(217, 70, 239, 0.1); border-radius: 12px; border: 1px solid rgba(217, 70, 239, 0.3); margin-bottom: 24px;">
-                <p style="color: #d946ef; font-size: 20px; font-weight: 600; margin: 0 0 12px;">
+              <div style="padding: 24px; background-color: #faf5ff; border-radius: 12px; border: 2px solid #a855f7; margin-bottom: 24px;">
+                <p style="color: #7c3aed; font-size: 20px; font-weight: 600; margin: 0 0 16px;">
                   ${emoji} ${activityName}
                 </p>
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: #94a3b8; font-size: 14px;">📅 When:</span>
-                      <span style="color: #e2e8f0; font-size: 14px; margin-left: 8px;">${formattedTime}</span>
+                      <span style="color: #64748b; font-size: 14px;">📅 When:</span>
+                      <span style="color: #1e293b; font-size: 14px; margin-left: 8px; font-weight: 500;">${formattedTime}</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: #94a3b8; font-size: 14px;">🎯 Type:</span>
-                      <span style="color: #e2e8f0; font-size: 14px; margin-left: 8px; text-transform: capitalize;">${activityType}</span>
+                      <span style="color: #64748b; font-size: 14px;">🎯 Type:</span>
+                      <span style="color: #1e293b; font-size: 14px; margin-left: 8px; text-transform: capitalize; font-weight: 500;">${activityType}</span>
                     </td>
                   </tr>
                 </table>
                 ${message ? `
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(217, 70, 239, 0.2);">
-                  <p style="color: #94a3b8; font-size: 14px; margin: 0 0 8px;">💬 Message:</p>
-                  <p style="color: #e2e8f0; font-size: 14px; font-style: italic; margin: 0;">"${message}"</p>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9d5ff;">
+                  <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">💬 Message:</p>
+                  <p style="color: #1e293b; font-size: 14px; font-style: italic; margin: 0;">"${message}"</p>
                 </div>
                 ` : ''}
               </div>
@@ -143,14 +143,14 @@ serve(async (req: Request): Promise<Response> => {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="https://pulseos.tech/friends" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #d946ef, #a855f7); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
+                    <a href="https://pulseos.tech/app/friends" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #a855f7, #7c3aed); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px;">
                       View Invite →
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0;">
+              <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0; text-align: center;">
                 You can accept, decline, or suggest a different time!
               </p>
             </td>
@@ -158,10 +158,10 @@ serve(async (req: Request): Promise<Response> => {
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 25px 40px; border-top: 1px solid rgba(217, 70, 239, 0.3); background: rgba(0,0,0,0.2);">
-              <p style="color: #94a3b8; font-size: 13px; text-align: center; margin: 0;">
+            <td style="padding: 25px 40px; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+              <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
                 You're receiving this because a friend invited you to an activity.<br>
-                <a href="https://pulseos.tech/app/settings" style="color: #d946ef; text-decoration: none;">Manage email preferences</a>
+                <a href="https://pulseos.tech/app/settings" style="color: #7c3aed; text-decoration: underline;">Manage email preferences</a>
               </p>
             </td>
           </tr>
