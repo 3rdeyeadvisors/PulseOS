@@ -151,6 +151,46 @@ async function fetchLiveContext(city?: string, country?: string): Promise<string
       }
     }
 
+    // Fetch upcoming events if we have location
+    if (city) {
+      try {
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+        const eventsRes = await fetch(`${supabaseUrl}/functions/v1/ticketmaster-events`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ 
+            city, 
+            state: undefined,
+            interests: [],
+            radius: 100,
+            timezone: userTimezone
+          }),
+        });
+        if (eventsRes.ok) {
+          const events = await eventsRes.json();
+          if (events.events?.length > 0) {
+            liveContext += `\n**Upcoming Events Near ${city}**:\n`;
+            events.events.slice(0, 8).forEach((event: { 
+              name: string; 
+              date?: string; 
+              time?: string;
+              venue?: string;
+              priceRange?: string;
+              url?: string;
+            }, i: number) => {
+              const dateStr = event.date ? ` on ${event.date}` : '';
+              const timeStr = event.time ? ` at ${event.time}` : '';
+              const venueStr = event.venue ? ` @ ${event.venue}` : '';
+              const priceStr = event.priceRange ? ` (${event.priceRange})` : '';
+              liveContext += `${i + 1}. ${event.name}${dateStr}${timeStr}${venueStr}${priceStr}\n`;
+            });
+          }
+        }
+      } catch (eventError) {
+        console.error("Error fetching events:", eventError);
+      }
+    }
+
   } catch (error) {
     console.error("Error fetching live context:", error);
   }
