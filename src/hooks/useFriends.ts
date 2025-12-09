@@ -194,13 +194,20 @@ export function useFriends() {
   const acceptFriendRequest = async (requestId: string, senderId: string) => {
     if (!user) return { error: 'Not authenticated' };
 
+    console.log('[Friends] Accepting friend request:', { requestId, senderId, userId: user.id });
+
     // Update request status
     const { error: updateError } = await supabase
       .from('friend_requests')
       .update({ status: 'accepted' })
       .eq('id', requestId);
 
-    if (updateError) return { error: updateError.message };
+    if (updateError) {
+      console.error('[Friends] Failed to update request status:', updateError);
+      return { error: updateError.message };
+    }
+
+    console.log('[Friends] Request status updated, creating friendship...');
 
     // Create friendship using database function (handles both directions)
     const { error: friendshipError } = await supabase
@@ -209,8 +216,34 @@ export function useFriends() {
         _friend_id: senderId,
       });
 
-    if (friendshipError) return { error: friendshipError.message };
+    if (friendshipError) {
+      console.error('[Friends] Failed to create friendship:', friendshipError);
+      // Revert the request status if friendship creation fails
+      await supabase
+        .from('friend_requests')
+        .update({ status: 'pending' })
+        .eq('id', requestId);
+      return { error: `Failed to create friendship: ${friendshipError.message}` };
+    }
 
+    // Verify the friendship was actually created
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('friendships')
+      .select('id')
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${senderId}),and(user_id.eq.${senderId},friend_id.eq.${user.id})`)
+      .limit(1);
+
+    if (verifyError || !verifyData || verifyData.length === 0) {
+      console.error('[Friends] Friendship verification failed:', verifyError || 'No records found');
+      // Revert the request status
+      await supabase
+        .from('friend_requests')
+        .update({ status: 'pending' })
+        .eq('id', requestId);
+      return { error: 'Friendship was not created. Please try again.' };
+    }
+
+    console.log('[Friends] Friendship created and verified successfully');
     await Promise.all([fetchFriends(), fetchPendingRequests()]);
     return { error: null };
   };
