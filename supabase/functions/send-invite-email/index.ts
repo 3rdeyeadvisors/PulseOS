@@ -129,7 +129,7 @@ serve(async (req: Request): Promise<Response> => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="https://pulse.lovable.app/auth" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
+                    <a href="https://pulseos.tech/auth" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
                       Join PulseOS Now →
                     </a>
                   </td>
