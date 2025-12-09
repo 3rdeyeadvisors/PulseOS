@@ -10,6 +10,8 @@ interface DailyScore {
   tasks_total: number;
   recommendations_tried: number;
   chat_interactions: number;
+  social_engagement: number;
+  streak_bonus: number;
   daily_score: number;
 }
 
@@ -18,15 +20,27 @@ export function DailyActionScoreCard() {
   const [score, setScore] = useState<DailyScore | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const calculateScore = useCallback((tasksCompleted: number, tasksTotal: number, recommendationsTried: number, chatInteractions: number) => {
-    // Tasks are worth up to 50 points (based on completion percentage)
-    const taskScore = tasksTotal > 0 ? Math.round((tasksCompleted / tasksTotal) * 50) : 0;
-    // Each recommendation tried is worth 10 points (up to 30)
-    const recScore = Math.min(30, recommendationsTried * 10);
-    // Each chat interaction is worth 5 points (up to 20)
-    const chatScore = Math.min(20, chatInteractions * 5);
+  const calculateScore = useCallback((
+    tasksCompleted: number, 
+    tasksTotal: number, 
+    recommendationsTried: number, 
+    chatInteractions: number,
+    socialEngagement: number = 0,
+    streakBonus: number = 0
+  ) => {
+    // NEW 500-POINT SYSTEM:
+    // Tasks: 200 pts (10 pts per task, max 20 tasks)
+    const taskScore = Math.min(200, tasksCompleted * 10);
+    // Recommendations: 100 pts (20 pts each, max 5)
+    const recScore = Math.min(100, recommendationsTried * 20);
+    // Social: 100 pts (10 pts per interaction, max 10)
+    const socialScore = Math.min(100, socialEngagement * 10);
+    // Streaks: 50 pts (7-day = 25, 30-day = 50)
+    const streakScore = Math.min(50, streakBonus);
+    // Chat: 50 pts (10 pts each, max 5)
+    const chatScore = Math.min(50, chatInteractions * 10);
     
-    return Math.min(100, taskScore + recScore + chatScore);
+    return Math.min(500, taskScore + recScore + socialScore + streakScore + chatScore);
   }, []);
 
   const fetchAndUpdateScore = useCallback(async () => {
@@ -53,7 +67,9 @@ export function DailyActionScoreCard() {
 
     const recommendationsTried = existingScore?.recommendations_tried || 0;
     const chatInteractions = existingScore?.chat_interactions || 0;
-    const newDailyScore = calculateScore(tasksCompleted, tasksTotal, recommendationsTried, chatInteractions);
+    const socialEngagement = existingScore?.social_engagement || 0;
+    const streakBonus = existingScore?.streak_bonus || 0;
+    const newDailyScore = calculateScore(tasksCompleted, tasksTotal, recommendationsTried, chatInteractions, socialEngagement, streakBonus);
 
     if (existingScore) {
       // Update existing score
@@ -83,6 +99,8 @@ export function DailyActionScoreCard() {
           tasks_total: tasksTotal,
           recommendations_tried: 0,
           chat_interactions: 0,
+          social_engagement: 0,
+          streak_bonus: 0,
           daily_score: newDailyScore
         })
         .select()
@@ -139,15 +157,15 @@ export function DailyActionScoreCard() {
   }, [user, fetchAndUpdateScore]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-500';
-    if (score >= 50) return 'text-amber-500';
+    if (score >= 400) return 'text-emerald-500';
+    if (score >= 250) return 'text-amber-500';
     return 'text-muted-foreground';
   };
 
   const getScoreMessage = (score: number) => {
-    if (score >= 80) return "You're crushing it today!";
-    if (score >= 50) return "Good progress, keep going!";
-    if (score >= 20) return "You're getting started!";
+    if (score >= 400) return "You're crushing it today!";
+    if (score >= 250) return "Good progress, keep going!";
+    if (score >= 100) return "You're getting started!";
     return "Start completing tasks to boost your score!";
   };
 
@@ -187,8 +205,8 @@ export function DailyActionScoreCard() {
             <div className={`text-4xl font-bold ${getScoreColor(currentScore)}`}>
               {currentScore}
             </div>
-            <div className="text-sm text-muted-foreground">/ 100</div>
-            {currentScore >= 50 && (
+            <div className="text-sm text-muted-foreground">/ 500</div>
+            {currentScore >= 250 && (
               <Flame className="h-5 w-5 text-orange-500 animate-pulse" />
             )}
           </div>
@@ -196,7 +214,7 @@ export function DailyActionScoreCard() {
         </div>
 
         {/* Progress Bar */}
-        <Progress value={currentScore} className="h-2" />
+        <Progress value={(currentScore / 500) * 100} className="h-2" />
 
         {/* Message */}
         <p className="text-sm text-muted-foreground">{getScoreMessage(currentScore)}</p>

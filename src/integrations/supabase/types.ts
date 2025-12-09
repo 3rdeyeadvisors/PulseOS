@@ -46,6 +46,8 @@ export type Database = {
           id: string
           recommendations_tried: number
           score_date: string
+          social_engagement: number
+          streak_bonus: number
           tasks_completed: number
           tasks_total: number
           updated_at: string
@@ -58,6 +60,8 @@ export type Database = {
           id?: string
           recommendations_tried?: number
           score_date?: string
+          social_engagement?: number
+          streak_bonus?: number
           tasks_completed?: number
           tasks_total?: number
           updated_at?: string
@@ -70,6 +74,8 @@ export type Database = {
           id?: string
           recommendations_tried?: number
           score_date?: string
+          social_engagement?: number
+          streak_bonus?: number
           tasks_completed?: number
           tasks_total?: number
           updated_at?: string
@@ -142,6 +148,84 @@ export type Database = {
           welcome_email?: boolean
         }
         Relationships: []
+      }
+      friend_requests: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
+          status: Database["public"]["Enums"]["friend_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
+          status?: Database["public"]["Enums"]["friend_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: Database["public"]["Enums"]["friend_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friend_requests_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friend_requests_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      friendships: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_friend_id_fkey"
+            columns: ["friend_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friendships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -235,10 +319,13 @@ export type Database = {
           full_name: string | null
           household_type: string | null
           id: string
+          interests_public: boolean | null
           onboarding_completed: boolean | null
+          profile_public: boolean | null
           state: string | null
           updated_at: string
           user_id: string
+          username: string | null
           zip_code: string | null
         }
         Insert: {
@@ -251,10 +338,13 @@ export type Database = {
           full_name?: string | null
           household_type?: string | null
           id?: string
+          interests_public?: boolean | null
           onboarding_completed?: boolean | null
+          profile_public?: boolean | null
           state?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -267,10 +357,13 @@ export type Database = {
           full_name?: string | null
           household_type?: string | null
           id?: string
+          interests_public?: boolean | null
           onboarding_completed?: boolean | null
+          profile_public?: boolean | null
           state?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
           zip_code?: string | null
         }
         Relationships: []
@@ -331,6 +424,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_friends: {
+        Args: { _friend_id: string; _user_id: string }
+        Returns: boolean
+      }
+      get_pending_request_count: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -341,6 +439,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      friend_request_status: "pending" | "accepted" | "declined"
       notification_type:
         | "welcome"
         | "daily_digest"
@@ -477,6 +576,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      friend_request_status: ["pending", "accepted", "declined"],
       notification_type: [
         "welcome",
         "daily_digest",

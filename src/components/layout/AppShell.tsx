@@ -17,7 +17,8 @@ import {
   X,
   DollarSign,
   Newspaper,
-  MapPin
+  MapPin,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/app/money', icon: DollarSign, label: 'Money' },
   { href: '/app/reality', icon: Newspaper, label: 'Reality' },
   { href: '/app/out-and-about', icon: MapPin, label: 'Out & About' },
+  { href: '/app/friends', icon: Users, label: 'Friends' },
   { href: '/app/settings', icon: Settings, label: 'Settings' },
 ];
 
