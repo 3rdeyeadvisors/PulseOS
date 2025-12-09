@@ -141,6 +141,26 @@ export function useFriends() {
       return { error: error.message };
     }
 
+    // Get sender's profile for the email
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('full_name, username')
+      .eq('user_id', user.id)
+      .single();
+
+    // Send email notification
+    try {
+      await supabase.functions.invoke('send-friend-request-email', {
+        body: {
+          receiverId,
+          senderName: senderProfile?.full_name || senderProfile?.username || 'Someone',
+          senderUsername: senderProfile?.username,
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send friend request email:', emailError);
+    }
+
     await fetchSentRequests();
     return { error: null };
   };
