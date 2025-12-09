@@ -1,0 +1,177 @@
+import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCommunity } from '@/hooks/useCommunity';
+import { useFriends } from '@/hooks/useFriends';
+import { toast } from 'sonner';
+import { MapPin, UserPlus, Users, Loader2, Globe } from 'lucide-react';
+
+export function CommunityDiscovery() {
+  const { members, loading, userCity } = useCommunity();
+  const { sendFriendRequest } = useFriends();
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+
+  const handleSendRequest = async (userId: string) => {
+    setSendingTo(userId);
+    const { error } = await sendFriendRequest(userId);
+    
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success('Friend request sent!');
+      setSentRequests(prev => new Set([...prev, userId]));
+    }
+    setSendingTo(null);
+  };
+
+  const getInitials = (name: string | null, username: string | null) => {
+    if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    if (username) return username.slice(0, 2).toUpperCase();
+    return '?';
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            Community
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 p-4 rounded-lg bg-muted/30">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-9 w-24" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!userCity) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            Community
+          </CardTitle>
+          <CardDescription>
+            Discover people in your area
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Set Your Location</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Add your city in Settings → Lifestyle to discover people nearby
+            </p>
+            <Button variant="outline" asChild>
+              <a href="/app/settings">Go to Settings</a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5 text-primary" />
+          Community
+        </CardTitle>
+        <CardDescription className="flex items-center gap-1">
+          <MapPin className="h-3 w-3" />
+          People in {userCity}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {members.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No One Nearby Yet</h3>
+            <p className="text-sm text-muted-foreground">
+              Be the first in {userCity} to make your profile public, or check back later!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {members.map((member) => (
+              <div
+                key={member.user_id}
+                className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <Avatar className="h-12 w-12 border border-border">
+                  <AvatarImage src={member.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getInitials(member.full_name, member.username)}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">
+                    {member.full_name || member.username || 'Unknown User'}
+                  </p>
+                  {member.username && (
+                    <p className="text-sm text-muted-foreground truncate">
+                      @{member.username}
+                    </p>
+                  )}
+                  {member.interests_public && member.interests && member.interests.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {member.interests.slice(0, 3).map((interest) => (
+                        <Badge key={interest} variant="secondary" className="text-xs">
+                          {interest}
+                        </Badge>
+                      ))}
+                      {member.interests.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{member.interests.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {sentRequests.has(member.user_id) ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Request Sent
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => handleSendRequest(member.user_id)}
+                    disabled={sendingTo === member.user_id}
+                  >
+                    {sendingTo === member.user_id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        Add
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
