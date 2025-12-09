@@ -50,8 +50,9 @@ export function useFriends() {
   const fetchFriends = useCallback(async () => {
     if (!user) return;
 
-    // Fetch friendships where current user is user_id
-    const { data: friendshipsAsUser } = await supabase
+    // Since friendships are bidirectional (both A->B and B->A records exist),
+    // we only need to query where current user is user_id to get all friends
+    const { data: friendships, error } = await supabase
       .from('friendships')
       .select(`
         id,
@@ -62,25 +63,13 @@ export function useFriends() {
       `)
       .eq('user_id', user.id);
 
-    // Fetch friendships where current user is friend_id
-    const { data: friendshipsAsFriend } = await supabase
-      .from('friendships')
-      .select(`
-        id,
-        user_id,
-        friend_id,
-        created_at,
-        friend:profiles!friendships_user_id_fkey(user_id, username, full_name, avatar_url, city, verified)
-      `)
-      .eq('friend_id', user.id);
+    if (error) {
+      console.error('[Friends] Failed to fetch friends:', error);
+      setFriends([]);
+      return;
+    }
 
-    // Combine and dedupe
-    const allFriendships = [
-      ...(friendshipsAsUser || []),
-      ...(friendshipsAsFriend || []),
-    ];
-
-    setFriends(allFriendships as unknown as Friendship[]);
+    setFriends((friendships || []) as unknown as Friendship[]);
   }, [user]);
 
   const fetchPendingRequests = useCallback(async () => {
