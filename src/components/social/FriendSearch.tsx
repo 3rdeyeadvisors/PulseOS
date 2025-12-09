@@ -267,22 +267,22 @@ export function FriendSearch() {
                 </div>
 
                 {isAlreadyFriend ? (
-                  <Button variant="outline" disabled>
-                    <Check className="h-4 w-4 mr-2" />
+                  <Button variant="outline" size="sm" disabled>
+                    <Check className="h-4 w-4 mr-1" />
                     Friends
                   </Button>
                 ) : hasPendingRequest ? (
-                  <Button variant="outline" disabled>
-                    Request Sent
+                  <Button variant="outline" size="sm" disabled>
+                    Sent
                   </Button>
                 ) : (
-                  <Button onClick={handleSendRequest} disabled={sending}>
+                  <Button size="sm" onClick={handleSendRequest} disabled={sending}>
                     {sending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <UserPlus className="h-4 w-4 mr-2" />
+                      <UserPlus className="h-4 w-4 mr-1" />
                     )}
-                    Add Friend
+                    Add
                   </Button>
                 )}
               </div>
