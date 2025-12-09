@@ -69,7 +69,7 @@ export default function Friends() {
               Add Friend
             </CardTitle>
             <CardDescription>
-              Search for friends by their username
+              Search for friends by username or email, or invite someone new
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
