@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
-import { Trophy, Medal, Award, Crown, TrendingUp, Users } from 'lucide-react';
+import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
