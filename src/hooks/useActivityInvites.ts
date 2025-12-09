@@ -97,20 +97,34 @@ export function useActivityInvites() {
       .eq('user_id', user.id)
       .single();
 
-    // Send email notification
+    // Send email and in-app notification
     try {
+      const senderName = senderProfile?.full_name || senderProfile?.username || 'A friend';
+      
+      // Send email
       await supabase.functions.invoke('send-activity-invite-email', {
         body: {
           receiverId,
-          senderName: senderProfile?.full_name || senderProfile?.username || 'A friend',
+          senderName,
           activityName,
           activityType,
           proposedTime: proposedTime.toISOString(),
           message,
         },
       });
-    } catch (emailError) {
-      console.error('Failed to send activity invite email:', emailError);
+
+      // Create in-app notification
+      await supabase.functions.invoke('create-notification', {
+        body: {
+          userId: receiverId,
+          type: 'system',
+          title: 'Activity Invite',
+          message: `${senderName} invited you to ${activityName}!`,
+          data: { senderId: user.id, activityType, activityName },
+        },
+      });
+    } catch (notifyError) {
+      console.error('Failed to send activity invite notifications:', notifyError);
     }
 
     await fetchSentInvites();

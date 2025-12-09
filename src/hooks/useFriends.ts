@@ -148,17 +148,31 @@ export function useFriends() {
       .eq('user_id', user.id)
       .single();
 
-    // Send email notification
+    // Send email and in-app notification
     try {
+      const senderName = senderProfile?.full_name || senderProfile?.username || 'Someone';
+      
+      // Send email
       await supabase.functions.invoke('send-friend-request-email', {
         body: {
           receiverId,
-          senderName: senderProfile?.full_name || senderProfile?.username || 'Someone',
+          senderName,
           senderUsername: senderProfile?.username,
         },
       });
-    } catch (emailError) {
-      console.error('Failed to send friend request email:', emailError);
+
+      // Create in-app notification
+      await supabase.functions.invoke('create-notification', {
+        body: {
+          userId: receiverId,
+          type: 'system',
+          title: 'New Friend Request',
+          message: `${senderName} wants to be your friend!`,
+          data: { senderId: user.id, senderUsername: senderProfile?.username },
+        },
+      });
+    } catch (notifyError) {
+      console.error('Failed to send friend request notifications:', notifyError);
     }
 
     await fetchSentRequests();
