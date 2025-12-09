@@ -57,36 +57,38 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-12 w-12 border border-border">
-          <AvatarImage src={request.sender?.avatar_url || undefined} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {getInitials()}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <p className="font-medium">
-              {request.sender?.full_name || request.sender?.username || 'Unknown User'}
-            </p>
-            {request.sender?.verified && (
-              <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />
-            )}
-          </div>
-          {request.sender?.username && (
-            <p className="text-sm text-muted-foreground">@{request.sender.username}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+    <div className="flex items-center gap-3 p-4 rounded-lg bg-card border border-border">
+      <Avatar className="h-10 w-10 border border-border flex-shrink-0">
+        <AvatarImage src={request.sender?.avatar_url || undefined} />
+        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+          {getInitials()}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="font-medium truncate max-w-[140px]">
+            {request.sender?.full_name || request.sender?.username || 'Unknown User'}
           </p>
+          {request.sender?.verified && (
+            <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
+          )}
         </div>
+        {request.sender?.username && (
+          <p className="text-sm text-muted-foreground truncate max-w-[140px]">
+            @{request.sender.username}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+        </p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 flex-shrink-0">
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
+          className="h-8 w-8 p-0"
           onClick={handleDecline}
           disabled={declining || accepting}
         >
@@ -98,15 +100,15 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
         </Button>
         <Button
           size="sm"
+          className="h-8 px-3"
           onClick={handleAccept}
           disabled={accepting || declining}
         >
           {accepting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Check className="h-4 w-4 mr-1" />
+            <Check className="h-4 w-4" />
           )}
-          Accept
         </Button>
       </div>
     </div>
