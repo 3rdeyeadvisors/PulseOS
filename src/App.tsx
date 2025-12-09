@@ -15,6 +15,7 @@ import Reality from "./pages/Reality";
 import OutAndAbout from "./pages/OutAndAbout";
 import Settings from "./pages/Settings";
 import Chat from "./pages/Chat";
+import Friends from "./pages/Friends";
 import Admin from "./pages/Admin";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/app/reality" element={<Reality />} />
               <Route path="/app/out-and-about" element={<OutAndAbout />} />
               <Route path="/app/chat" element={<Chat />} />
+              <Route path="/app/friends" element={<Friends />} />
               <Route path="/app/settings" element={<Settings />} />
               <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
