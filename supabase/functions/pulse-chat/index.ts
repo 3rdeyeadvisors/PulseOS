@@ -5,17 +5,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper to detect if a query needs web search
+// Helper to detect if a query needs web search - be aggressive about searching
 function needsWebSearch(message: string): boolean {
   const searchTriggers = [
-    /what is|what are|who is|who are|where is|when did|when was|how to|how do/i,
-    /latest|recent|current|today's|this week|breaking/i,
-    /tell me about|explain|define|describe/i,
-    /news about|update on|status of/i,
-    /price of|cost of|value of/i,
-    /best|top|recommend/i,
-    /\?$/,
+    /what is|what are|who is|who are|where is|when did|when was|when is|how to|how do|how much|how many/i,
+    /latest|recent|current|today|tonight|this week|this weekend|breaking|upcoming/i,
+    /tell me about|explain|define|describe|give me|show me|find|look up|search/i,
+    /news about|update on|status of|information on|info on|details about/i,
+    /price of|cost of|value of|worth|salary|income/i,
+    /best|top|recommend|suggest|popular|famous|trending/i,
+    /events|concerts|shows|games|matches|performances|festivals|happenings/i,
+    /weather|temperature|forecast|rain|snow|sunny/i,
+    /movie|film|tv show|series|book|song|album|artist|actor|celebrity/i,
+    /restaurant|food|eat|dining|bar|cafe|coffee/i,
+    /stock|crypto|bitcoin|market|investing/i,
+    /schedule|hours|open|closed|available/i,
+    /\?$/, // Any question
   ];
+  
+  // Also search if message is longer than 10 words (likely a complex question)
+  const wordCount = message.split(/\s+/).length;
+  if (wordCount > 10) return true;
   
   // Check if message matches any search triggers
   return searchTriggers.some(trigger => trigger.test(message));
@@ -322,27 +332,31 @@ ${liveWorldContext}
 ${webSearchContext}
 
 ## CRITICAL RULES:
-1. NEVER make up facts, statistics, prices, or information you don't have
-2. If you don't know something, say "I don't have that information" rather than guessing
-3. NEVER repeat the same phrases or sentences within a response
-4. Keep responses concise and avoid redundancy
-5. When you have web search results, use ONLY that information - do not embellish or add made-up details
-6. Always cite sources when sharing factual information from web searches
+1. ALWAYS provide helpful, complete answers - never say "hang tight" or "let me check" without following up with actual information
+2. If you have web search results, USE THEM to answer the question thoroughly
+3. If you don't have specific information, use your general knowledge to provide a helpful response
+4. NEVER refuse to answer a question - always provide value, even if just pointing them in the right direction
+5. Keep responses conversational but informative
+6. When sharing facts from web searches, present them naturally without excessive source citations
+7. Vary your language - never repeat the same phrases
 
 Your role is to:
-- Help users with daily planning and productivity
-- Provide personalized recommendations based on their interests, location, and dietary preferences
-- Answer questions using ONLY the live context and web search results provided - never fabricate information
-- Be supportive and encouraging
-- Reference their tasks, interests, location, or current news when relevant
+- Be the user's knowledgeable, helpful companion who can discuss ANY topic
+- Help with daily planning, productivity, and life decisions
+- Provide personalized recommendations based on their interests, location, and preferences
+- Answer questions on any subject using your knowledge and web search results
+- Be supportive, encouraging, and genuinely helpful
+- Reference their context (tasks, interests, location, events nearby) when relevant
 
 You have access to:
+- Your broad knowledge base on virtually any topic
+- Real-time web search for current information
 - Current weather data for the user's location
 - Today's news headlines
+- Upcoming events in their area
 - User-specific information (profile, preferences, tasks)
-- Real-time web search results for factual questions
 
-Keep responses concise. Use markdown formatting when it improves readability. Vary your language - never repeat phrases.`;
+Keep responses helpful and thorough. Use markdown formatting when it improves readability.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
