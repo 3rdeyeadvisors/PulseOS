@@ -58,16 +58,18 @@ serve(async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">
-              <span style="font-size: 48px;">👋</span>
-              <h1 style="margin: 16px 0 0; font-size: 28px; font-weight: 700; color: #ffffff;">
+            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">
+              <div style="display: inline-block; padding: 16px; background: rgba(255, 255, 255, 0.2); border-radius: 16px;">
+                <span style="font-size: 48px;">👋</span>
+              </div>
+              <h1 style="margin: 20px 0 0; font-size: 28px; font-weight: 700; color: #ffffff;">
                 New Friend Request!
               </h1>
             </td>
@@ -77,7 +79,7 @@ serve(async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 32px 40px 40px;">
               <p style="color: #1e293b; font-size: 18px; line-height: 1.7; margin: 0 0 24px;">
-                Hey ${displayName}!
+                Hey ${displayName}! 👋
               </p>
               
               <div style="padding: 20px; background-color: #f0fdf4; border-radius: 12px; border: 2px solid #22c55e; margin-bottom: 24px;">

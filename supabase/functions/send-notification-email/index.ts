@@ -41,28 +41,32 @@ serve(async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f0f23;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f0f23; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.2);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 40px 20px; text-align: center; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
-              <div style="display: inline-flex; align-items: center; gap: 8px;">
-                <span style="font-size: 24px;">⚡</span>
-                <span style="color: #ffffff; font-size: 20px; font-weight: 700;">PulseOS</span>
-              </div>
+            <td style="padding: 32px 40px 24px; border-bottom: 1px solid #e2e8f0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 24px; margin-right: 8px;">⚡</span>
+                    <span style="color: #1e293b; font-size: 20px; font-weight: 700;">PulseOS</span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
           <!-- Body -->
           <tr>
             <td style="padding: 40px;">
-              <h1 style="color: #ffffff; font-size: 24px; margin: 0 0 20px; font-weight: 600;">
+              <h1 style="color: #1e293b; font-size: 24px; margin: 0 0 20px; font-weight: 600;">
                 ${title}
               </h1>
-              <div style="color: #94a3b8; font-size: 16px; line-height: 1.7;">
+              <div style="color: #475569; font-size: 16px; line-height: 1.7;">
                 ${content}
               </div>
               
@@ -71,7 +75,7 @@ serve(async (req: Request): Promise<Response> => {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
                 <tr>
                   <td>
-                    <a href="${ctaUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; border-radius: 10px;">
+                    <a href="${ctaUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px;">
                       ${ctaText}
                     </a>
                   </td>
@@ -83,10 +87,10 @@ serve(async (req: Request): Promise<Response> => {
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 25px 40px; border-top: 1px solid rgba(139, 92, 246, 0.2); background: rgba(0,0,0,0.2);">
+            <td style="padding: 25px 40px; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
               <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
                 You're receiving this because you have notifications enabled.<br>
-                <a href="https://pulseos.tech/app/settings" style="color: #8b5cf6; text-decoration: none;">Manage preferences</a>
+                <a href="https://pulseos.tech/app/settings" style="color: #6d28d9; text-decoration: underline;">Manage preferences</a>
               </p>
             </td>
           </tr>

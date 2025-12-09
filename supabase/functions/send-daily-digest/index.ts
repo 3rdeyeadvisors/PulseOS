@@ -100,8 +100,8 @@ serve(async (req: Request): Promise<Response> => {
     if (tasks && tasks.length > 0) {
       tasksHtml = tasks.map(task => `
         <tr>
-          <td style="padding: 10px 15px; background: rgba(139, 92, 246, 0.05); border-radius: 8px; margin-bottom: 8px;">
-            <span style="color: #e2e8f0; font-size: 14px;">☐ ${task.title}</span>
+          <td style="padding: 12px 16px; background-color: #f5f3ff; border-radius: 8px; margin-bottom: 8px;">
+            <span style="color: #1e293b; font-size: 14px;">☐ ${task.title}</span>
             ${task.due_date ? `<span style="color: #64748b; font-size: 12px; margin-left: 8px;">Due: ${task.due_date}</span>` : ''}
           </td>
         </tr>
@@ -110,7 +110,7 @@ serve(async (req: Request): Promise<Response> => {
     } else {
       tasksHtml = `
         <tr>
-          <td style="padding: 15px; background: rgba(139, 92, 246, 0.05); border-radius: 8px; text-align: center;">
+          <td style="padding: 16px; background-color: #f5f3ff; border-radius: 8px; text-align: center;">
             <span style="color: #64748b; font-size: 14px;">No pending tasks. Add some to boost your score!</span>
           </td>
         </tr>
@@ -128,16 +128,16 @@ serve(async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f0f23;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f0f23; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.2);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center;">
-              <div style="display: inline-block; padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
-                <span style="font-size: 32px;">⚡</span>
+            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+              <div style="display: inline-block; padding: 16px; background: rgba(255, 255, 255, 0.2); border-radius: 16px;">
+                <span style="font-size: 48px;">⚡</span>
               </div>
               <h1 style="margin: 20px 0 0; font-size: 24px; font-weight: 700; color: #ffffff;">
                 Good morning, ${displayName}!
@@ -147,36 +147,24 @@ serve(async (req: Request): Promise<Response> => {
           
           <!-- Action Score -->
           <tr>
-            <td style="padding: 20px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(217, 70, 239, 0.2)); border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.3);">
-                <tr>
-                  <td style="padding: 25px; text-align: center;">
-                    <p style="color: #a78bfa; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px;">Yesterday's Action Score</p>
-                    <p style="font-size: 56px; font-weight: 800; margin: 0; background: linear-gradient(135deg, #8b5cf6, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${score}</p>
-                    <p style="color: #64748b; font-size: 14px; margin: 5px 0 0;">out of 100</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 0 25px 20px;">
-                    <div style="background: rgba(0,0,0,0.2); border-radius: 8px; height: 8px; overflow: hidden;">
-                      <div style="background: linear-gradient(90deg, #8b5cf6, #d946ef); height: 100%; width: ${score}%; border-radius: 8px;"></div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 0 25px 25px; text-align: center;">
-                    <p style="color: #e2e8f0; font-size: 16px; margin: 0;">${scoreMessage}</p>
-                    <p style="color: #64748b; font-size: 14px; margin: 10px 0 0;">Tasks completed: ${tasksCompleted}/${tasksTotal}</p>
-                  </td>
-                </tr>
-              </table>
+            <td style="padding: 32px 40px;">
+              <div style="padding: 28px; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-radius: 16px; border: 2px solid #ddd6fe; text-align: center;">
+                <p style="color: #6d28d9; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px;">Yesterday's Action Score</p>
+                <p style="font-size: 56px; font-weight: 800; margin: 0; color: #6d28d9;">${score}</p>
+                <p style="color: #64748b; font-size: 14px; margin: 8px 0 16px;">out of 100</p>
+                <div style="background: #e2e8f0; border-radius: 8px; height: 10px; overflow: hidden; margin-bottom: 16px;">
+                  <div style="background: linear-gradient(90deg, #8b5cf6, #6d28d9); height: 100%; width: ${score}%; border-radius: 8px;"></div>
+                </div>
+                <p style="color: #1e293b; font-size: 16px; margin: 0 0 8px;">${scoreMessage}</p>
+                <p style="color: #64748b; font-size: 14px; margin: 0;">Tasks completed: ${tasksCompleted}/${tasksTotal}</p>
+              </div>
             </td>
           </tr>
           
           <!-- Pending Tasks -->
           <tr>
-            <td style="padding: 10px 40px 20px;">
-              <p style="color: #a78bfa; font-size: 14px; font-weight: 600; margin: 0 0 15px;">📋 Your Pending Tasks</p>
+            <td style="padding: 0 40px 24px;">
+              <p style="color: #6d28d9; font-size: 14px; font-weight: 600; margin: 0 0 16px;">📋 Your Pending Tasks</p>
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${tasksHtml}
               </table>
@@ -185,11 +173,11 @@ serve(async (req: Request): Promise<Response> => {
           
           <!-- CTA -->
           <tr>
-            <td style="padding: 20px 40px 30px;">
+            <td style="padding: 0 40px 32px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="https://pulseos.tech/app" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
+                    <a href="https://pulseos.tech/app" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px;">
                       Start Today's Actions →
                     </a>
                   </td>
@@ -200,10 +188,10 @@ serve(async (req: Request): Promise<Response> => {
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 25px 40px; border-top: 1px solid rgba(139, 92, 246, 0.2);">
+            <td style="padding: 25px 40px; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
               <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
                 You're receiving this daily digest because you opted in.<br>
-                <a href="https://pulseos.tech/app/settings" style="color: #8b5cf6; text-decoration: none;">Manage email preferences</a>
+                <a href="https://pulseos.tech/app/settings" style="color: #6d28d9; text-decoration: underline;">Manage email preferences</a>
               </p>
             </td>
           </tr>
