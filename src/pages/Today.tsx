@@ -12,9 +12,10 @@ import { NewsCard } from '@/components/dashboard/NewsCard';
 import { FoodRecommendationsCard } from '@/components/dashboard/FoodRecommendationsCard';
 import { SongCard, PodcastCard, MovieCard } from '@/components/dashboard/MediaCards';
 import { TasksCard } from '@/components/dashboard/TasksCard';
+import { DailyActionScoreCard } from '@/components/dashboard/DailyActionScoreCard';
 import { Loader2 } from 'lucide-react';
 
-const ALL_MODULES = ['greeting', 'weather', 'gas', 'tasks', 'ai-insight', 'food', 'song', 'podcast', 'movie', 'daily-picks', 'news'];
+const ALL_MODULES = ['greeting', 'action-score', 'weather', 'gas', 'tasks', 'ai-insight', 'food', 'song', 'podcast', 'movie', 'daily-picks', 'news'];
 
 export default function Today() {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ export default function Today() {
       <div className="max-w-6xl mx-auto overflow-x-hidden">
         <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {isEnabled('greeting') && <GreetingCard />}
+          {isEnabled('action-score') && <DailyActionScoreCard />}
           {isEnabled('weather') && <WeatherCard />}
           {isEnabled('gas') && <GasCard />}
           {isEnabled('tasks') && <TasksCard />}

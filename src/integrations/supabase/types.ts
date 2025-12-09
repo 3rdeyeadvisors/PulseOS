@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_action_scores: {
+        Row: {
+          chat_interactions: number
+          created_at: string
+          daily_score: number
+          id: string
+          recommendations_tried: number
+          score_date: string
+          tasks_completed: number
+          tasks_total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_interactions?: number
+          created_at?: string
+          daily_score?: number
+          id?: string
+          recommendations_tried?: number
+          score_date?: string
+          tasks_completed?: number
+          tasks_total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_interactions?: number
+          created_at?: string
+          daily_score?: number
+          id?: string
+          recommendations_tried?: number
+          score_date?: string
+          tasks_completed?: number
+          tasks_total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           email_type: string
