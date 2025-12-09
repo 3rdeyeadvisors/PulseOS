@@ -315,11 +315,14 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string
+          current_streak: number
           email: string | null
           full_name: string | null
           household_type: string | null
           id: string
           interests_public: boolean | null
+          last_active_date: string | null
+          longest_streak: number
           onboarding_completed: boolean | null
           profile_public: boolean | null
           state: string | null
@@ -334,11 +337,14 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          current_streak?: number
           email?: string | null
           full_name?: string | null
           household_type?: string | null
           id?: string
           interests_public?: boolean | null
+          last_active_date?: string | null
+          longest_streak?: number
           onboarding_completed?: boolean | null
           profile_public?: boolean | null
           state?: string | null
@@ -353,11 +359,14 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          current_streak?: number
           email?: string | null
           full_name?: string | null
           household_type?: string | null
           id?: string
           interests_public?: boolean | null
+          last_active_date?: string | null
+          longest_streak?: number
           onboarding_completed?: boolean | null
           profile_public?: boolean | null
           state?: string | null
@@ -419,6 +428,59 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_leaderboards: {
+        Row: {
+          created_at: string
+          id: string
+          rank: number | null
+          recommendations_tried: number
+          social_engagement: number
+          streak_days: number
+          tasks_completed: number
+          total_score: number
+          updated_at: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rank?: number | null
+          recommendations_tried?: number
+          social_engagement?: number
+          streak_days?: number
+          tasks_completed?: number
+          total_score?: number
+          updated_at?: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rank?: number | null
+          recommendations_tried?: number
+          social_engagement?: number
+          streak_days?: number
+          tasks_completed?: number
+          total_score?: number
+          updated_at?: string
+          user_id?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_leaderboards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -427,6 +489,17 @@ export type Database = {
       are_friends: {
         Args: { _friend_id: string; _user_id: string }
         Returns: boolean
+      }
+      get_friends_leaderboard: {
+        Args: { _user_id: string; _week_start: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          rank: number
+          total_score: number
+          user_id: string
+          username: string
+        }[]
       }
       get_pending_request_count: { Args: { _user_id: string }; Returns: number }
       has_role: {
