@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp } from 'lucide-react';
+import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music } from 'lucide-react';
 
 export default function Index() {
 
@@ -48,7 +48,7 @@ export default function Index() {
           
           {/* Subheadline - Clear value prop */}
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            PulseOS brings together your daily tasks, date night ideas, family events, local recommendations, 
+            PulseOS brings together your daily tasks, local recommendations, social connections, 
             and personalized insights — all in one dashboard that adapts to your life.
           </p>
 
@@ -68,7 +68,7 @@ export default function Index() {
           </p>
           
           {/* Benefits Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
               <div className="p-2.5 rounded-lg bg-primary/10">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -78,27 +78,103 @@ export default function Index() {
             </div>
             
             <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
-              <div className="p-2.5 rounded-lg bg-pink-500/10">
-                <Heart className="h-5 w-5 text-pink-500" />
+              <div className="p-2.5 rounded-lg bg-amber-500/10">
+                <Trophy className="h-5 w-5 text-amber-500" />
               </div>
-              <h3 className="font-semibold">Date Night Ideas</h3>
-              <p className="text-sm text-muted-foreground text-center">Get personalized couple activities and romantic plans near you</p>
+              <h3 className="font-semibold">Weekly Leaderboards</h3>
+              <p className="text-sm text-muted-foreground text-center">Compete with friends and see who can achieve the most each week</p>
             </div>
             
             <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
               <div className="p-2.5 rounded-lg bg-blue-500/10">
                 <Users className="h-5 w-5 text-blue-500" />
               </div>
-              <h3 className="font-semibold">Family Events</h3>
-              <p className="text-sm text-muted-foreground text-center">Discover kid-friendly activities and family outings in your area</p>
+              <h3 className="font-semibold">Connect with Friends</h3>
+              <p className="text-sm text-muted-foreground text-center">Find friends by username or email and build your social circle</p>
             </div>
             
             <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
               <div className="p-2.5 rounded-lg bg-emerald-500/10">
-                <Calendar className="h-5 w-5 text-emerald-500" />
+                <Send className="h-5 w-5 text-emerald-500" />
               </div>
-              <h3 className="font-semibold">Smart Planning</h3>
-              <p className="text-sm text-muted-foreground text-center">AI organizes your day based on weather, events, and your schedule</p>
+              <h3 className="font-semibold">Activity Invites</h3>
+              <p className="text-sm text-muted-foreground text-center">Invite friends to restaurants, events, and activities with one tap</p>
+            </div>
+          </div>
+
+          {/* Social Features Highlight */}
+          <div className="mt-20 max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6">
+              <Users className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium text-blue-500">New Social Features</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Life is Better Together</h2>
+            <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
+              Connect with friends, compete on leaderboards, and plan activities together. 
+              PulseOS makes staying social effortless.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-blue-500/20">
+                    <UserPlus className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <h3 className="font-semibold">Find Friends</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Search by username or email. Invite anyone to join via email if they are not on PulseOS yet.</p>
+              </div>
+              
+              <div className="p-6 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-amber-500/20">
+                    <Trophy className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <h3 className="font-semibold">Friendly Competition</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Weekly leaderboards track your progress against friends. Who will be #1 this week?</p>
+              </div>
+              
+              <div className="p-6 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-emerald-500/20">
+                    <BadgeCheck className="h-5 w-5 text-emerald-400" />
+                  </div>
+                  <h3 className="font-semibold">Verified Profiles</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Notable users get a blue verification badge so you know who is who.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Activity Types */}
+          <div className="mt-20 max-w-4xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Plan Activities with Friends</h2>
+            <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
+              Discover local spots and invite friends to join you. From dinner to concerts, make every outing social.
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+                <Utensils className="h-4 w-4 text-orange-500" />
+                <span className="text-sm font-medium">Restaurants</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+                <Music className="h-4 w-4 text-purple-500" />
+                <span className="text-sm font-medium">Concerts</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+                <Calendar className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-medium">Events</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+                <MapPin className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium">Local Spots</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+                <Heart className="h-4 w-4 text-pink-500" />
+                <span className="text-sm font-medium">Date Nights</span>
+              </div>
             </div>
           </div>
 
@@ -123,11 +199,32 @@ export default function Index() {
               <div className="flex gap-4 items-start">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">3</div>
                 <div>
-                  <h3 className="font-semibold mb-1">Complete actions, boost your score</h3>
-                  <p className="text-muted-foreground">Check off tasks, try recommendations, and watch your Daily Action Score grow as you engage with life.</p>
+                  <h3 className="font-semibold mb-1">Connect and compete</h3>
+                  <p className="text-muted-foreground">Add friends, climb the leaderboard, and invite others to activities you discover.</p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">4</div>
+                <div>
+                  <h3 className="font-semibold mb-1">Boost your Daily Action Score</h3>
+                  <p className="text-muted-foreground">Complete tasks, try recommendations, and watch your score grow as you engage with life.</p>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Final CTA */}
+          <div className="mt-20 p-8 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Take Control of Your Day?</h2>
+            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+              Join PulseOS today and start living more intentionally with your personalized life dashboard.
+            </p>
+            <Link to="/auth">
+              <Button size="lg" className="h-12 px-8 text-base">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </main>
