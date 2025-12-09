@@ -60,7 +60,7 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
       // Clean the username input (remove @ if present)
       const cleanUsername = searchQuery.trim().toLowerCase().replace(/^@/, '');
 
-      // Search by username
+      // Search by username - only select non-sensitive fields
       const response = await supabase
         .from('profiles')
         .select('user_id, username, full_name, avatar_url, city, verified')
@@ -71,7 +71,8 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
       data = response.data;
       error = response.error;
     } else {
-      // Search by email
+      // Email search should only work for exact match and not expose emails
+      // We search by email but only return safe profile fields
       const cleanEmail = searchQuery.trim().toLowerCase();
 
       const response = await supabase
