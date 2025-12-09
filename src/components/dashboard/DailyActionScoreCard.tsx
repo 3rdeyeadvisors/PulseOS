@@ -119,15 +119,17 @@ export function DailyActionScoreCard() {
     fetchAndUpdateScore();
   }, [fetchAndUpdateScore]);
 
-  // Listen for custom task-updated events (more reliable than realtime for same-page updates)
+  // Listen for custom task-updated and streak-updated events
   useEffect(() => {
-    const handleTaskUpdate = () => {
+    const handleUpdate = () => {
       fetchAndUpdateScore();
     };
     
-    window.addEventListener('task-updated', handleTaskUpdate);
+    window.addEventListener('task-updated', handleUpdate);
+    window.addEventListener('streak-updated', handleUpdate);
     return () => {
-      window.removeEventListener('task-updated', handleTaskUpdate);
+      window.removeEventListener('task-updated', handleUpdate);
+      window.removeEventListener('streak-updated', handleUpdate);
     };
   }, [fetchAndUpdateScore]);
 
