@@ -19,7 +19,11 @@ interface SearchResult {
   verified: boolean | null;
 }
 
-export function FriendSearch() {
+interface FriendSearchProps {
+  onRequestSent?: () => void;
+}
+
+export function FriendSearch({ onRequestSent }: FriendSearchProps) {
   const { user } = useAuth();
   const { sendFriendRequest, friends, sentRequests } = useFriends();
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,6 +101,7 @@ export function FriendSearch() {
       toast.success('Friend request sent!');
       setResult(null);
       setSearchQuery('');
+      onRequestSent?.();
     }
     setSending(false);
   };

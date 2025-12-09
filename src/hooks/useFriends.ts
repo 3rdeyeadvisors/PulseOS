@@ -271,6 +271,6 @@ export function useFriends() {
     removeFriend,
     cancelFriendRequest,
     refreshFriends: fetchFriends,
-    refreshRequests: fetchPendingRequests,
+    refreshRequests: () => Promise.all([fetchPendingRequests(), fetchSentRequests()]),
   };
 }
