@@ -21,7 +21,7 @@ export default function Friends() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { needsUsername, loading: usernameLoading, refreshUsername } = useUsername();
-  const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading, refreshRequests } = useFriends();
+  const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading, refreshRequests, friends } = useFriends();
   const { receivedInvites } = useActivityInvites();
   
   const inviteCount = receivedInvites.length;
@@ -73,7 +73,11 @@ export default function Friends() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <FriendSearch onRequestSent={refreshRequests} />
+            <FriendSearch 
+              onRequestSent={refreshRequests} 
+              sentRequests={sentRequests}
+              friends={friends}
+            />
           </CardContent>
         </Card>
 

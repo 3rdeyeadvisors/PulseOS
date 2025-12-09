@@ -21,11 +21,18 @@ interface SearchResult {
 
 interface FriendSearchProps {
   onRequestSent?: () => void;
+  sentRequests?: Array<{ receiver_id: string }>;
+  friends?: Array<{ friend?: { user_id: string } }>;
 }
 
-export function FriendSearch({ onRequestSent }: FriendSearchProps) {
+export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, friends: parentFriends }: FriendSearchProps) {
   const { user } = useAuth();
-  const { sendFriendRequest, friends, sentRequests } = useFriends();
+  const { sendFriendRequest, friends: hookFriends, sentRequests: hookSentRequests } = useFriends();
+  
+  // Use parent props if provided, otherwise use hook data
+  const friends = parentFriends || hookFriends;
+  const sentRequests = parentSentRequests || hookSentRequests;
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
