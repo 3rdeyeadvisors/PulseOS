@@ -26,7 +26,6 @@ interface Event {
   matchReason?: string;
   isInterestMatch?: boolean;
   rawDate?: string;
-  source?: 'ticketmaster' | 'eventbrite';
 }
 
 interface LocationInfo {
@@ -120,63 +119,33 @@ export async function getEvents(location: LocationInfo, interests: string[]): Pr
     // Get user's timezone for accurate time filtering
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
-    // Fetch from both Ticketmaster and Eventbrite in parallel
-    const [ticketmasterResult, eventbriteResult] = await Promise.allSettled([
-      supabase.functions.invoke('ticketmaster-events', {
-        body: {
-          city: location.city,
-          state: location.state,
-          interests: validInterests,
-          radius: 100,
-          timezone: userTimezone
-        }
-      }),
-      supabase.functions.invoke('eventbrite-events', {
-        body: {
-          city: location.city,
-          state: location.state,
-          interests: validInterests,
-          radius: 50
-        }
-      })
-    ]);
-
-    let allEvents: Event[] = [];
-
-    // Process Ticketmaster results
-    if (ticketmasterResult.status === 'fulfilled' && ticketmasterResult.value.data?.success) {
-      const tmEvents = ticketmasterResult.value.data.events || [];
-      allEvents.push(...tmEvents.map((e: any) => ({ ...e, source: 'ticketmaster' })));
-    }
-
-    // Process Eventbrite results
-    if (eventbriteResult.status === 'fulfilled' && eventbriteResult.value.data?.success) {
-      const ebEvents = eventbriteResult.value.data.events || [];
-      allEvents.push(...ebEvents.map((e: any) => ({ ...e, source: 'eventbrite' })));
-    }
-
-    // Dedupe by title (case-insensitive) and sort by date
-    const seen = new Set<string>();
-    const uniqueEvents = allEvents.filter(event => {
-      const key = event.title.toLowerCase().trim();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+    const { data, error } = await supabase.functions.invoke('ticketmaster-events', {
+      body: {
+        city: location.city,
+        state: location.state,
+        interests: validInterests,
+        radius: 100,
+        timezone: userTimezone
+      }
     });
 
+    if (error) throw error;
+    
+    const events: Event[] = data?.events || [];
+    
     // Sort: interest matches first, then by date
-    uniqueEvents.sort((a: any, b: any) => {
+    events.sort((a: any, b: any) => {
       if (a.isInterestMatch && !b.isInterestMatch) return -1;
       if (!a.isInterestMatch && b.isInterestMatch) return 1;
       return (a.rawDate || '9999-99-99').localeCompare(b.rawDate || '9999-99-99');
     });
     
-    console.log(`Fetched ${uniqueEvents.length} total events (TM: ${ticketmasterResult.status === 'fulfilled' ? ticketmasterResult.value.data?.events?.length || 0 : 0}, EB: ${eventbriteResult.status === 'fulfilled' ? eventbriteResult.value.data?.events?.length || 0 : 0})`);
+    console.log(`Fetched ${events.length} events from Ticketmaster`);
     
-    return uniqueEvents;
+    return events;
   } catch (err) {
     console.error('Error fetching events:', err);
-    return []; // Return empty array instead of mock data
+    return [];
   }
 }
 

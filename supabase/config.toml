@@ -12,9 +12,6 @@ verify_jwt = false
 [functions.ticketmaster-events]
 verify_jwt = false
 
-[functions.eventbrite-events]
-verify_jwt = false
-
 [functions.cost-insights]
 verify_jwt = false
 
