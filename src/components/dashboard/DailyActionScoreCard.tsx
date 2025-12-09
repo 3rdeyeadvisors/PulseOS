@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, CheckCircle2, Flame, Target } from 'lucide-react';
@@ -18,75 +18,95 @@ export function DailyActionScoreCard() {
   const [score, setScore] = useState<DailyScore | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const calculateScore = useCallback((tasksCompleted: number, tasksTotal: number, recommendationsTried: number, chatInteractions: number) => {
+    // Tasks are worth up to 50 points (based on completion percentage)
+    const taskScore = tasksTotal > 0 ? Math.round((tasksCompleted / tasksTotal) * 50) : 0;
+    // Each recommendation tried is worth 10 points (up to 30)
+    const recScore = Math.min(30, recommendationsTried * 10);
+    // Each chat interaction is worth 5 points (up to 20)
+    const chatScore = Math.min(20, chatInteractions * 5);
+    
+    return Math.min(100, taskScore + recScore + chatScore);
+  }, []);
+
+  const fetchAndUpdateScore = useCallback(async () => {
     if (!user) return;
     
-    const fetchOrCreateScore = async () => {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Try to get today's score
-      const { data: existingScore, error: fetchError } = await supabase
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get today's tasks count
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('completed')
+      .eq('user_id', user.id);
+
+    const tasksTotal = tasks?.length || 0;
+    const tasksCompleted = tasks?.filter(t => t.completed).length || 0;
+
+    // Try to get today's score
+    const { data: existingScore } = await supabase
+      .from('daily_action_scores')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('score_date', today)
+      .maybeSingle();
+
+    const recommendationsTried = existingScore?.recommendations_tried || 0;
+    const chatInteractions = existingScore?.chat_interactions || 0;
+    const newDailyScore = calculateScore(tasksCompleted, tasksTotal, recommendationsTried, chatInteractions);
+
+    if (existingScore) {
+      // Update existing score
+      const { data: updatedScore } = await supabase
         .from('daily_action_scores')
-        .select('*')
+        .update({
+          tasks_completed: tasksCompleted,
+          tasks_total: tasksTotal,
+          daily_score: newDailyScore
+        })
         .eq('user_id', user.id)
         .eq('score_date', today)
-        .maybeSingle();
+        .select()
+        .single();
 
-      if (fetchError) {
-        console.error('Error fetching score:', fetchError);
-        setLoading(false);
-        return;
+      if (updatedScore) {
+        setScore(updatedScore);
       }
-
-      if (existingScore) {
-        setScore(existingScore);
-        setLoading(false);
-        return;
-      }
-
-      // Get today's tasks count
-      const { data: tasks } = await supabase
-        .from('tasks')
-        .select('completed')
-        .eq('user_id', user.id);
-
-      const tasksTotal = tasks?.length || 0;
-      const tasksCompleted = tasks?.filter(t => t.completed).length || 0;
-
-      // Calculate initial score
-      const taskScore = tasksTotal > 0 ? Math.round((tasksCompleted / tasksTotal) * 50) : 0;
-      const initialScore = Math.min(100, taskScore);
-
-      // Create today's score
-      const { data: newScore, error: insertError } = await supabase
+    } else {
+      // Create new score
+      const { data: newScore } = await supabase
         .from('daily_action_scores')
         .insert({
           user_id: user.id,
           score_date: today,
           tasks_completed: tasksCompleted,
           tasks_total: tasksTotal,
-          daily_score: initialScore
+          recommendations_tried: 0,
+          chat_interactions: 0,
+          daily_score: newDailyScore
         })
         .select()
         .single();
 
-      if (insertError) {
-        console.error('Error creating score:', insertError);
-      } else {
+      if (newScore) {
         setScore(newScore);
       }
-      setLoading(false);
-    };
+    }
+    
+    setLoading(false);
+  }, [user, calculateScore]);
 
-    fetchOrCreateScore();
-  }, [user]);
+  // Initial fetch
+  useEffect(() => {
+    fetchAndUpdateScore();
+  }, [fetchAndUpdateScore]);
 
-  // Subscribe to task changes to update score
+  // Subscribe to task changes to update score in real-time
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('task-changes')
+      .channel('task-score-updates')
       .on(
         'postgres_changes',
         {
@@ -95,35 +115,9 @@ export function DailyActionScoreCard() {
           table: 'tasks',
           filter: `user_id=eq.${user.id}`
         },
-        async () => {
+        () => {
           // Recalculate score when tasks change
-          const today = new Date().toISOString().split('T')[0];
-          
-          const { data: tasks } = await supabase
-            .from('tasks')
-            .select('completed')
-            .eq('user_id', user.id);
-
-          const tasksTotal = tasks?.length || 0;
-          const tasksCompleted = tasks?.filter(t => t.completed).length || 0;
-          const taskScore = tasksTotal > 0 ? Math.round((tasksCompleted / tasksTotal) * 50) : 0;
-          const newDailyScore = Math.min(100, taskScore + (score?.recommendations_tried || 0) * 10 + (score?.chat_interactions || 0) * 5);
-
-          const { data: updatedScore } = await supabase
-            .from('daily_action_scores')
-            .update({
-              tasks_completed: tasksCompleted,
-              tasks_total: tasksTotal,
-              daily_score: newDailyScore
-            })
-            .eq('user_id', user.id)
-            .eq('score_date', today)
-            .select()
-            .single();
-
-          if (updatedScore) {
-            setScore(updatedScore);
-          }
+          fetchAndUpdateScore();
         }
       )
       .subscribe();
@@ -131,7 +125,7 @@ export function DailyActionScoreCard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, score]);
+  }, [user, fetchAndUpdateScore]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-500';
