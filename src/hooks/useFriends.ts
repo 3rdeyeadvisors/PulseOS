@@ -107,21 +107,33 @@ export function useFriends() {
   const fetchSentRequests = useCallback(async () => {
     if (!user) return;
 
-    const { data } = await supabase
+    // First get the friend requests
+    const { data: requestsData } = await supabase
       .from('friend_requests')
-      .select(`
-        id,
-        sender_id,
-        receiver_id,
-        status,
-        created_at,
-        receiver:profiles!friend_requests_receiver_id_fkey(username, full_name, avatar_url, city, verified)
-      `)
+      .select('id, sender_id, receiver_id, status, created_at')
       .eq('sender_id', user.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
-    setSentRequests((data || []) as unknown as FriendRequest[]);
+    if (!requestsData || requestsData.length === 0) {
+      setSentRequests([]);
+      return;
+    }
+
+    // Get receiver profiles separately to avoid RLS join issues
+    const receiverIds = requestsData.map(r => r.receiver_id);
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, username, full_name, avatar_url, city, verified')
+      .in('user_id', receiverIds);
+
+    // Combine the data
+    const enrichedRequests = requestsData.map(request => ({
+      ...request,
+      receiver: profilesData?.find(p => p.user_id === request.receiver_id) || null
+    }));
+
+    setSentRequests(enrichedRequests as unknown as FriendRequest[]);
   }, [user]);
 
   const sendFriendRequest = async (receiverId: string) => {
