@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Check, X } from 'lucide-react';
+import { Loader2, Check, X, BadgeCheck } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -16,6 +16,7 @@ interface FriendRequestCardProps {
       full_name: string | null;
       avatar_url: string | null;
       city: string | null;
+      verified: boolean | null;
     };
   };
 }
@@ -65,9 +66,14 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium">
-            {request.sender?.full_name || request.sender?.username || 'Unknown User'}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="font-medium">
+              {request.sender?.full_name || request.sender?.username || 'Unknown User'}
+            </p>
+            {request.sender?.verified && (
+              <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />
+            )}
+          </div>
           {request.sender?.username && (
             <p className="text-sm text-muted-foreground">@{request.sender.username}</p>
           )}

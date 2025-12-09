@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Loader2, UserMinus, Users } from 'lucide-react';
+import { Loader2, UserMinus, Users, BadgeCheck } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
 
 export function FriendsList() {
@@ -54,7 +54,7 @@ export function FriendsList() {
         <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <h3 className="text-lg font-medium mb-2">No friends yet</h3>
         <p className="text-sm text-muted-foreground">
-          Search for friends by their email address to get started
+          Search for friends by their username to get started
         </p>
       </div>
     );
@@ -80,9 +80,14 @@ export function FriendsList() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">
-                    {friend.full_name || friend.username || 'Unknown User'}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium">
+                      {friend.full_name || friend.username || 'Unknown User'}
+                    </p>
+                    {friend.verified && (
+                      <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />
+                    )}
+                  </div>
                   {friend.username && (
                     <p className="text-sm text-muted-foreground">@{friend.username}</p>
                   )}

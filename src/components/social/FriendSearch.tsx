@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Loader2, Search, UserPlus, Check, Mail } from 'lucide-react';
+import { Loader2, Search, UserPlus, Check, AtSign, BadgeCheck } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
 
 interface SearchResult {
@@ -15,29 +15,33 @@ interface SearchResult {
   full_name: string | null;
   avatar_url: string | null;
   city: string | null;
+  verified: boolean | null;
 }
 
 export function FriendSearch() {
   const { user } = useAuth();
   const { sendFriendRequest, friends, sentRequests } = useFriends();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [sending, setSending] = useState(false);
 
   const handleSearch = async () => {
-    if (!email.trim() || !user) return;
+    if (!username.trim() || !user) return;
 
     setSearching(true);
     setResult(null);
     setNotFound(false);
 
-    // Search by email
+    // Clean the username input (remove @ if present)
+    const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+
+    // Search by username
     const { data, error } = await supabase
       .from('profiles')
-      .select('user_id, username, full_name, avatar_url, city')
-      .eq('email', email.trim().toLowerCase())
+      .select('user_id, username, full_name, avatar_url, city, verified')
+      .ilike('username', cleanUsername)
       .neq('user_id', user.id)
       .maybeSingle();
 
@@ -63,7 +67,7 @@ export function FriendSearch() {
     } else {
       toast.success('Friend request sent!');
       setResult(null);
-      setEmail('');
+      setUsername('');
     }
     setSending(false);
   };
@@ -76,9 +80,9 @@ export function FriendSearch() {
     r => r.receiver_id === result.user_id
   );
 
-  const getInitials = (name: string | null, username: string | null) => {
+  const getInitials = (name: string | null, uname: string | null) => {
     if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    if (username) return username.slice(0, 2).toUpperCase();
+    if (uname) return uname.slice(0, 2).toUpperCase();
     return '?';
   };
 
@@ -87,16 +91,16 @@ export function FriendSearch() {
       <CardContent className="pt-6 space-y-4">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Search by email address..."
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Search by username..."
               className="pl-10"
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
           </div>
-          <Button onClick={handleSearch} disabled={searching || !email.trim()}>
+          <Button onClick={handleSearch} disabled={searching || !username.trim()}>
             {searching ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -107,7 +111,7 @@ export function FriendSearch() {
 
         {notFound && (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No user found with that email address
+            No user found with that username
           </p>
         )}
 
@@ -121,9 +125,14 @@ export function FriendSearch() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">
-                  {result.full_name || result.username || 'Unknown User'}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="font-medium">
+                    {result.full_name || result.username || 'Unknown User'}
+                  </p>
+                  {result.verified && (
+                    <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />
+                  )}
+                </div>
                 {result.username && (
                   <p className="text-sm text-muted-foreground">@{result.username}</p>
                 )}
