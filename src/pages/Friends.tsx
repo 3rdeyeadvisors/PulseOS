@@ -7,19 +7,24 @@ import { FriendRequestCard } from '@/components/social/FriendRequestCard';
 import { FriendsList } from '@/components/social/FriendsList';
 import { Leaderboard } from '@/components/social/Leaderboard';
 import { CommunityDiscovery } from '@/components/social/CommunityDiscovery';
+import { ActivityInvitesList } from '@/components/social/ActivityInvitesList';
 import { UsernameSetupModal } from '@/components/social/UsernameSetupModal';
 import { useUsername } from '@/hooks/useUsername';
 import { useFriends } from '@/hooks/useFriends';
+import { useActivityInvites } from '@/hooks/useActivityInvites';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe } from 'lucide-react';
+import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck } from 'lucide-react';
 
 export default function Friends() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { needsUsername, loading: usernameLoading, refreshUsername } = useUsername();
   const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading } = useFriends();
+  const { receivedInvites } = useActivityInvites();
+  
+  const inviteCount = receivedInvites.length;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -73,36 +78,49 @@ export default function Friends() {
         </Card>
 
         <Tabs defaultValue="leaderboard" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="leaderboard" className="gap-1 px-2">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="leaderboard" className="gap-1 px-1">
               <Trophy className="h-4 w-4" />
-              <span className="hidden lg:inline">Leaderboard</span>
+              <span className="hidden xl:inline">Leaderboard</span>
             </TabsTrigger>
-            <TabsTrigger value="community" className="gap-1 px-2">
+            <TabsTrigger value="invites" className="gap-1 px-1">
+              <CalendarCheck className="h-4 w-4" />
+              <span className="hidden xl:inline">Invites</span>
+              {inviteCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {inviteCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="community" className="gap-1 px-1">
               <Globe className="h-4 w-4" />
-              <span className="hidden lg:inline">Community</span>
+              <span className="hidden xl:inline">Community</span>
             </TabsTrigger>
-            <TabsTrigger value="friends" className="gap-1 px-2">
+            <TabsTrigger value="friends" className="gap-1 px-1">
               <Users className="h-4 w-4" />
-              <span className="hidden lg:inline">Friends</span>
+              <span className="hidden xl:inline">Friends</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-1 px-2">
+            <TabsTrigger value="requests" className="gap-1 px-1">
               <Inbox className="h-4 w-4" />
-              <span className="hidden lg:inline">Requests</span>
+              <span className="hidden xl:inline">Requests</span>
               {pendingCount > 0 && (
                 <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                   {pendingCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="sent" className="gap-1 px-2">
+            <TabsTrigger value="sent" className="gap-1 px-1">
               <Send className="h-4 w-4" />
-              <span className="hidden lg:inline">Sent</span>
+              <span className="hidden xl:inline">Sent</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="leaderboard">
             <Leaderboard />
+          </TabsContent>
+
+          <TabsContent value="invites">
+            <ActivityInvitesList />
           </TabsContent>
 
           <TabsContent value="community">
