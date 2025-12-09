@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -15,20 +14,59 @@ interface InviteEmailRequest {
   inviteeEmail: string;
 }
 
+// Input validation helpers
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+const sanitizeString = (str: string, maxLength: number = 100): string => {
+  return str.trim().slice(0, maxLength).replace(/[<>]/g, '');
+};
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { inviterName, inviterEmail, inviteeEmail }: InviteEmailRequest = await req.json();
+    const body = await req.json();
+    const { inviterName, inviterEmail, inviteeEmail } = body as InviteEmailRequest;
     
-    console.log(`Sending invite email to ${inviteeEmail} from ${inviterName}`);
+    // Validate required fields
+    if (!inviterName || !inviterEmail || !inviteeEmail) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email formats
+    if (!isValidEmail(inviteeEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid invitee email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!isValidEmail(inviterEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid inviter email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Sanitize inputs to prevent XSS in email
+    const sanitizedInviterName = sanitizeString(inviterName, 100);
+    const sanitizedInviterEmail = sanitizeString(inviterEmail, 255);
+    const sanitizedInviteeEmail = sanitizeString(inviteeEmail, 255);
+    
+    console.log(`Sending invite email to ${sanitizedInviteeEmail} from ${sanitizedInviterName}`);
 
     const emailResponse = await resend.emails.send({
       from: "PulseOS <support@notifications.pulseos.tech>",
-      to: [inviteeEmail],
-      subject: `${inviterName} invited you to join PulseOS! 🚀`,
+      to: [sanitizedInviteeEmail],
+      subject: `${sanitizedInviterName} invited you to join PulseOS! 🚀`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -60,7 +98,7 @@ serve(async (req: Request): Promise<Response> => {
                 Hey there! 👋
               </p>
               <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 30px;">
-                <strong style="color: #a78bfa;">${inviterName}</strong> thinks you'd love PulseOS - your personal life dashboard that helps you stay on top of everything that matters.
+                <strong style="color: #a78bfa;">${sanitizedInviterName}</strong> thinks you'd love PulseOS - your personal life dashboard that helps you stay on top of everything that matters.
               </p>
               
               <!-- Features -->
@@ -104,7 +142,7 @@ serve(async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 30px 40px; border-top: 1px solid rgba(139, 92, 246, 0.2);">
               <p style="color: #64748b; font-size: 14px; text-align: center; margin: 0;">
-                You're receiving this because ${inviterName} (${inviterEmail}) invited you to PulseOS.
+                You're receiving this because ${sanitizedInviterName} (${sanitizedInviterEmail}) invited you to PulseOS.
               </p>
             </td>
           </tr>
