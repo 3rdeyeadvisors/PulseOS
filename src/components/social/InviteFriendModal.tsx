@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Loader2, Send, Users, Calendar, Clock } from 'lucide-react';
+import { Loader2, Send, Users, Calendar, Clock, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface InviteFriendModalProps {
@@ -43,6 +43,18 @@ export function InviteFriendModal({
   const [proposedTime, setProposedTime] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
+
+  // Filter friends by search term
+  const filteredFriends = friends.filter((friendship) => {
+    const friend = friendship.friend;
+    if (!friend) return false;
+    const searchLower = friendSearch.toLowerCase();
+    return (
+      friend.full_name?.toLowerCase().includes(searchLower) ||
+      friend.username?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleSend = async () => {
     if (!selectedFriend || !proposedDate || !proposedTime) {
@@ -81,6 +93,7 @@ export function InviteFriendModal({
     setProposedDate('');
     setProposedTime('');
     setMessage('');
+    setFriendSearch('');
   };
 
   const getInitials = (name: string | null, username: string | null) => {
@@ -119,38 +132,58 @@ export function InviteFriendModal({
                 No friends yet. Add friends first!
               </div>
             ) : (
-              <ScrollArea className="h-40 rounded-md border">
-                <div className="p-2 space-y-1">
-                  {friends.map((friendship) => {
-                    const friend = friendship.friend;
-                    if (!friend) return null;
-                    
-                    const isSelected = selectedFriend === friend.user_id;
-                    
-                    return (
-                      <button
-                        key={friendship.id}
-                        onClick={() => setSelectedFriend(friend.user_id)}
-                        className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                          isSelected 
-                            ? 'bg-primary/10 border border-primary/30' 
-                            : 'hover:bg-muted'
-                        }`}
-                      >
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={friend.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {getInitials(friend.full_name, friend.username)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium truncate">
-                          {friend.full_name || friend.username || 'Unknown'}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+              <div className="space-y-2">
+                {/* Search input - show when 4+ friends */}
+                {friends.length >= 4 && (
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search friends..."
+                      value={friendSearch}
+                      onChange={(e) => setFriendSearch(e.target.value)}
+                      className="pl-8 h-9"
+                    />
+                  </div>
+                )}
+                <ScrollArea className="h-40 rounded-md border bg-background">
+                  <div className="p-2 space-y-1">
+                    {filteredFriends.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-4">
+                        No friends match your search
+                      </p>
+                    ) : (
+                      filteredFriends.map((friendship) => {
+                        const friend = friendship.friend;
+                        if (!friend) return null;
+                        
+                        const isSelected = selectedFriend === friend.user_id;
+                        
+                        return (
+                          <button
+                            key={friendship.id}
+                            onClick={() => setSelectedFriend(friend.user_id)}
+                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                              isSelected 
+                                ? 'bg-primary/10 border border-primary/30' 
+                                : 'hover:bg-muted'
+                            }`}
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={friend.avatar_url || undefined} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                {getInitials(friend.full_name, friend.username)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium truncate">
+                              {friend.full_name || friend.username || 'Unknown'}
+                            </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             )}
           </div>
 
