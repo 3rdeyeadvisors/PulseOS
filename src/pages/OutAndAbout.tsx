@@ -22,12 +22,22 @@ const openInMaps = (address: string, name: string) => {
   window.open(mapsUrl, '_blank');
 };
 
+const EVENT_CATEGORIES = [
+  { value: 'all', label: 'All' },
+  { value: 'music', label: 'Music' },
+  { value: 'sports', label: 'Sports' },
+  { value: 'arts & theatre', label: 'Theatre' },
+  { value: 'comedy', label: 'Comedy' },
+  { value: 'family', label: 'Family' },
+];
+
 export default function OutAndAbout() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [foodPlaces, setFoodPlaces] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [eventCategory, setEventCategory] = useState('all');
   const [dataLoading, setDataLoading] = useState(true);
   const [inviteModal, setInviteModal] = useState<{
     open: boolean;
@@ -35,6 +45,10 @@ export default function OutAndAbout() {
     name: string;
     data: any;
   }>({ open: false, type: '', name: '', data: null });
+
+  const filteredEvents = eventCategory === 'all' 
+    ? events 
+    : events.filter(e => e.type?.toLowerCase() === eventCategory.toLowerCase());
 
   useEffect(() => {
     if (!loading && !user) {
@@ -284,16 +298,33 @@ export default function OutAndAbout() {
           </TabsContent>
 
           <TabsContent value="events" className="mt-4 space-y-3">
+            {/* Category filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+              {EVENT_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => setEventCategory(cat.value)}
+                  className={`px-3 py-1.5 text-xs rounded-full whitespace-nowrap transition-colors ${
+                    eventCategory === cat.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            
             {dataLoading ? (
               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full" />)
-            ) : events.length === 0 ? (
+            ) : filteredEvents.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No events found in your area</p>
-                <p className="text-sm mt-2">Ask your AI assistant for personalized recommendations</p>
+                <p>{eventCategory === 'all' ? 'No events found in your area' : `No ${eventCategory} events found`}</p>
+                <p className="text-sm mt-2">Try a different category or ask your AI assistant</p>
               </div>
             ) : (
-              events.map((event) => <EventCard key={event.id} event={event} />)
+              filteredEvents.map((event) => <EventCard key={event.id} event={event} />)
             )}
           </TabsContent>
         </Tabs>
