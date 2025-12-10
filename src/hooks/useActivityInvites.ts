@@ -157,7 +157,7 @@ export function useActivityInvites() {
     // Get invite details first
     const { data: invite } = await supabase
       .from('activity_invites')
-      .select('sender_id, activity_name')
+      .select('sender_id, activity_name, activity_type, proposed_time')
       .eq('id', inviteId)
       .single();
 
@@ -179,6 +179,7 @@ export function useActivityInvites() {
 
         const accepterName = accepterProfile?.full_name || accepterProfile?.username || 'Someone';
 
+        // Send in-app notification
         await supabase.functions.invoke('create-notification', {
           body: {
             userId: invite.sender_id,
@@ -186,6 +187,17 @@ export function useActivityInvites() {
             title: 'Invite Accepted!',
             message: `${accepterName} accepted your invite to ${invite.activity_name}!`,
             data: { inviteId, activityName: invite.activity_name },
+          },
+        });
+
+        // Send email notification
+        await supabase.functions.invoke('send-invite-accepted-email', {
+          body: {
+            senderId: invite.sender_id,
+            accepterName,
+            activityName: invite.activity_name,
+            activityType: invite.activity_type,
+            proposedTime: invite.proposed_time,
           },
         });
       } catch (notifyError) {
