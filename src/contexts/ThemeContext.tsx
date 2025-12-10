@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { usePreferences } from './PreferencesContext';
 
 export type ThemeName = 
   | 'night' 
@@ -30,35 +31,39 @@ const themes: { name: ThemeName; label: string; description: string }[] = [
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const { preferences, updatePreferences, loading } = usePreferences();
   const [theme, setThemeState] = useState<ThemeName>('night');
 
+  // Sync theme from preferences
   useEffect(() => {
-    // Load theme from localStorage on mount
-    const savedTheme = localStorage.getItem('pulse-theme') as ThemeName | null;
-    if (savedTheme && themes.some(t => t.name === savedTheme)) {
-      setThemeState(savedTheme);
+    if (!loading && preferences.theme) {
+      const savedTheme = preferences.theme as ThemeName;
+      if (themes.some(t => t.name === savedTheme)) {
+        setThemeState(savedTheme);
+      }
     }
-  }, []);
+  }, [preferences.theme, loading]);
 
+  // Apply theme to DOM
   useEffect(() => {
-    // Remove all theme classes from html
     const root = document.documentElement;
     
     themes.forEach(t => {
       root.classList.remove(`theme-${t.name}`);
     });
     
-    // Add current theme class (night is default, no class needed)
     if (theme !== 'night') {
       root.classList.add(`theme-${theme}`);
     }
     
-    // Save to localStorage
+    // Also save to localStorage for initial load before auth
     localStorage.setItem('pulse-theme', theme);
   }, [theme]);
 
-  const setTheme = (newTheme: ThemeName) => {
+  const setTheme = async (newTheme: ThemeName) => {
     setThemeState(newTheme);
+    // Update in Supabase via preferences context
+    await updatePreferences({ theme: newTheme });
   };
 
   return (
