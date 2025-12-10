@@ -164,7 +164,13 @@ export default function OutAndAbout() {
 
   const EventCard = ({ event }: { event: any }) => {
     const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+    const [popoverOpen, setPopoverOpen] = useState(false);
     const currentDate = event.allDates?.[selectedDateIndex] || event;
+    
+    const handleDateSelect = (index: number) => {
+      setSelectedDateIndex(index);
+      setPopoverOpen(false);
+    };
     
     return (
       <div className="w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all">
@@ -173,7 +179,7 @@ export default function OutAndAbout() {
             <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
             <p className="text-xs font-medium">{currentDate.date}</p>
             {event.additionalDates > 0 && (
-              <Popover>
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <button className="text-[10px] text-primary mt-1 hover:underline cursor-pointer">
                     +{event.additionalDates} more
@@ -185,7 +191,7 @@ export default function OutAndAbout() {
                     {event.allDates?.map((d: any, i: number) => (
                       <button
                         key={i}
-                        onClick={() => setSelectedDateIndex(i)}
+                        onClick={() => handleDateSelect(i)}
                         className={`w-full text-left text-xs px-2 py-1.5 rounded transition-colors ${
                           selectedDateIndex === i 
                             ? 'bg-primary text-primary-foreground' 
