@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useActivityInvites } from '@/hooks/useActivityInvites';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { 
@@ -27,11 +28,15 @@ import {
   Film,
   Loader2,
   Send,
-  Inbox
+  Inbox,
+  CalendarCheck,
+  ExternalLink,
+  Star
 } from 'lucide-react';
 
 export function ActivityInvitesList() {
-  const { receivedInvites, sentInvites, loading, acceptInvite, declineInvite, counterInvite, cancelInvite } = useActivityInvites();
+  const { user } = useAuth();
+  const { receivedInvites, sentInvites, upcomingPlans, loading, acceptInvite, declineInvite, counterInvite, cancelInvite } = useActivityInvites();
   const [counterModal, setCounterModal] = useState<{ id: string; name: string } | null>(null);
   const [counterDate, setCounterDate] = useState('');
   const [counterTime, setCounterTime] = useState('');
@@ -56,7 +61,7 @@ export function ActivityInvitesList() {
     setProcessing(id);
     const { error } = await acceptInvite(id);
     if (error) toast.error(error);
-    else toast.success('Invite accepted!');
+    else toast.success('Invite accepted! Check Upcoming Plans.');
     setProcessing(null);
   };
 
@@ -97,6 +102,30 @@ export function ActivityInvitesList() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
+  const getPartnerInfo = (invite: any) => {
+    if (invite.sender_id === user?.id) {
+      return invite.receiver;
+    }
+    return invite.sender;
+  };
+
+  const getActivityUrl = (invite: any) => {
+    const data = invite.activity_data;
+    if (!data) return null;
+    return data.url || data.link || data.ticketUrl || null;
+  };
+
+  const getActivityDetails = (invite: any) => {
+    const data = invite.activity_data;
+    if (!data) return null;
+    return {
+      image: data.image || data.imageUrl || null,
+      location: data.location || data.venue || data.address || null,
+      rating: data.rating || null,
+      price: data.price || data.priceRange || null,
+    };
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -117,11 +146,107 @@ export function ActivityInvitesList() {
     );
   }
 
-  const hasInvites = receivedInvites.length > 0 || sentInvites.length > 0;
-
   return (
     <>
       <div className="space-y-6">
+        {/* Upcoming Plans - Accepted Invites */}
+        {upcomingPlans.length > 0 && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarCheck className="h-5 w-5 text-primary" />
+                Upcoming Plans
+              </CardTitle>
+              <CardDescription>
+                Confirmed activities with friends
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {upcomingPlans.map((invite) => {
+                  const partner = getPartnerInfo(invite);
+                  const url = getActivityUrl(invite);
+                  const details = getActivityDetails(invite);
+
+                  return (
+                    <div
+                      key={invite.id}
+                      className="p-4 rounded-lg border border-border bg-card space-y-3"
+                    >
+                      {/* Activity header with image if available */}
+                      <div className="flex gap-4">
+                        {details?.image && (
+                          <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                            <img 
+                              src={details.image} 
+                              alt={invite.activity_name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {getActivityIcon(invite.activity_type)}
+                            <h4 className="font-semibold truncate">{invite.activity_name}</h4>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={partner?.avatar_url || undefined} />
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                {getInitials(partner?.full_name || null, partner?.username || null)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>with {partner?.full_name || partner?.username || 'Friend'}</span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(invite.proposed_time), 'EEE, MMM d')}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {format(new Date(invite.proposed_time), 'h:mm a')}
+                            </span>
+                            {details?.rating && (
+                              <span className="flex items-center gap-1">
+                                <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                                {details.rating}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      {details?.location && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate">{details.location}</span>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      {url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => window.open(url, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View Details / Get Tickets
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Received Invites */}
         <Card>
           <CardHeader>
@@ -140,90 +265,126 @@ export function ActivityInvitesList() {
               </p>
             ) : (
               <div className="space-y-3">
-                {receivedInvites.map((invite) => (
-                  <div
-                    key={invite.id}
-                    className="p-4 rounded-lg border border-border bg-card space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={invite.sender?.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {getInitials(invite.sender?.full_name || null, invite.sender?.username || null)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {invite.sender?.full_name || invite.sender?.username || 'Someone'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            invited you to
-                          </p>
+                {receivedInvites.map((invite) => {
+                  const url = getActivityUrl(invite);
+                  const details = getActivityDetails(invite);
+
+                  return (
+                    <div
+                      key={invite.id}
+                      className="p-4 rounded-lg border border-border bg-card space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={invite.sender?.avatar_url || undefined} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {getInitials(invite.sender?.full_name || null, invite.sender?.username || null)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">
+                              {invite.sender?.full_name || invite.sender?.username || 'Someone'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              invited you to
+                            </p>
+                          </div>
+                        </div>
+                        {invite.status === 'countered' && (
+                          <Badge variant="secondary">Counter-Proposal</Badge>
+                        )}
+                      </div>
+
+                      {/* Activity details with image */}
+                      <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                        {details?.image && (
+                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            <img 
+                              src={details.image} 
+                              alt={invite.activity_name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            {getActivityIcon(invite.activity_type)}
+                            <span className="font-medium truncate">{invite.activity_name}</span>
+                          </div>
+                          {details?.location && (
+                            <p className="text-xs text-muted-foreground mt-1 truncate flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {details.location}
+                            </p>
+                          )}
+                          {url && (
+                            <Button
+                              size="sm"
+                              variant="link"
+                              className="h-auto p-0 text-xs mt-1"
+                              onClick={() => window.open(url, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View Details
+                            </Button>
+                          )}
                         </div>
                       </div>
-                      {invite.status === 'countered' && (
-                        <Badge variant="secondary">Counter-Proposal</Badge>
+
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(invite.counter_time || invite.proposed_time), 'MMM d, yyyy')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {format(new Date(invite.counter_time || invite.proposed_time), 'h:mm a')}
+                        </span>
+                      </div>
+
+                      {(invite.message || invite.counter_message) && (
+                        <p className="text-sm italic text-muted-foreground">
+                          "{invite.counter_message || invite.message}"
+                        </p>
                       )}
-                    </div>
 
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                      {getActivityIcon(invite.activity_type)}
-                      <span className="font-medium">{invite.activity_name}</span>
-                    </div>
-
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(invite.counter_time || invite.proposed_time), 'MMM d, yyyy')}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {format(new Date(invite.counter_time || invite.proposed_time), 'h:mm a')}
-                      </span>
-                    </div>
-
-                    {(invite.message || invite.counter_message) && (
-                      <p className="text-sm italic text-muted-foreground">
-                        "{invite.counter_message || invite.message}"
-                      </p>
-                    )}
-
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleAccept(invite.id)}
-                        disabled={processing === invite.id}
-                      >
-                        {processing === invite.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4 mr-1" />
-                        )}
-                        Accept
-                      </Button>
-                      {invite.counter_count < 2 && (
+                      <div className="flex gap-2 pt-2">
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => setCounterModal({ id: invite.id, name: invite.activity_name })}
+                          onClick={() => handleAccept(invite.id)}
                           disabled={processing === invite.id}
                         >
-                          <RotateCcw className="h-4 w-4 mr-1" />
-                          Counter
+                          {processing === invite.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Check className="h-4 w-4 mr-1" />
+                          )}
+                          Accept
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDecline(invite.id)}
-                        disabled={processing === invite.id}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                        {invite.counter_count < 2 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setCounterModal({ id: invite.id, name: invite.activity_name })}
+                            disabled={processing === invite.id}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            Counter
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDecline(invite.id)}
+                          disabled={processing === invite.id}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
