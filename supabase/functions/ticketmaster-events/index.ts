@@ -213,29 +213,24 @@ serve(async (req) => {
         }
       }
 
-      // Check if event matches user interests with STRICT mappings
-      const eventType = (event.classifications?.[0]?.segment?.name || "").toLowerCase();
+      // Check if event matches user interests - STRICT matching only on Ticketmaster classification data
+      const eventSegment = (event.classifications?.[0]?.segment?.name || "").toLowerCase();
       const eventGenre = (event.classifications?.[0]?.genre?.name || "").toLowerCase();
       const eventSubGenre = (event.classifications?.[0]?.subGenre?.name || "").toLowerCase();
-      const eventName = (event.name || "").toLowerCase();
       
       let matchReason = "";
       let isInterestMatch = false;
       
-      // Define strict interest-to-event mappings (no overlaps)
-      const interestMappings: Record<string, { segments: string[], genres: string[], keywords: string[] }> = {
-        "music": { segments: ["music"], genres: ["rock", "pop", "hip-hop", "r&b", "country", "jazz", "classical", "electronic", "latin"], keywords: ["concert", "live music", "tour"] },
-        "sports": { segments: ["sports"], genres: ["football", "basketball", "baseball", "hockey", "soccer", "tennis", "golf", "boxing", "mma", "wrestling"], keywords: ["game", "match", "championship"] },
-        "comedy": { segments: [], genres: ["comedy"], keywords: ["comedy", "stand-up", "comedian", "funny"] },
-        "theater": { segments: ["arts & theatre"], genres: ["theatre", "broadway", "musical", "play", "opera", "ballet"], keywords: ["stage", "performance"] },
-        "movies": { segments: ["film"], genres: ["film", "screening", "premiere"], keywords: ["movie", "film", "cinema"] },
-        "art": { segments: [], genres: ["art", "fine art", "exhibition"], keywords: ["art show", "gallery", "exhibition", "artist"] },
-        "tech": { segments: [], genres: ["technology", "innovation"], keywords: ["tech", "hackathon", "startup", "developer", "coding"] },
-        "gaming": { segments: [], genres: ["gaming", "esports"], keywords: ["esports", "gaming", "tournament", "video game"] },
-        "food": { segments: [], genres: ["food & drink", "culinary"], keywords: ["food", "tasting", "chef", "culinary", "wine"] },
-        "fitness": { segments: [], genres: ["fitness", "wellness"], keywords: ["marathon", "run", "fitness", "yoga", "workout"] },
-        "nightlife": { segments: [], genres: ["club", "dance"], keywords: ["club", "party", "dj", "rave"] },
-        "family": { segments: ["family"], genres: ["children", "family"], keywords: ["kids", "family", "children"] }
+      // Define strict interest-to-event mappings - ONLY match on official Ticketmaster classifications
+      const interestMappings: Record<string, { segments: string[], genres: string[] }> = {
+        "music": { segments: ["music"], genres: ["rock", "pop", "hip-hop", "r&b", "country", "jazz", "classical", "electronic", "latin", "alternative", "metal", "indie"] },
+        "sports": { segments: ["sports"], genres: ["basketball", "football", "baseball", "hockey", "soccer", "tennis", "golf", "boxing", "mma", "wrestling", "nba", "nfl", "mlb", "nhl"] },
+        "comedy": { segments: [], genres: ["comedy"] },
+        "theater": { segments: ["arts & theatre"], genres: ["theatre", "broadway", "musical", "play", "opera", "ballet", "dance"] },
+        "movies": { segments: ["film"], genres: ["film", "screening"] },
+        "art": { segments: [], genres: ["art", "fine art", "exhibition"] },
+        "gaming": { segments: [], genres: ["gaming", "esports"] },
+        "family": { segments: [], genres: ["children", "family", "circus", "ice shows"] }
       };
       
       if (validInterests?.length) {
@@ -244,18 +239,15 @@ serve(async (req) => {
           const mapping = interestMappings[interestLower];
           
           if (!mapping) {
-            // Fallback: direct match only
-            return eventType.includes(interestLower) || 
-                   eventGenre.includes(interestLower) ||
-                   eventName.includes(interestLower);
+            // No mapping for this interest - don't try to match loosely
+            return false;
           }
           
-          // Check segments
-          if (mapping.segments.some(seg => eventType.includes(seg))) return true;
-          // Check genres
-          if (mapping.genres.some(gen => eventGenre.includes(gen) || eventSubGenre.includes(gen))) return true;
-          // Check keywords in event name
-          if (mapping.keywords.some(kw => eventName.includes(kw))) return true;
+          // Check segments (exact match)
+          if (mapping.segments.some(seg => eventSegment === seg)) return true;
+          
+          // Check genres (exact match or contains for compound genres like "Hip-Hop/Rap")
+          if (mapping.genres.some(gen => eventGenre === gen || eventGenre.includes(gen) || eventSubGenre === gen || eventSubGenre.includes(gen))) return true;
           
           return false;
         });
