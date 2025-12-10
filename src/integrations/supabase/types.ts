@@ -594,6 +594,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      search_public_profiles: {
+        Args: { search_query: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          user_id: string
+          username: string
+          verified: boolean
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
