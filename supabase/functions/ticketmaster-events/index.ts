@@ -295,6 +295,14 @@ serve(async (req) => {
       return a.rawDate.localeCompare(b.rawDate);
     });
 
+    // Log all event categories for debugging
+    console.log("Event categories returned:", deduplicatedEvents.map((e: any) => ({
+      title: e.title.substring(0, 30),
+      type: e.type,
+      genre: e.genre,
+      subGenre: e.subGenre
+    })));
+
     return new Response(
       JSON.stringify({ 
         success: true,
