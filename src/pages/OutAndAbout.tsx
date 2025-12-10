@@ -8,6 +8,7 @@ import { Loader2, Utensils, MapPin, Calendar, Star, Navigation, UserPlus } from 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getFoodPlaces, getThingsToDo, getEvents } from '@/services/placesService';
 
 // Helper function to open location in maps
@@ -168,7 +169,22 @@ export default function OutAndAbout() {
           <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-xs font-medium">{event.date}</p>
           {event.additionalDates > 0 && (
-            <p className="text-[10px] text-primary mt-1">+{event.additionalDates} more</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="text-[10px] text-primary mt-1 hover:underline cursor-pointer">
+                  +{event.additionalDates} more
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="start">
+                <p className="text-xs font-medium mb-2">All dates:</p>
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  <p className="text-xs text-muted-foreground">{event.date} · {event.time}</p>
+                  {event.allDates?.map((d: any, i: number) => (
+                    <p key={i} className="text-xs text-muted-foreground">{d.date} · {d.time}</p>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
         <div className="flex-1">
