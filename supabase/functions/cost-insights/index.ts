@@ -28,32 +28,58 @@ serve(async (req) => {
 
     console.log(`Fetching cost insights for ${location}, household: ${household}`);
 
-    const systemPrompt = `You are a cost of living expert. Provide accurate, realistic monthly cost estimates based on current 2024-2025 data. Be specific to the location provided.`;
+    const currentDate = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    const userPrompt = `For a ${household} household living in ${location}, provide cost of living insights.
+    const systemPrompt = `You are a cost of living analyst with access to current economic data. Your estimates must be based on:
+- Bureau of Labor Statistics (BLS) Consumer Price Index data
+- Council for Community and Economic Research (C2ER) Cost of Living Index
+- Regional price parities from the Bureau of Economic Analysis
+- Current local utility rates, gas prices, and grocery store averages
 
-Return a JSON object with this exact structure:
+Be precise and conservative. Use real-world price ranges, not rounded estimates. Account for regional variations within cities.`;
+
+    const userPrompt = `Provide accurate monthly cost estimates for a ${household} household in ${location} as of ${currentDate}.
+
+IMPORTANT: Base your estimates on actual regional data, not national averages. Consider:
+- Local grocery chains and their typical prices (H-E-B, Kroger, Walmart, etc.)
+- Current gas prices in the region (check AAA averages for the state)
+- Local utility providers and their current rates
+- Regional restaurant pricing (fast food vs casual dining averages)
+- Local entertainment costs (movies, streaming, activities)
+
+For household type "${household}":
+- Single adult: 1 person
+- Couple: 2 adults
+- Family: 2 adults + 2 children
+- Adjust quantities accordingly
+
+Return ONLY a JSON object with this exact structure:
 {
   "insights": [
     {
       "category": "Groceries",
-      "averageCost": <number - monthly average in USD>,
-      "trend": "<up|down|stable>",
-      "tip": "<specific money-saving tip for this category in this location>"
+      "averageCost": <precise monthly average in USD based on regional grocery prices>,
+      "trend": "<up|down|stable based on recent 6-month price trends>",
+      "tip": "<specific local tip mentioning actual stores or strategies for this area>"
     }
   ],
   "budgetTips": [
     {
-      "title": "<actionable tip title>",
-      "savings": "<estimated monthly savings like $50/mo>",
-      "description": "<specific description of how to implement>"
+      "title": "<specific actionable tip>",
+      "savings": "<realistic monthly savings estimate>",
+      "description": "<detailed implementation specific to ${location}>"
     }
   ]
 }
 
-Include these 5 categories in insights: Groceries, Gas, Dining Out, Utilities, Entertainment.
-Include 3-4 personalized budget tips based on the location's cost of living.
-Make all numbers realistic for ${location} in 2024-2025.`;
+Categories to include with regional accuracy:
+1. Groceries - based on local supermarket prices (mention specific chains if relevant)
+2. Gas - use current state average gas price × typical monthly usage (single: 40gal, couple: 60gal, family: 80gal)
+3. Dining Out - mix of fast food ($10-15) and casual dining ($20-35 per person)
+4. Utilities - electric, water, gas, internet based on local provider rates
+5. Entertainment - streaming services, movies, local activities
+
+Include 3-4 budget tips specific to ${location} (mention local resources, discount stores, programs).`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -62,12 +88,12 @@ Make all numbers realistic for ${location} in 2024-2025.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
