@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Loader2, Send, Users, Calendar, Clock, Search } from 'lucide-react';
+import { Loader2, Send, Users, Calendar, Clock, Search, Check, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 interface InviteFriendModalProps {
@@ -38,12 +39,29 @@ export function InviteFriendModal({
   const { friends, loading: friendsLoading } = useFriends();
   const { sendInvite } = useActivityInvites();
   
-  const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [proposedDate, setProposedDate] = useState('');
   const [proposedTime, setProposedTime] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
+
+  // Toggle friend selection
+  const toggleFriend = (friendId: string) => {
+    setSelectedFriends(prev => 
+      prev.includes(friendId)
+        ? prev.filter(id => id !== friendId)
+        : [...prev, friendId]
+    );
+  };
+
+  // Get selected friend names for display
+  const getSelectedFriendNames = () => {
+    return selectedFriends.map(id => {
+      const friendship = friends.find(f => f.friend?.user_id === id);
+      return friendship?.friend?.full_name || friendship?.friend?.username || 'Unknown';
+    });
+  };
 
   // Filter friends by search term
   const filteredFriends = friends.filter((friendship) => {
@@ -57,8 +75,8 @@ export function InviteFriendModal({
   });
 
   const handleSend = async () => {
-    if (!selectedFriend || !proposedDate || !proposedTime) {
-      toast.error('Please select a friend and set a date/time');
+    if (selectedFriends.length === 0 || !proposedDate || !proposedTime) {
+      toast.error('Please select at least one friend and set a date/time');
       return;
     }
 
@@ -69,27 +87,39 @@ export function InviteFriendModal({
     }
 
     setSending(true);
-    const { error } = await sendInvite(
-      selectedFriend,
-      activityType,
-      activityName,
-      activityData,
-      dateTime,
-      message
+    
+    // Send invites to all selected friends
+    const results = await Promise.all(
+      selectedFriends.map(friendId => 
+        sendInvite(
+          friendId,
+          activityType,
+          activityName,
+          activityData,
+          dateTime,
+          message
+        )
+      )
     );
 
-    if (error) {
-      toast.error(error);
-    } else {
-      toast.success('Invite sent!');
+    const errors = results.filter(r => r.error);
+    const successes = results.filter(r => !r.error);
+
+    if (successes.length > 0) {
+      toast.success(`Invite${successes.length > 1 ? 's' : ''} sent to ${successes.length} friend${successes.length > 1 ? 's' : ''}!`);
       onOpenChange(false);
       resetForm();
     }
+    
+    if (errors.length > 0) {
+      toast.error(`Failed to send ${errors.length} invite${errors.length > 1 ? 's' : ''}`);
+    }
+    
     setSending(false);
   };
 
   const resetForm = () => {
-    setSelectedFriend(null);
+    setSelectedFriends([]);
     setProposedDate('');
     setProposedTime('');
     setMessage('');
@@ -111,17 +141,46 @@ export function InviteFriendModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
-            Invite a Friend
+            Invite Friends
           </DialogTitle>
           <DialogDescription>
-            Invite a friend to {activityName}
+            Invite friends to {activityName}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Friend Selection */}
           <div className="space-y-2">
-            <Label>Select Friend</Label>
+            <div className="flex items-center justify-between">
+              <Label>Select Friends</Label>
+              {selectedFriends.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {selectedFriends.length} selected
+                </Badge>
+              )}
+            </div>
+            
+            {/* Selected friends chips */}
+            {selectedFriends.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {getSelectedFriendNames().map((name, idx) => (
+                  <Badge 
+                    key={selectedFriends[idx]} 
+                    variant="outline" 
+                    className="bg-primary/10 border-primary/30 pr-1"
+                  >
+                    {name}
+                    <button
+                      onClick={() => toggleFriend(selectedFriends[idx])}
+                      className="ml-1 hover:bg-primary/20 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            
             {friendsLoading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -156,18 +215,25 @@ export function InviteFriendModal({
                         const friend = friendship.friend;
                         if (!friend) return null;
                         
-                        const isSelected = selectedFriend === friend.user_id;
+                        const isSelected = selectedFriends.includes(friend.user_id);
                         
                         return (
                           <button
                             key={friendship.id}
-                            onClick={() => setSelectedFriend(friend.user_id)}
+                            onClick={() => toggleFriend(friend.user_id)}
                             className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
                               isSelected 
                                 ? 'bg-primary/10 border border-primary/30' 
-                                : 'hover:bg-muted'
+                                : 'hover:bg-muted border border-transparent'
                             }`}
                           >
+                            <div className={`flex items-center justify-center h-5 w-5 rounded border ${
+                              isSelected 
+                                ? 'bg-primary border-primary' 
+                                : 'border-muted-foreground/30'
+                            }`}>
+                              {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                            </div>
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={friend.avatar_url || undefined} />
                               <AvatarFallback className="bg-primary/10 text-primary text-xs">
@@ -235,14 +301,15 @@ export function InviteFriendModal({
           </Button>
           <Button
             onClick={handleSend}
-            disabled={!selectedFriend || !proposedDate || !proposedTime || sending}
+            disabled={selectedFriends.length === 0 || !proposedDate || !proposedTime || sending}
           >
             {sending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Send className="h-4 w-4 mr-2" />
             )}
-            Send Invite
+            Send Invite{selectedFriends.length > 1 ? 's' : ''}
+            {selectedFriends.length > 1 && ` (${selectedFriends.length})`}
           </Button>
         </div>
       </DialogContent>
