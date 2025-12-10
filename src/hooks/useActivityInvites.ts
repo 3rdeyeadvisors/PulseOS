@@ -32,6 +32,7 @@ export function useActivityInvites() {
   const { user } = useAuth();
   const [receivedInvites, setReceivedInvites] = useState<ActivityInvite[]>([]);
   const [sentInvites, setSentInvites] = useState<ActivityInvite[]>([]);
+  const [upcomingPlans, setUpcomingPlans] = useState<ActivityInvite[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchReceivedInvites = useCallback(async () => {
@@ -64,6 +65,25 @@ export function useActivityInvites() {
       .order('created_at', { ascending: false });
 
     setSentInvites((data || []) as unknown as ActivityInvite[]);
+  }, [user]);
+
+  const fetchUpcomingPlans = useCallback(async () => {
+    if (!user) return;
+
+    // Fetch accepted invites where user is sender or receiver
+    const { data } = await supabase
+      .from('activity_invites')
+      .select(`
+        *,
+        sender:profiles!activity_invites_sender_id_fkey(user_id, username, full_name, avatar_url),
+        receiver:profiles!activity_invites_receiver_id_fkey(user_id, username, full_name, avatar_url)
+      `)
+      .eq('status', 'accepted')
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .gte('proposed_time', new Date().toISOString())
+      .order('proposed_time', { ascending: true });
+
+    setUpcomingPlans((data || []) as unknown as ActivityInvite[]);
   }, [user]);
 
   const sendInvite = async (
@@ -132,6 +152,15 @@ export function useActivityInvites() {
   };
 
   const acceptInvite = async (inviteId: string) => {
+    if (!user) return { error: 'Not authenticated' };
+
+    // Get invite details first
+    const { data: invite } = await supabase
+      .from('activity_invites')
+      .select('sender_id, activity_name')
+      .eq('id', inviteId)
+      .single();
+
     const { error } = await supabase
       .from('activity_invites')
       .update({ status: 'accepted' })
@@ -139,7 +168,32 @@ export function useActivityInvites() {
 
     if (error) return { error: error.message };
 
-    await fetchReceivedInvites();
+    // Notify the sender that their invite was accepted
+    if (invite) {
+      try {
+        const { data: accepterProfile } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('user_id', user.id)
+          .single();
+
+        const accepterName = accepterProfile?.full_name || accepterProfile?.username || 'Someone';
+
+        await supabase.functions.invoke('create-notification', {
+          body: {
+            userId: invite.sender_id,
+            type: 'system',
+            title: 'Invite Accepted!',
+            message: `${accepterName} accepted your invite to ${invite.activity_name}!`,
+            data: { inviteId, activityName: invite.activity_name },
+          },
+        });
+      } catch (notifyError) {
+        console.error('Failed to send acceptance notification:', notifyError);
+      }
+    }
+
+    await Promise.all([fetchReceivedInvites(), fetchUpcomingPlans()]);
     return { error: null };
   };
 
@@ -209,24 +263,25 @@ export function useActivityInvites() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchReceivedInvites(), fetchSentInvites()]);
+      await Promise.all([fetchReceivedInvites(), fetchSentInvites(), fetchUpcomingPlans()]);
       setLoading(false);
     };
 
     if (user) {
       loadData();
     }
-  }, [user, fetchReceivedInvites, fetchSentInvites]);
+  }, [user, fetchReceivedInvites, fetchSentInvites, fetchUpcomingPlans]);
 
   return {
     receivedInvites,
     sentInvites,
+    upcomingPlans,
     loading,
     sendInvite,
     acceptInvite,
     declineInvite,
     counterInvite,
     cancelInvite,
-    refreshInvites: () => Promise.all([fetchReceivedInvites(), fetchSentInvites()]),
+    refreshInvites: () => Promise.all([fetchReceivedInvites(), fetchSentInvites(), fetchUpcomingPlans()]),
   };
 }
