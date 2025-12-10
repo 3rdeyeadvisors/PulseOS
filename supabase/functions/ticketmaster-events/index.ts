@@ -210,17 +210,17 @@ serve(async (req) => {
         const min = standardPrice.min;
         const max = standardPrice.max;
         if (min && max) {
-          priceStr = min === max ? `$${Math.round(min)}` : `$${Math.round(min)} - $${Math.round(max)}`;
+          priceStr = min === max ? `$${min}` : `$${min} - $${max}`;
         } else if (min) {
-          priceStr = `From $${Math.round(min)}`;
+          priceStr = `From $${min}`;
         } else if (max) {
-          priceStr = `Up to $${Math.round(max)}`;
+          priceStr = `Up to $${max}`;
         }
       } else if (event.products && event.products.length > 0) {
         // Fallback to products array if available
         const product = event.products[0];
         if (product.price) {
-          priceStr = `$${Math.round(product.price)}`;
+          priceStr = `$${product.price}`;
         }
       }
       
