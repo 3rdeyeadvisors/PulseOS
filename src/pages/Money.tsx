@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
-import { Loader2, Fuel, TrendingDown, TrendingUp, Minus, Lightbulb, DollarSign, Info } from 'lucide-react';
+import { Loader2, Fuel, TrendingDown, TrendingUp, Lightbulb, DollarSign, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getGasPrices } from '@/services/gasService';
 import { getCostInsightsWithBudget } from '@/services/costOfLivingService';
 
@@ -17,6 +18,7 @@ export default function Money() {
   const [budgetTips, setBudgetTips] = useState<any[]>([]);
   const [gasLoading, setGasLoading] = useState(true);
   const [costLoading, setCostLoading] = useState(true);
+  const [selectedInsight, setSelectedInsight] = useState<any | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -200,14 +202,18 @@ export default function Money() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 max-h-64 overflow-y-auto pr-1">
               {costInsights.map((insight) => (
-                <div key={insight.category} className="p-3 rounded-lg bg-secondary/30">
+                <button
+                  key={insight.category}
+                  onClick={() => setSelectedInsight(insight)}
+                  className="p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors text-left cursor-pointer"
+                >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium truncate">{insight.category}</span>
                     {getTrendIcon(insight.trend)}
                   </div>
                   <p className="text-lg font-bold">${insight.averageCost}/mo</p>
                   <p className="text-xs text-muted-foreground line-clamp-2">{insight.tip}</p>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -239,6 +245,35 @@ export default function Money() {
             </div>
           )}
         </div>
+
+        {/* Cost Insight Detail Dialog */}
+        <Dialog open={!!selectedInsight} onOpenChange={() => setSelectedInsight(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-primary" />
+                {selectedInsight?.category}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Monthly Average</span>
+                <span className="text-2xl font-bold">${selectedInsight?.averageCost}/mo</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Trend:</span>
+                <span className="flex items-center gap-1 capitalize">
+                  {getTrendIcon(selectedInsight?.trend)}
+                  {selectedInsight?.trend}
+                </span>
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/30">
+                <p className="text-sm font-medium mb-1">Money-Saving Tip</p>
+                <p className="text-sm text-muted-foreground">{selectedInsight?.tip}</p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );
