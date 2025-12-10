@@ -1,8 +1,52 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music } from 'lucide-react';
+import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music, Loader2 } from 'lucide-react';
 
 export default function Index() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Redirect authenticated users to app or onboarding
+  useEffect(() => {
+    const checkAndRedirect = async () => {
+      if (user && !loading) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (profile?.onboarding_completed) {
+          navigate('/app', { replace: true });
+        } else {
+          navigate('/onboarding', { replace: true });
+        }
+      }
+    };
+    
+    checkAndRedirect();
+  }, [user, loading, navigate]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If user exists, show loading while redirecting
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
