@@ -167,6 +167,9 @@ export default function OutAndAbout() {
         <div className="p-3 rounded-lg bg-primary/10 text-center shrink-0">
           <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-xs font-medium">{event.date}</p>
+          {event.additionalDates > 0 && (
+            <p className="text-[10px] text-primary mt-1">+{event.additionalDates} more</p>
+          )}
         </div>
         <div className="flex-1">
           <h3 className="font-semibold">{event.title}</h3>
