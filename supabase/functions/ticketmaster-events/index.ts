@@ -235,6 +235,8 @@ serve(async (req) => {
         id: event.id,
         title: event.name,
         type: event.classifications?.[0]?.segment?.name || "Event",
+        genre: event.classifications?.[0]?.genre?.name || "",
+        subGenre: event.classifications?.[0]?.subGenre?.name || "",
         date: dateStr,
         rawDate: startDate?.localDate || "9999-99-99", // For sorting
         time: timeStr,
