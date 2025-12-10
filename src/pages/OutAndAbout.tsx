@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { InviteFriendModal } from '@/components/social/InviteFriendModal';
-import { Loader2, Utensils, MapPin, Calendar, Star, Navigation, UserPlus } from 'lucide-react';
+import { Loader2, Utensils, MapPin, Calendar, Star, Navigation, UserPlus, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -63,6 +63,7 @@ export default function OutAndAbout() {
   const [events, setEvents] = useState<any[]>([]);
   const [eventCategory, setEventCategory] = useState('all');
   const [dataLoading, setDataLoading] = useState(true);
+  const [eventsRefreshing, setEventsRefreshing] = useState(false);
   const [inviteModal, setInviteModal] = useState<{
     open: boolean;
     type: string;
@@ -143,6 +144,31 @@ export default function OutAndAbout() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user]);
+
+  // Manual refresh for events
+  const refreshEvents = async () => {
+    if (!user) return;
+    setEventsRefreshing(true);
+    try {
+      const [{ data: profile }, { data: prefs }] = await Promise.all([
+        supabase.from('profiles').select('city, state, zip_code').eq('user_id', user.id).maybeSingle(),
+        supabase.from('preferences').select('interests').eq('user_id', user.id).maybeSingle(),
+      ]);
+      const location = {
+        city: profile?.city || 'New York',
+        state: profile?.state || '',
+        zipCode: profile?.zip_code || '',
+      };
+      const interests = (prefs?.interests as string[]) || [];
+      const evts = await getEvents(location, interests);
+      setEvents(evts);
+      console.log('Refreshed events:', evts.map((e: any) => ({ title: e.title, type: e.type, genre: e.genre })));
+    } catch (err) {
+      console.error('Error refreshing events:', err);
+    } finally {
+      setEventsRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -243,7 +269,12 @@ export default function OutAndAbout() {
             )}
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold">{event.title}</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold">{event.title}</h3>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                {event.type}{event.genre ? ` · ${event.genre}` : ''}
+              </span>
+            </div>
             <p className="text-sm text-muted-foreground">{currentDate.time} · {event.location}</p>
             {event.matchReason && (
               <p className="text-xs text-primary mt-1">{event.matchReason}</p>
@@ -320,21 +351,32 @@ export default function OutAndAbout() {
           </TabsContent>
 
           <TabsContent value="events" className="mt-4 space-y-3">
-            {/* Category filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-              {EVENT_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.value}
-                  onClick={() => setEventCategory(cat.value)}
-                  className={`px-3 py-1.5 text-xs rounded-full whitespace-nowrap transition-colors ${
-                    eventCategory === cat.value
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
+            {/* Category filters with refresh */}
+            <div className="flex items-center gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 flex-1">
+                {EVENT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setEventCategory(cat.value)}
+                    className={`px-3 py-1.5 text-xs rounded-full whitespace-nowrap transition-colors ${
+                      eventCategory === cat.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={refreshEvents}
+                disabled={eventsRefreshing}
+                className="shrink-0"
+              >
+                <RefreshCw className={`h-4 w-4 ${eventsRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
             
             {dataLoading ? (
