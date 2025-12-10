@@ -166,17 +166,20 @@ serve(async (req) => {
           return false;
         }
 
-        // Check for valid ticket URL - only include events with real purchasable tickets
-        const hasValidUrl = (
-          (event.url && event.url.startsWith('http')) ||
-          (event.outlets && event.outlets[0]?.url && event.outlets[0].url.startsWith('http')) ||
-          (event._links?.purchase?.href && event._links.purchase.href.startsWith('http'))
-        );
+        // Get the best available URL for this event
+        const ticketUrl = 
+          (event.url && event.url.startsWith('http') ? event.url : null) ||
+          (event.outlets?.[0]?.url && event.outlets[0].url.startsWith('http') ? event.outlets[0].url : null) ||
+          (event._links?.purchase?.href && event._links.purchase.href.startsWith('http') ? event._links.purchase.href : null) ||
+          (event.id ? `https://www.ticketmaster.com/event/${event.id}` : null);
 
-        if (!hasValidUrl) {
+        if (!ticketUrl) {
           console.log(`FILTERED (no URL): ${event.name}`);
           return false;
         }
+        
+        // Store the URL on the event for later use
+        event._resolvedUrl = ticketUrl;
 
         console.log(`KEPT: ${event.name}`);
         return true;
@@ -274,22 +277,8 @@ serve(async (req) => {
         }
       }
 
-      // Get ticket URL - try multiple sources and ensure it's valid
-      let ticketUrl: string = '';
-      
-      // Priority order: direct URL, outlets, purchase link, constructed URL
-      if (event.url && event.url.startsWith('http')) {
-        ticketUrl = event.url;
-      } else if (event.outlets?.[0]?.url && event.outlets[0].url.startsWith('http')) {
-        ticketUrl = event.outlets[0].url;
-      } else if (event._links?.purchase?.href && event._links.purchase.href.startsWith('http')) {
-        ticketUrl = event._links.purchase.href;
-      } else {
-        // Construct Ticketmaster URL as fallback
-        ticketUrl = `https://www.ticketmaster.com/event/${event.id}`;
-      }
-      
-      console.log(`Event URL for "${event.name}": ${ticketUrl}`);
+      // Use the pre-resolved URL from the filter step
+      const ticketUrl = event._resolvedUrl;
 
       return {
         id: event.id,
