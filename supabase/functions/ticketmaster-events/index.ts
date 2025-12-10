@@ -200,17 +200,33 @@ serve(async (req) => {
         timeStr = `${hour12}:${minutes} ${ampm}`;
       }
 
-      // Get price range
+      // Get price range - check multiple sources
       let priceStr = "See Tickets";
       const priceRanges = event.priceRanges;
+      
       if (priceRanges && priceRanges.length > 0) {
-        const min = priceRanges[0].min;
-        const max = priceRanges[0].max;
+        // Find the best price range (prefer type "standard" if available)
+        const standardPrice = priceRanges.find((p: any) => p.type === 'standard') || priceRanges[0];
+        const min = standardPrice.min;
+        const max = standardPrice.max;
         if (min && max) {
-          priceStr = min === max ? `$${min}` : `$${min} - $${max}`;
+          priceStr = min === max ? `$${Math.round(min)}` : `$${Math.round(min)} - $${Math.round(max)}`;
         } else if (min) {
-          priceStr = `From $${min}`;
+          priceStr = `From $${Math.round(min)}`;
+        } else if (max) {
+          priceStr = `Up to $${Math.round(max)}`;
         }
+      } else if (event.products && event.products.length > 0) {
+        // Fallback to products array if available
+        const product = event.products[0];
+        if (product.price) {
+          priceStr = `$${Math.round(product.price)}`;
+        }
+      }
+      
+      // Log price info for debugging
+      if (priceStr === "See Tickets") {
+        console.log(`No price for: ${event.name} - priceRanges:`, event.priceRanges);
       }
 
       // Check if event matches user interests - STRICT matching only on Ticketmaster classification data
