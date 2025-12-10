@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Check, Trash2, X, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -25,9 +26,55 @@ interface Notification {
 
 export function NotificationBell() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+
+  // Get the route to navigate based on notification type and data
+  const getNotificationRoute = (notification: Notification): string | null => {
+    const { type, data } = notification;
+    
+    switch (type) {
+      case 'welcome':
+        return '/today';
+      case 'daily_digest':
+        return '/today';
+      case 'event_reminder':
+        return '/out-and-about';
+      case 'task_reminder':
+        return '/today';
+      case 'weather_alert':
+        return '/today';
+      case 'new_recommendation':
+        return '/today';
+      case 'system':
+        // Check data for specific navigation
+        if (data?.senderId || data?.senderUsername) {
+          return '/friends'; // Friend request notification
+        }
+        if (data?.route) {
+          return data.route; // Custom route in data
+        }
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read if not already
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+    
+    // Navigate to the relevant page
+    const route = getNotificationRoute(notification);
+    if (route) {
+      setOpen(false); // Close the popover
+      navigate(route);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -225,51 +272,58 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={cn(
-                    'px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer relative group',
-                    !notification.read && 'bg-primary/5'
-                  )}
-                  onClick={() => !notification.read && markAsRead(notification.id)}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-lg flex-shrink-0">
-                      {getTypeIcon(notification.type)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        'text-sm font-medium truncate',
-                        !notification.read && 'text-foreground',
-                        notification.read && 'text-muted-foreground'
-                      )}>
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground/60 mt-1">
-                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                    {!notification.read && (
-                      <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />
+              {notifications.map((notification) => {
+                const hasRoute = !!getNotificationRoute(notification);
+                return (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      'px-4 py-3 hover:bg-muted/50 transition-colors relative group',
+                      !notification.read && 'bg-primary/5',
+                      hasRoute && 'cursor-pointer'
                     )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg flex-shrink-0">
+                        {getTypeIcon(notification.type)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          'text-sm font-medium truncate',
+                          !notification.read && 'text-foreground',
+                          notification.read && 'text-muted-foreground'
+                        )}>
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">
+                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                      {hasRoute && (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 flex-shrink-0 mt-1" />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      {!notification.read && (
+                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
