@@ -40,40 +40,70 @@ serve(async (req) => {
     today.setHours(0, 0, 0, 0); // Start of today
     const startDateTime = today.toISOString().replace('.000Z', 'Z');
 
-    // Build the API URL - search without keyword filters to get more results
     const baseUrl = "https://app.ticketmaster.com/discovery/v2/events.json";
-    const params = new URLSearchParams({
-      apikey: API_KEY,
-      city: city,
-      radius: radius.toString(),
-      unit: "miles",
-      size: "30", // Request more events
-      sort: "date,asc",
-      startDateTime: startDateTime // Only fetch events from today onwards
+    
+    // Fetch events from different segments to get variety (Sports, Music, Arts, etc.)
+    const segments = [
+      { id: "KZFzniwnSyZfZ7v7nE", name: "Sports" },
+      { id: "KZFzniwnSyZfZ7v7nJ", name: "Music" },
+      { id: "KZFzniwnSyZfZ7v7na", name: "Arts & Theatre" },
+      { id: "KZFzniwnSyZfZ7v7nn", name: "Film" },
+      { id: "KZFzniwnSyZfZ7v7n1", name: "Miscellaneous" }
+    ];
+
+    const stateCode = state ? getStateCode(state) : '';
+    
+    // Fetch events from each segment in parallel
+    const fetchPromises = segments.map(async (segment) => {
+      const params = new URLSearchParams({
+        apikey: API_KEY,
+        city: city,
+        radius: radius.toString(),
+        unit: "miles",
+        size: "20",
+        sort: "date,asc",
+        startDateTime: startDateTime,
+        segmentId: segment.id
+      });
+      
+      if (stateCode) {
+        params.append("stateCode", stateCode);
+      }
+
+      const url = `${baseUrl}?${params.toString()}`;
+      console.log(`Fetching ${segment.name} from:`, url.replace(API_KEY, "***"));
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error(`Ticketmaster API error for ${segment.name}:`, response.status);
+          return [];
+        }
+        const data = await response.json();
+        const segmentEvents = data._embedded?.events || [];
+        console.log(`${segment.name} events received:`, segmentEvents.length);
+        return segmentEvents;
+      } catch (err) {
+        console.error(`Error fetching ${segment.name}:`, err);
+        return [];
+      }
     });
 
-    // Add state if provided
-    if (state) {
-      params.append("stateCode", getStateCode(state));
+    const allSegmentResults = await Promise.all(fetchPromises);
+    
+    // Combine and deduplicate by event ID
+    const seenIds = new Set<string>();
+    const events: any[] = [];
+    for (const segmentEvents of allSegmentResults) {
+      for (const event of segmentEvents) {
+        if (!seenIds.has(event.id)) {
+          seenIds.add(event.id);
+          events.push(event);
+        }
+      }
     }
-
-    // Don't filter by interests - get all events and let the user browse
-
-    const url = `${baseUrl}?${params.toString()}`;
-    console.log("Fetching from:", url.replace(API_KEY, "***"));
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Ticketmaster API error:", response.status, errorText);
-      throw new Error(`Ticketmaster API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Ticketmaster response received, events:", data._embedded?.events?.length || 0);
-
-    const events = data._embedded?.events || [];
+    
+    console.log("Total unique events after combining segments:", events.length);
 
     // Keywords to filter out internal/sponsor events
     const internalKeywords = [
