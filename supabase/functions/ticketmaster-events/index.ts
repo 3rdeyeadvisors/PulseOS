@@ -93,6 +93,15 @@ serve(async (req) => {
 
     console.log(`Current time in ${timezone}: ${userNow.toISOString()}, ${currentHours}:${currentMinutes}`);
 
+    // Log all events before filtering for debugging
+    console.log("All events from Ticketmaster BEFORE filtering:", events.map((e: any) => ({
+      name: e.name?.substring(0, 40),
+      type: e.classifications?.[0]?.segment?.name,
+      genre: e.classifications?.[0]?.genre?.name,
+      date: e.dates?.start?.localDate,
+      hasUrl: !!e.url
+    })));
+
     // Filter and format the events
     const formattedEvents = events
       .filter((event: any) => {
@@ -103,7 +112,7 @@ serve(async (req) => {
         // Filter out past events - check both date AND time in user's timezone
         if (eventDate) {
           if (eventDate < todayStr) {
-            console.log(`Filtering out past event (past date): ${event.name} (${eventDate})`);
+            console.log(`FILTERED (past date): ${event.name} (${eventDate})`);
             return false;
           }
           
@@ -113,7 +122,7 @@ serve(async (req) => {
             
             // Compare event time with current time in user's timezone
             if (hours < currentHours || (hours === currentHours && minutes < currentMinutes)) {
-              console.log(`Filtering out past event (past time): ${event.name} (${eventDate} ${eventTime})`);
+              console.log(`FILTERED (past time): ${event.name} (${eventDate} ${eventTime})`);
               return false;
             }
           }
@@ -122,7 +131,8 @@ serve(async (req) => {
         // Filter out internal/sponsor events
         const isInternal = internalKeywords.some(keyword => eventName.includes(keyword));
         if (isInternal) {
-          console.log(`Filtering out internal event: ${event.name}`);
+          const matchedKeyword = internalKeywords.find(kw => eventName.includes(kw));
+          console.log(`FILTERED (internal - "${matchedKeyword}"): ${event.name}`);
           return false;
         }
 
@@ -134,10 +144,11 @@ serve(async (req) => {
         );
 
         if (!hasValidUrl) {
-          console.log(`Filtering out event without ticket URL: ${event.name}`);
+          console.log(`FILTERED (no URL): ${event.name}`);
           return false;
         }
 
+        console.log(`KEPT: ${event.name}`);
         return true;
       })
       .map((event: any) => {
