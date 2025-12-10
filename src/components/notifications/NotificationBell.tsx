@@ -37,21 +37,21 @@ export function NotificationBell() {
     
     switch (type) {
       case 'welcome':
-        return '/today';
+        return '/app/today';
       case 'daily_digest':
-        return '/today';
+        return '/app/today';
       case 'event_reminder':
-        return '/out-and-about';
+        return '/app/out-and-about';
       case 'task_reminder':
-        return '/today';
+        return '/app/today';
       case 'weather_alert':
-        return '/today';
+        return '/app/today';
       case 'new_recommendation':
-        return '/today';
+        return '/app/today';
       case 'system':
         // Check data for specific navigation
         if (data?.senderId || data?.senderUsername) {
-          return '/friends'; // Friend request notification
+          return '/app/friends'; // Friend request notification
         }
         if (data?.route) {
           return data.route; // Custom route in data
