@@ -162,69 +162,83 @@ export default function OutAndAbout() {
     </div>
   );
 
-  const EventCard = ({ event }: { event: any }) => (
-    <div className="w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all">
-      <div className="flex items-start gap-4">
-        <div className="p-3 rounded-lg bg-primary/10 text-center shrink-0">
-          <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
-          <p className="text-xs font-medium">{event.date}</p>
-          {event.additionalDates > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="text-[10px] text-primary mt-1 hover:underline cursor-pointer">
-                  +{event.additionalDates} more
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-2" align="start">
-                <p className="text-xs font-medium mb-2">All dates:</p>
-                <div className="space-y-1 max-h-40 overflow-y-auto">
-                  <p className="text-xs text-muted-foreground">{event.date} · {event.time}</p>
-                  {event.allDates?.map((d: any, i: number) => (
-                    <p key={i} className="text-xs text-muted-foreground">{d.date} · {d.time}</p>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-        <div className="flex-1">
-          <h3 className="font-semibold">{event.title}</h3>
-          <p className="text-sm text-muted-foreground">{event.time} · {event.location}</p>
-          {event.matchReason && (
-            <p className="text-xs text-primary mt-1">{event.matchReason}</p>
-          )}
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            {event.url && (
-              <a
-                href={event.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                {event.price}
-              </a>
+  const EventCard = ({ event }: { event: any }) => {
+    const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+    const currentDate = event.allDates?.[selectedDateIndex] || event;
+    
+    return (
+      <div className="w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-lg bg-primary/10 text-center shrink-0">
+            <Calendar className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-xs font-medium">{currentDate.date}</p>
+            {event.additionalDates > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-[10px] text-primary mt-1 hover:underline cursor-pointer">
+                    +{event.additionalDates} more
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-52 p-2" align="start">
+                  <p className="text-xs font-medium mb-2">Select a date:</p>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {event.allDates?.map((d: any, i: number) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedDateIndex(i)}
+                        className={`w-full text-left text-xs px-2 py-1.5 rounded transition-colors ${
+                          selectedDateIndex === i 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'hover:bg-muted'
+                        }`}
+                      >
+                        {d.date} · {d.time}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-xs"
-              onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: event })}
-            >
-              <UserPlus className="h-3 w-3" />
-              Invite
-            </Button>
-            <button
-              onClick={() => openInMaps(event.address, event.location)}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-            >
-              <Navigation className="h-3 w-3" /> Directions
-            </button>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold">{event.title}</h3>
+            <p className="text-sm text-muted-foreground">{currentDate.time} · {event.location}</p>
+            {event.matchReason && (
+              <p className="text-xs text-primary mt-1">{event.matchReason}</p>
+            )}
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {currentDate.url && (
+                <a
+                  href={currentDate.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  {currentDate.price || event.price}
+                </a>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1 text-xs"
+                onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: { ...event, selectedDate: currentDate } })}
+              >
+                <UserPlus className="h-3 w-3" />
+                Invite
+              </Button>
+              <button
+                onClick={() => openInMaps(event.address, event.location)}
+                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+              >
+                <Navigation className="h-3 w-3" /> Directions
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <AppShell>

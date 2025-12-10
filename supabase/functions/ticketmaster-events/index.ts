@@ -275,7 +275,13 @@ serve(async (req) => {
       return {
         ...soonestEvent,
         additionalDates,
-        allDates: additionalDates > 0 ? group.map(e => ({ date: e.date, time: e.time, rawDate: e.rawDate })) : []
+        allDates: group.map(e => ({ 
+          date: e.date, 
+          time: e.time, 
+          rawDate: e.rawDate,
+          url: e.url,
+          price: e.price
+        }))
       };
     });
 
