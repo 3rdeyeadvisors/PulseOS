@@ -76,14 +76,49 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    const articles = data.articles?.map((article: any) => ({
-      title: article.title,
-      source: article.source?.name || "Unknown",
-      url: article.url,
-      publishedAt: article.publishedAt,
-    })) || [];
+    // Filter and validate articles - only include those with valid URLs
+    const articles = (data.articles || [])
+      .filter((article: any) => {
+        // Must have a URL that starts with http
+        if (!article.url || !article.url.startsWith('http')) {
+          console.log(`FILTERED (no valid URL): ${article.title}`);
+          return false;
+        }
+        
+        // Filter out removed/unavailable content
+        if (article.title === '[Removed]' || article.content === '[Removed]') {
+          console.log(`FILTERED (removed content): ${article.url}`);
+          return false;
+        }
+        
+        // Filter out articles with no title
+        if (!article.title || article.title.trim() === '') {
+          console.log(`FILTERED (no title): ${article.url}`);
+          return false;
+        }
+        
+        // Filter out placeholder/error URLs
+        const invalidPatterns = [
+          'removed.com',
+          'example.com',
+          'localhost',
+          'about:blank'
+        ];
+        if (invalidPatterns.some(pattern => article.url.includes(pattern))) {
+          console.log(`FILTERED (invalid URL pattern): ${article.url}`);
+          return false;
+        }
+        
+        return true;
+      })
+      .map((article: any) => ({
+        title: article.title,
+        source: article.source?.name || "Unknown",
+        url: article.url,
+        publishedAt: article.publishedAt,
+      }));
 
-    console.log(`Fetched ${articles.length} articles`);
+    console.log(`Fetched ${data.articles?.length || 0} articles, ${articles.length} after filtering`);
 
     return new Response(
       JSON.stringify({ articles }),
