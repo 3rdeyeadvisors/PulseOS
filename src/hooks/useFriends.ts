@@ -69,7 +69,15 @@ export function useFriends() {
       return;
     }
 
-    setFriends((friendships || []) as unknown as Friendship[]);
+    // Deduplicate by friend_id to prevent showing same friend twice
+    const seen = new Set<string>();
+    const uniqueFriendships = (friendships || []).filter((f: any) => {
+      if (seen.has(f.friend_id)) return false;
+      seen.add(f.friend_id);
+      return true;
+    });
+
+    setFriends(uniqueFriendships as unknown as Friendship[]);
   }, [user]);
 
   const fetchPendingRequests = useCallback(async () => {
