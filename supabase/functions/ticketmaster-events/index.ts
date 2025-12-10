@@ -248,8 +248,39 @@ serve(async (req) => {
       };
     });
 
+    // Group events by normalized name to deduplicate recurring events
+    const eventGroups = new Map<string, any[]>();
+    formattedEvents.forEach((event: any) => {
+      // Normalize the event name for grouping (remove dates, times, venue specifics)
+      const normalizedName = event.title
+        .toLowerCase()
+        .replace(/\s*-\s*(night|day|week|evening|morning)\s*\d*/gi, '')
+        .replace(/\s*\d{1,2}\/\d{1,2}(\/\d{2,4})?/g, '') // Remove dates like 12/25 or 12/25/24
+        .replace(/\s*@\s*.*/gi, '') // Remove @ venue
+        .trim();
+      
+      if (!eventGroups.has(normalizedName)) {
+        eventGroups.set(normalizedName, []);
+      }
+      eventGroups.get(normalizedName)!.push(event);
+    });
+
+    // For each group, keep the soonest event and add info about additional dates
+    const deduplicatedEvents = Array.from(eventGroups.values()).map(group => {
+      // Sort group by date
+      group.sort((a, b) => a.rawDate.localeCompare(b.rawDate));
+      const soonestEvent = group[0];
+      const additionalDates = group.length - 1;
+      
+      return {
+        ...soonestEvent,
+        additionalDates,
+        allDates: additionalDates > 0 ? group.map(e => ({ date: e.date, time: e.time, rawDate: e.rawDate })) : []
+      };
+    });
+
     // Sort events: interest matches first, then by date (closest first)
-    formattedEvents.sort((a: any, b: any) => {
+    deduplicatedEvents.sort((a: any, b: any) => {
       if (a.isInterestMatch && !b.isInterestMatch) return -1;
       if (!a.isInterestMatch && b.isInterestMatch) return 1;
       // Sort by date ascending (closest dates first)
@@ -259,7 +290,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        events: formattedEvents
+        events: deduplicatedEvents
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
