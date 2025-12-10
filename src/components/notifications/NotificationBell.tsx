@@ -184,9 +184,13 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="font-semibold">Notifications</h3>
+      <PopoverContent 
+        className="w-80 p-0 bg-background border border-border shadow-lg z-50" 
+        align="end"
+        sideOffset={8}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+          <h3 className="font-semibold text-foreground">Notifications</h3>
           {notifications.length > 0 && (
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
@@ -212,9 +216,9 @@ export function NotificationBell() {
           )}
         </div>
 
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="max-h-[350px]">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Bell className="h-10 w-10 mb-3 opacity-50" />
               <p className="text-sm">No notifications yet</p>
             </div>
