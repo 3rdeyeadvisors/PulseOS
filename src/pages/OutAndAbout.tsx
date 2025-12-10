@@ -355,13 +355,13 @@ export default function OutAndAbout() {
 
           <TabsContent value="events" className="mt-4 space-y-3">
             {/* Category filters with refresh */}
-            <div className="flex items-center gap-2">
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 flex-1">
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex gap-2 overflow-x-auto pb-2 flex-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <button
                     key={cat.value}
                     onClick={() => setEventCategory(cat.value)}
-                    className={`px-3 py-1.5 text-xs rounded-full whitespace-nowrap transition-colors ${
+                    className={`px-3 py-1.5 text-xs rounded-full whitespace-nowrap transition-colors flex-shrink-0 ${
                       eventCategory === cat.value
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
