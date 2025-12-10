@@ -15,7 +15,8 @@ export default function Money() {
   const [gasStations, setGasStations] = useState<any[]>([]);
   const [costInsights, setCostInsights] = useState<any[]>([]);
   const [budgetTips, setBudgetTips] = useState<any[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [gasLoading, setGasLoading] = useState(true);
+  const [costLoading, setCostLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -24,64 +25,75 @@ export default function Money() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    async function fetchData() {
-      if (!user) return;
+    if (!user) return;
 
+    // Fetch profile data first
+    const fetchProfile = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('city, state, zip_code, household_type')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return profile;
+    };
+
+    // Start cost insights fetch immediately with profile data (doesn't need coords)
+    const fetchCostData = async (profile: any) => {
       try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('city, state, zip_code, household_type')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        let lat: number | null = null;
-        let lng: number | null = null;
         const city = profile?.city || 'New York';
         const state = profile?.state;
         const householdType = profile?.household_type;
+        const costData = await getCostInsightsWithBudget(city, state, householdType);
+        setCostInsights(costData.insights);
+        setBudgetTips(costData.budgetTips);
+      } catch (err) {
+        console.error('Cost data error:', err);
+      } finally {
+        setCostLoading(false);
+      }
+    };
 
-        // Priority 1: Try browser geolocation
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              timeout: 5000,
-              maximumAge: 300000
-            });
-          });
-          lat = position.coords.latitude;
-          lng = position.coords.longitude;
-        } catch (geoErr) {
-          console.log('Browser geolocation not available');
-        }
+    // Fetch gas prices with location (needs coords)
+    const fetchGasData = async (profile: any) => {
+      try {
+        const city = profile?.city || 'New York';
+        const state = profile?.state;
+        let lat: number | null = null;
+        let lng: number | null = null;
 
-        // Priority 2: Use zip code from profile
-        if (!lat && profile?.zip_code) {
+        // Try geolocation with short timeout, or use zip/city in parallel
+        const geoPromise = new Promise<{lat: number, lng: number} | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => resolve(null),
+            { timeout: 2000, maximumAge: 300000 }
+          );
+        });
+
+        const zipPromise = profile?.zip_code 
+          ? supabase.functions.invoke('geocode', { body: { zipCode: profile.zip_code, state: profile.state } })
+            .then(({ data }) => data?.latitude ? { lat: data.latitude, lng: data.longitude } : null)
+            .catch(() => null)
+          : Promise.resolve(null);
+
+        // Race: use whichever returns valid coords first
+        const [geoResult, zipResult] = await Promise.all([geoPromise, zipPromise]);
+        
+        if (geoResult) {
+          lat = geoResult.lat;
+          lng = geoResult.lng;
+        } else if (zipResult) {
+          lat = zipResult.lat;
+          lng = zipResult.lng;
+        } else {
+          // Fallback to city geocode
           try {
-            const { data: geoData } = await supabase.functions.invoke('geocode', {
-              body: { zipCode: profile.zip_code, state: profile.state }
-            });
-            if (geoData?.latitude && geoData?.longitude) {
+            const { data: geoData } = await supabase.functions.invoke('geocode', { body: { city, state } });
+            if (geoData?.latitude) {
               lat = geoData.latitude;
               lng = geoData.longitude;
             }
-          } catch (geoErr) {
-            console.error('Geocode by zip error:', geoErr);
-          }
-        }
-
-        // Priority 3: Use city/state from profile
-        if (!lat && city && state) {
-          try {
-            const { data: geoData } = await supabase.functions.invoke('geocode', {
-              body: { city, state }
-            });
-            if (geoData?.latitude && geoData?.longitude) {
-              lat = geoData.latitude;
-              lng = geoData.longitude;
-            }
-          } catch (geoErr) {
-            console.error('Geocode by city error:', geoErr);
-          }
+          } catch {}
         }
 
         // Default fallback
@@ -90,23 +102,20 @@ export default function Money() {
           lng = -74.0060;
         }
 
-        // Fetch all data in parallel - single API call for cost insights + budget tips
-        const [gasResult, costData] = await Promise.all([
-          getGasPrices(lat, lng, city, state),
-          getCostInsightsWithBudget(city, state, householdType),
-        ]);
-
+        const gasResult = await getGasPrices(lat, lng, city, state);
         setGasStations(gasResult.stations);
-        setCostInsights(costData.insights);
-        setBudgetTips(costData.budgetTips);
       } catch (err) {
-        console.error('Money data error:', err);
+        console.error('Gas data error:', err);
       } finally {
-        setDataLoading(false);
+        setGasLoading(false);
       }
-    }
+    };
 
-    fetchData();
+    // Execute: fetch profile, then start both data fetches in parallel
+    fetchProfile().then((profile) => {
+      fetchCostData(profile);
+      fetchGasData(profile);
+    });
   }, [user]);
 
   const getTrendIcon = (trend: string) => {
@@ -142,7 +151,7 @@ export default function Money() {
             <h2 className="font-semibold">Gas Prices Near You</h2>
           </div>
           
-          {dataLoading ? (
+          {gasLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
             </div>
@@ -184,7 +193,7 @@ export default function Money() {
             </AlertDescription>
           </Alert>
           
-          {dataLoading ? (
+          {costLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
@@ -212,7 +221,7 @@ export default function Money() {
           </div>
           <p className="text-xs text-muted-foreground mb-4">AI-generated tips personalized for your area</p>
           
-          {dataLoading ? (
+          {costLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
