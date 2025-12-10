@@ -23,6 +23,7 @@ export default function Auth() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetSent, setResetSent] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -37,6 +38,7 @@ export default function Auth() {
   useEffect(() => {
     const checkOnboarding = async () => {
       if (user && !loading) {
+        setIsRedirecting(true);
         const { data: profile } = await supabase
           .from('profiles')
           .select('onboarding_completed')
@@ -44,9 +46,9 @@ export default function Auth() {
           .maybeSingle();
         
         if (profile?.onboarding_completed) {
-          navigate('/app');
+          navigate('/app', { replace: true });
         } else {
-          navigate('/onboarding');
+          navigate('/onboarding', { replace: true });
         }
       }
     };
@@ -57,21 +59,28 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Get values directly from form elements to handle browser autofill
+    const form = e.target as HTMLFormElement;
+    const emailInput = form.querySelector('#login-email') as HTMLInputElement;
+    const passwordInput = form.querySelector('#login-password') as HTMLInputElement;
+    const email = emailInput?.value || loginEmail;
+    const password = passwordInput?.value || loginPassword;
+    
     // Validate inputs
-    const emailResult = emailSchema.safeParse(loginEmail);
+    const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
       toast.error(emailResult.error.errors[0].message);
       return;
     }
     
-    const passwordResult = passwordSchema.safeParse(loginPassword);
+    const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       toast.error(passwordResult.error.errors[0].message);
       return;
     }
     
     setIsSubmitting(true);
-    const { error } = await signIn(loginEmail, loginPassword);
+    const { error } = await signIn(email, password);
     setIsSubmitting(false);
     
     if (error) {
@@ -143,7 +152,8 @@ export default function Auth() {
     }
   };
 
-  if (loading) {
+  // Show loading state while checking auth or redirecting
+  if (loading || isRedirecting || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
