@@ -72,10 +72,24 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "activity_invites_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "activity_invites_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "activity_invites_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
             referencedColumns: ["user_id"]
           },
         ]
@@ -249,10 +263,24 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "friend_requests_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "friend_requests_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friend_requests_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
             referencedColumns: ["user_id"]
           },
         ]
@@ -285,10 +313,24 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "friendships_friend_id_fkey"
+            columns: ["friend_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "friendships_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friendships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
             referencedColumns: ["user_id"]
           },
         ]
@@ -548,11 +590,41 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "weekly_leaderboards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profile_search"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      public_profile_search: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          profile_public: boolean | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          profile_public?: boolean | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          profile_public?: boolean | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       are_friends: {
@@ -575,6 +647,18 @@ export type Database = {
         }[]
       }
       get_pending_request_count: { Args: { _user_id: string }; Returns: number }
+      get_safe_public_profile: {
+        Args: { profile_user_id: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          full_name: string
+          interests_public: boolean
+          state: string
+          user_id: string
+          username: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
