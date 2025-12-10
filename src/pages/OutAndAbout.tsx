@@ -26,10 +26,34 @@ const EVENT_CATEGORIES = [
   { value: 'all', label: 'All' },
   { value: 'music', label: 'Music' },
   { value: 'sports', label: 'Sports' },
-  { value: 'arts & theatre', label: 'Theatre' },
+  { value: 'theatre', label: 'Theatre' },
   { value: 'comedy', label: 'Comedy' },
   { value: 'family', label: 'Family' },
 ];
+
+// Helper to check if event matches category
+const eventMatchesCategory = (event: any, category: string): boolean => {
+  if (category === 'all') return true;
+  
+  const type = (event.type || '').toLowerCase();
+  const genre = (event.genre || '').toLowerCase();
+  const subGenre = (event.subGenre || '').toLowerCase();
+  
+  switch (category) {
+    case 'music':
+      return type === 'music';
+    case 'sports':
+      return type === 'sports';
+    case 'theatre':
+      return type === 'arts & theatre' || genre.includes('theatre') || genre.includes('broadway') || genre.includes('musical');
+    case 'comedy':
+      return genre.includes('comedy') || subGenre.includes('comedy');
+    case 'family':
+      return type === 'family' || genre.includes('family') || genre.includes('children');
+    default:
+      return true;
+  }
+};
 
 export default function OutAndAbout() {
   const navigate = useNavigate();
@@ -46,9 +70,7 @@ export default function OutAndAbout() {
     data: any;
   }>({ open: false, type: '', name: '', data: null });
 
-  const filteredEvents = eventCategory === 'all' 
-    ? events 
-    : events.filter(e => e.type?.toLowerCase() === eventCategory.toLowerCase());
+  const filteredEvents = events.filter(e => eventMatchesCategory(e, eventCategory));
 
   useEffect(() => {
     if (!loading && !user) {
