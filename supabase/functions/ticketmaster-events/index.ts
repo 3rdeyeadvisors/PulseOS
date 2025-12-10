@@ -274,11 +274,22 @@ serve(async (req) => {
         }
       }
 
-      // Get ticket URL - we already verified a valid URL exists in the filter
-      let ticketUrl: string = event.url;
-      if (!ticketUrl?.startsWith('http')) {
-        ticketUrl = event.outlets?.[0]?.url || event._links?.purchase?.href;
+      // Get ticket URL - try multiple sources and ensure it's valid
+      let ticketUrl: string = '';
+      
+      // Priority order: direct URL, outlets, purchase link, constructed URL
+      if (event.url && event.url.startsWith('http')) {
+        ticketUrl = event.url;
+      } else if (event.outlets?.[0]?.url && event.outlets[0].url.startsWith('http')) {
+        ticketUrl = event.outlets[0].url;
+      } else if (event._links?.purchase?.href && event._links.purchase.href.startsWith('http')) {
+        ticketUrl = event._links.purchase.href;
+      } else {
+        // Construct Ticketmaster URL as fallback
+        ticketUrl = `https://www.ticketmaster.com/event/${event.id}`;
       }
+      
+      console.log(`Event URL for "${event.name}": ${ticketUrl}`);
 
       return {
         id: event.id,
