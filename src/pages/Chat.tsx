@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { ChatMessage } from '@/components/chat/ChatMessage';
@@ -9,13 +10,6 @@ import { useChatMessages } from '@/hooks/useChatMessages';
 import { Loader2, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-interface AISettings {
-  aiName: string;
-  aiPersonality: string;
-  humorLevel: number;
-  formalityLevel: number;
-}
 
 interface UserContext {
   profile: {
@@ -41,17 +35,20 @@ export default function Chat() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
+  const { preferences, loading: prefsLoading } = usePreferences();
   const initialMessage = (location.state as { initialMessage?: string })?.initialMessage;
   const { messages, setMessages, loadingHistory, saveMessage, clearMessages } = useChatMessages(user?.id);
   const [isLoading, setIsLoading] = useState(false);
-  const [aiSettings, setAiSettings] = useState<AISettings>({
-    aiName: 'Pulse',
-    aiPersonality: 'balanced',
-    humorLevel: 50,
-    formalityLevel: 50,
-  });
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Derive AI settings from synced preferences
+  const aiSettings = {
+    aiName: preferences.ai_name || 'Pulse',
+    aiPersonality: preferences.ai_personality || 'balanced',
+    humorLevel: preferences.ai_humor_level ?? 50,
+    formalityLevel: preferences.ai_formality_level ?? 50,
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -62,22 +59,6 @@ export default function Chat() {
   useEffect(() => {
     async function fetchUserData() {
       if (!user) return;
-
-      // Fetch preferences (includes AI settings)
-      const { data: prefs } = await supabase
-        .from('preferences')
-        .select('ai_name, ai_personality, ai_humor_level, ai_formality_level, dietary_preferences, interests, temperature_unit')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (prefs) {
-        setAiSettings({
-          aiName: prefs.ai_name || 'Pulse',
-          aiPersonality: prefs.ai_personality || 'balanced',
-          humorLevel: prefs.ai_humor_level ?? 50,
-          formalityLevel: prefs.ai_formality_level ?? 50,
-        });
-      }
 
       // Fetch profile
       const { data: profile } = await supabase
@@ -97,17 +78,17 @@ export default function Chat() {
 
       setUserContext({
         profile: profile || null,
-        preferences: prefs ? {
-          dietary_preferences: prefs.dietary_preferences,
-          interests: prefs.interests,
-          temperature_unit: prefs.temperature_unit,
-        } : null,
+        preferences: {
+          dietary_preferences: preferences.dietary_preferences,
+          interests: preferences.interests,
+          temperature_unit: preferences.temperature_unit,
+        },
         tasks: tasks || [],
       });
     }
 
     fetchUserData();
-  }, [user]);
+  }, [user, preferences]);
 
   // Handle initial message from navigation state
   const [initialMessageSent, setInitialMessageSent] = useState(false);
@@ -259,7 +240,7 @@ export default function Chat() {
     toast.success('Chat history cleared');
   };
 
-  if (loading || loadingHistory) {
+  if (loading || loadingHistory || prefsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
