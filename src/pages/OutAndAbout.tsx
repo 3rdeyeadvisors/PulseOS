@@ -271,9 +271,12 @@ export default function OutAndAbout() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold">{event.title}</h3>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                {event.type}{event.genre ? ` · ${event.genre}` : ''}
-              </span>
+              {/* Only show badge if there's a meaningful category */}
+              {(event.genre || (event.type && !['Event', 'Undefined', ''].includes(event.type))) && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                  {event.genre || event.type}
+                </span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{currentDate.time} · {event.location}</p>
             {event.matchReason && (
