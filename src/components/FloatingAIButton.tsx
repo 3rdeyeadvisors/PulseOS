@@ -106,23 +106,21 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
             </Button>
           </div>
 
-          {/* Quick Questions - hide when input focused to save space */}
-          {!isInputFocused && (
-            <div className="space-y-2 mb-4">
-              <p className="text-xs text-muted-foreground">Quick questions:</p>
-              <div className="flex flex-wrap gap-2">
-                {quickQuestions.map((q, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleQuickQuestion(q)}
-                    className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-left"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
+          {/* Quick Questions */}
+          <div className="space-y-2 mb-4">
+            <p className="text-xs text-muted-foreground">Quick questions:</p>
+            <div className="flex flex-wrap gap-2">
+              {quickQuestions.map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleQuickQuestion(q)}
+                  className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-left"
+                >
+                  {q}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
           {/* Input */}
           <div className="flex gap-2">
