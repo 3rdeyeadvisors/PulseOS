@@ -229,7 +229,7 @@ async function getSpotifyPodcast(interests: string[], token: string): Promise<an
   }
 }
 
-// Get movie from TMDb API
+// Get movie from TMDb API with better variety
 async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any> {
   const apiKey = Deno.env.get("TMDB_API_KEY");
   if (!apiKey) {
@@ -237,45 +237,82 @@ async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any>
     return null;
   }
 
+  // Expanded genre map covering more interests
   const genreMap: Record<string, number[]> = {
     "tech": [878], // Sci-Fi
+    "technology": [878],
     "travel": [12], // Adventure
     "fitness": [28], // Action
-    "reading": [18], // Drama
+    "health": [28, 99], // Action, Documentary
+    "reading": [18, 36], // Drama, History
+    "books": [18, 36],
     "finance": [80, 53], // Crime, Thriller
-    "nature": [99], // Documentary
-    "podcasts": [35], // Comedy
+    "money": [80, 53],
+    "nature": [99, 12], // Documentary, Adventure
+    "podcasts": [35, 18], // Comedy, Drama
+    "music": [10402], // Music
+    "gaming": [878, 28], // Sci-Fi, Action
+    "cooking": [35, 99], // Comedy, Documentary
+    "food": [35, 99],
+    "art": [18, 99], // Drama, Documentary
+    "science": [878, 99], // Sci-Fi, Documentary
+    "history": [36, 10752], // History, War
+    "sports": [28, 99], // Action, Documentary
+    "comedy": [35],
+    "horror": [27],
+    "romance": [10749],
+    "thriller": [53],
+    "animation": [16],
+    "family": [10751],
+    "mystery": [9648],
+    "fantasy": [14],
   };
 
   let genreIds: number[] = [];
   for (const interest of interests) {
-    const ids = genreMap[interest.toLowerCase()];
+    const lowerInterest = interest.toLowerCase();
+    const ids = genreMap[lowerInterest];
     if (ids) {
       genreIds.push(...ids);
     }
   }
 
+  // Wider default selection if no genres matched
   if (genreIds.length === 0) {
-    genreIds = [28, 12, 878]; // Default: Action, Adventure, Sci-Fi
+    genreIds = [28, 12, 878, 35, 18, 53]; // Action, Adventure, Sci-Fi, Comedy, Drama, Thriller
   }
 
-  // Use unique genres
-  const uniqueGenres = [...new Set(genreIds)].slice(0, 3);
-  const randomPage = refresh ? Math.floor(Math.random() * 3) + 1 : 1;
+  // Use unique genres, pick 1-2 randomly for more variety
+  const uniqueGenres = [...new Set(genreIds)];
+  const selectedGenres = uniqueGenres.sort(() => Math.random() - 0.5).slice(0, 2);
+  
+  // Random page between 1-10 for much more variety
+  const randomPage = Math.floor(Math.random() * 10) + 1;
+  
+  // Randomly pick a date range for more variety
+  const dateRanges = [
+    { gte: "2023-01-01", lte: "2025-12-31" }, // Recent
+    { gte: "2020-01-01", lte: "2022-12-31" }, // Pandemic era
+    { gte: "2015-01-01", lte: "2019-12-31" }, // 2010s
+    { gte: "2000-01-01", lte: "2014-12-31" }, // 2000s-2010s
+  ];
+  const dateRange = dateRanges[Math.floor(Math.random() * dateRanges.length)];
 
   try {
     const params = new URLSearchParams({
       api_key: apiKey,
       language: "en-US",
       sort_by: "popularity.desc",
-      "vote_count.gte": "100",
-      "primary_release_date.gte": "2022-01-01",
-      with_genres: uniqueGenres.join("|"),
+      "vote_count.gte": "200",
+      "vote_average.gte": "6.5",
+      "primary_release_date.gte": dateRange.gte,
+      "primary_release_date.lte": dateRange.lte,
+      with_genres: selectedGenres.join("|"),
       page: randomPage.toString(),
     });
 
     const url = `https://api.themoviedb.org/3/discover/movie?${params}`;
-    console.log("TMDb - Fetching movies");
+    console.log("TMDb - Fetching movies, page:", randomPage, "genres:", selectedGenres, "dates:", dateRange);
 
     const response = await fetch(url);
     const responseText = await response.text();
@@ -288,22 +325,38 @@ async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any>
     const data = JSON.parse(responseText);
 
     if (!data.results || data.results.length === 0) {
-      console.log("TMDb - No movies found");
-      return null;
+      console.log("TMDb - No movies found, trying page 1");
+      // Retry with page 1 if random page returned nothing
+      params.set("page", "1");
+      const retryResponse = await fetch(`https://api.themoviedb.org/3/discover/movie?${params}`);
+      const retryData = await retryResponse.json();
+      if (!retryData.results || retryData.results.length === 0) {
+        return null;
+      }
+      data.results = retryData.results;
     }
 
     console.log("TMDb - Found", data.results.length, "movies");
 
-    const movie = data.results[Math.floor(Math.random() * Math.min(data.results.length, 10))];
+    // Pick a random movie from ALL results (not just top 10)
+    const movie = data.results[Math.floor(Math.random() * data.results.length)];
+
+    // Fetch genre names for display
+    const genreResponse = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}&language=en-US`);
+    const genreData = await genreResponse.json();
+    const genreNames = genreData.genres || [];
+    const movieGenre = movie.genre_ids?.[0] 
+      ? genreNames.find((g: any) => g.id === movie.genre_ids[0])?.name || "Movie"
+      : "Movie";
 
     return {
       title: movie.title,
       artist: movie.release_date?.split("-")[0] || "2024",
-      genre: "Movie",
+      genre: movieGenre,
       reason: `${Math.round(movie.vote_average * 10)}% rating on TMDb`,
       posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
       tmdbUrl: `https://www.themoviedb.org/movie/${movie.id}`,
-      overview: movie.overview?.slice(0, 100) + "...",
+      overview: movie.overview?.slice(0, 100) + (movie.overview?.length > 100 ? "..." : ""),
     };
   } catch (err) {
     console.error("TMDb error:", err);
