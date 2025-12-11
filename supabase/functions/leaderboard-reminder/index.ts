@@ -143,50 +143,53 @@ serve(async (req) => {
         console.log(`User ${user.full_name} is behind ${friendsAhead.length} friends. Sending email...`);
 
         try {
+          // Get the app URL from environment or use default
+          const appUrl = Deno.env.get('APP_URL') || 'https://pulselife.lovable.app';
+          
           const emailResponse = await resend.emails.send({
             from: "Pulse <onboarding@resend.dev>",
             to: [user.email],
             subject: `📊 You're ${scoreDiff} points behind ${topFriend.friend_name}!`,
             html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h1 style="color: #333; margin-bottom: 20px;">Hey ${user.full_name || 'there'}! 👋</h1>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+                <h1 style="color: #1a1a2e; margin-bottom: 20px;">Hey ${user.full_name || 'there'}! 👋</h1>
                 
-                <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                  Your friend <strong>${topFriend.friend_name}</strong> is currently ahead of you on this week's leaderboard!
+                <p style="color: #333333; font-size: 16px; line-height: 1.6;">
+                  Your friend <strong style="color: #1a1a2e;">${topFriend.friend_name}</strong> is currently ahead of you on this week's leaderboard!
                 </p>
                 
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 20px; margin: 24px 0; color: white;">
-                  <p style="margin: 0 0 8px 0; opacity: 0.9;">Your Score</p>
-                  <p style="margin: 0; font-size: 36px; font-weight: bold;">${userScore} pts</p>
+                <div style="background-color: #6366f1; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                  <p style="margin: 0 0 8px 0; color: #e0e0ff; font-size: 14px;">Your Score</p>
+                  <p style="margin: 0; font-size: 36px; font-weight: bold; color: #ffffff;">${userScore} pts</p>
                 </div>
                 
-                <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                  <p style="margin: 0 0 8px 0; color: #666;">Top Friend</p>
-                  <p style="margin: 0; font-size: 24px; font-weight: bold; color: #333;">
+                <div style="background-color: #f3f4f6; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #e5e7eb;">
+                  <p style="margin: 0 0 8px 0; color: #4b5563; font-size: 14px;">Top Friend</p>
+                  <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1f2937;">
                     ${topFriend.friend_name}: ${topFriend.total_score} pts
                   </p>
-                  <p style="margin: 8px 0 0 0; color: #e74c3c; font-weight: 500;">
+                  <p style="margin: 8px 0 0 0; color: #dc2626; font-weight: 600; font-size: 14px;">
                     You're ${scoreDiff} points behind!
                   </p>
                 </div>
                 
                 ${friendsAhead.length > 1 ? `
-                <p style="color: #666; font-size: 14px;">
+                <p style="color: #4b5563; font-size: 14px;">
                   ${friendsAhead.length - 1} other friend${friendsAhead.length > 2 ? 's are' : ' is'} also ahead of you this week.
                 </p>
                 ` : ''}
                 
-                <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                <p style="color: #333333; font-size: 16px; line-height: 1.6;">
                   Complete tasks, try recommendations, and engage with friends to climb the leaderboard! 🚀
                 </p>
                 
-                <a href="https://pulselife.com/app" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
+                <a href="${appUrl}/app" style="display: inline-block; background-color: #6366f1; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
                   Open Pulse
                 </a>
                 
-                <p style="color: #999; font-size: 12px; margin-top: 32px;">
+                <p style="color: #6b7280; font-size: 12px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
                   You're receiving this because you have daily digest emails enabled. 
-                  <a href="https://pulselife.com/app/settings" style="color: #667eea;">Manage preferences</a>
+                  <a href="${appUrl}/app/settings" style="color: #6366f1; text-decoration: underline;">Manage preferences</a>
                 </p>
               </div>
             `,
