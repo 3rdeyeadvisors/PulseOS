@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -31,16 +31,28 @@ interface UserContext {
   }>;
 }
 
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export default function Chat() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
   const { preferences, loading: prefsLoading } = usePreferences();
   const initialMessage = (location.state as { initialMessage?: string })?.initialMessage;
-  const { messages, setMessages, loadingHistory, saveMessage, clearMessages } = useChatMessages(user?.id);
+  const { messages: savedMessages, setMessages: setSavedMessages, loadingHistory, saveMessage, clearMessages } = useChatMessages(user?.id);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Refs for streaming optimization
+  const streamingContentRef = useRef('');
+  const updateScheduledRef = useRef(false);
+  const currentAssistantIdRef = useRef<string | null>(null);
 
   // Derive AI settings from synced preferences
   const aiSettings = {
@@ -49,6 +61,17 @@ export default function Chat() {
     humorLevel: preferences.ai_humor_level ?? 50,
     formalityLevel: preferences.ai_formality_level ?? 50,
   };
+
+  // Sync saved messages to local state with IDs
+  useEffect(() => {
+    if (!loadingHistory) {
+      setMessages(savedMessages.map((m, i) => ({
+        id: `msg-${i}-${Date.now()}`,
+        role: m.role,
+        content: m.content,
+      })));
+    }
+  }, [savedMessages, loadingHistory]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -60,14 +83,12 @@ export default function Chat() {
     async function fetchUserData() {
       if (!user) return;
 
-      // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, city, country, age_range, household_type')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Fetch recent incomplete tasks
       const { data: tasks } = await supabase
         .from('tasks')
         .select('title, completed, due_date')
@@ -95,7 +116,6 @@ export default function Chat() {
   useEffect(() => {
     if (initialMessage && !initialMessageSent && userContext && !loadingHistory) {
       setInitialMessageSent(true);
-      // Clear the state to prevent re-sending on re-renders
       window.history.replaceState({}, document.title);
       sendMessage(initialMessage);
     }
@@ -105,18 +125,44 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Batched update function for streaming
+  const scheduleUpdate = useCallback(() => {
+    if (updateScheduledRef.current) return;
+    updateScheduledRef.current = true;
+    
+    requestAnimationFrame(() => {
+      const assistantId = currentAssistantIdRef.current;
+      const content = streamingContentRef.current;
+      
+      if (assistantId && content) {
+        setMessages(prev => 
+          prev.map(m => 
+            m.id === assistantId ? { ...m, content } : m
+          )
+        );
+      }
+      updateScheduledRef.current = false;
+    });
+  }, []);
+
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    const userMessage = { role: 'user' as const, content };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const userMessageId = `user-${Date.now()}`;
+    const assistantMessageId = `assistant-${Date.now()}`;
+    
+    const userMessage: Message = { id: userMessageId, role: 'user', content };
+    
+    // Add user message
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
     // Save user message to database
-    await saveMessage(userMessage);
+    await saveMessage({ role: 'user', content });
 
-    let assistantContent = '';
+    // Reset streaming refs
+    streamingContentRef.current = '';
+    currentAssistantIdRef.current = assistantMessageId;
 
     try {
       const response = await fetch(
@@ -128,7 +174,7 @@ export default function Chat() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            messages: newMessages,
+            messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
             aiName: aiSettings.aiName,
             aiPersonality: aiSettings.aiPersonality,
             humorLevel: aiSettings.humorLevel,
@@ -151,8 +197,8 @@ export default function Chat() {
       const decoder = new TextDecoder();
       let buffer = '';
 
-      // Add empty assistant message to start streaming into
-      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+      // Add empty assistant message
+      setMessages(prev => [...prev, { id: assistantMessageId, role: 'assistant', content: '' }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -176,15 +222,8 @@ export default function Chat() {
             const parsed = JSON.parse(jsonStr);
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
-              assistantContent += delta;
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: 'assistant',
-                  content: assistantContent,
-                };
-                return updated;
-              });
+              streamingContentRef.current += delta;
+              scheduleUpdate();
             }
           } catch {
             buffer = line + '\n' + buffer;
@@ -206,15 +245,7 @@ export default function Chat() {
             const parsed = JSON.parse(jsonStr);
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
-              assistantContent += delta;
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: 'assistant',
-                  content: assistantContent,
-                };
-                return updated;
-              });
+              streamingContentRef.current += delta;
             }
           } catch {
             // ignore
@@ -222,21 +253,30 @@ export default function Chat() {
         }
       }
 
-      // Save assistant response to database
-      if (assistantContent) {
-        await saveMessage({ role: 'assistant', content: assistantContent });
+      // Final update to ensure all content is shown
+      const finalContent = streamingContentRef.current;
+      if (finalContent) {
+        setMessages(prev => 
+          prev.map(m => 
+            m.id === assistantMessageId ? { ...m, content: finalContent } : m
+          )
+        );
+        await saveMessage({ role: 'assistant', content: finalContent });
       }
     } catch (error) {
       console.error('Chat error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to send message');
-      setMessages((prev) => prev.filter((m) => m.content !== ''));
+      // Remove empty assistant message on error
+      setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
     } finally {
       setIsLoading(false);
+      currentAssistantIdRef.current = null;
     }
   };
 
   const handleClearChat = async () => {
     await clearMessages();
+    setMessages([]);
     toast.success('Chat history cleared');
   };
 
@@ -292,9 +332,9 @@ export default function Chat() {
               </p>
             </div>
           ) : (
-            messages.map((message, index) => (
+            messages.map((message) => (
               <ChatMessage
-                key={index}
+                key={message.id}
                 role={message.role}
                 content={message.content}
                 aiName={aiSettings.aiName}

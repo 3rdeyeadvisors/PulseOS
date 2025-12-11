@@ -1,5 +1,6 @@
 import { User, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { memo } from 'react';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -7,13 +8,15 @@ interface ChatMessageProps {
   aiName: string;
 }
 
-export function ChatMessage({ role, content, aiName }: ChatMessageProps) {
+// Memoize to prevent unnecessary re-renders during streaming
+export const ChatMessage = memo(function ChatMessage({ role, content, aiName }: ChatMessageProps) {
   const isUser = role === 'user';
+  const isStreaming = !isUser && content === '';
 
   return (
     <div
       className={cn(
-        'flex gap-3 animate-fade-in',
+        'flex gap-3',
         isUser ? 'flex-row-reverse' : ''
       )}
     >
@@ -29,7 +32,7 @@ export function ChatMessage({ role, content, aiName }: ChatMessageProps) {
         {isUser ? (
           <User className="h-4 w-4 text-primary" />
         ) : (
-          <Sparkles className="h-4 w-4 text-accent" />
+          <Sparkles className={cn("h-4 w-4 text-accent", isStreaming && "animate-pulse")} />
         )}
       </div>
 
@@ -47,14 +50,14 @@ export function ChatMessage({ role, content, aiName }: ChatMessageProps) {
         )}
         <div className="text-sm whitespace-pre-wrap leading-relaxed">
           {content || (
-            <span className="inline-flex items-center gap-1 text-muted-foreground">
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse delay-100" />
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse delay-200" />
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }} />
             </span>
           )}
         </div>
       </div>
     </div>
   );
-}
+});
