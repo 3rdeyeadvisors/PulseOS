@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -21,12 +21,12 @@ interface FriendRequestCardProps {
   };
 }
 
-export function FriendRequestCard({ request }: FriendRequestCardProps) {
+export const FriendRequestCard = memo(function FriendRequestCard({ request }: FriendRequestCardProps) {
   const { acceptFriendRequest, declineFriendRequest } = useFriends();
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
 
-  const handleAccept = async () => {
+  const handleAccept = useCallback(async () => {
     setAccepting(true);
     const { error } = await acceptFriendRequest(request.id, request.sender_id);
     if (error) {
@@ -35,9 +35,9 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
       toast.success('Friend request accepted!');
     }
     setAccepting(false);
-  };
+  }, [acceptFriendRequest, request.id, request.sender_id]);
 
-  const handleDecline = async () => {
+  const handleDecline = useCallback(async () => {
     setDeclining(true);
     const { error } = await declineFriendRequest(request.id);
     if (error) {
@@ -46,7 +46,7 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
       toast.success('Friend request declined');
     }
     setDeclining(false);
-  };
+  }, [declineFriendRequest, request.id]);
 
   const getInitials = () => {
     const name = request.sender?.full_name;
@@ -71,7 +71,7 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
             {request.sender?.full_name || request.sender?.username || 'Unknown User'}
           </p>
           {request.sender?.verified && (
-            <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
+            <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
           )}
         </div>
         {request.sender?.username && (
@@ -113,4 +113,4 @@ export function FriendRequestCard({ request }: FriendRequestCardProps) {
       </div>
     </div>
   );
-}
+});

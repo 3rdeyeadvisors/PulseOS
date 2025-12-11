@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PulseLogo } from '@/components/ui/pulse-logo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,13 +17,35 @@ import {
 import { toast } from 'sonner';
 import { Loader2, UserMinus, Users, BadgeCheck, Search } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
+import { supabase } from '@/integrations/supabase/client';
 import { ProfileViewModal } from './ProfileViewModal';
 
-export function FriendsList() {
+export const FriendsList = memo(function FriendsList() {
   const { friends, removeFriend, loading } = useFriends();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [founderIds, setFounderIds] = useState<Set<string>>(new Set());
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // Fetch founder status for all friends
+  useEffect(() => {
+    const fetchFounderStatus = async () => {
+      if (friends.length === 0) return;
+      const friendUserIds = friends.map(f => f.friend?.user_id).filter(Boolean) as string[];
+      if (friendUserIds.length === 0) return;
+
+      const { data } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('user_id', friendUserIds)
+        .eq('role', 'admin');
+
+      setFounderIds(new Set(data?.map(r => r.user_id) || []));
+    };
+
+    fetchFounderStatus();
+  }, [friends]);
 
   const filteredFriends = useMemo(() => {
     if (!searchQuery.trim()) return friends;
@@ -37,7 +60,6 @@ export function FriendsList() {
       );
     });
   }, [friends, searchQuery]);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const handleRemove = async () => {
     if (!confirmRemove) return;
@@ -126,7 +148,19 @@ export function FriendsList() {
                             {friend.full_name || friend.username || 'Unknown User'}
                           </p>
                           {friend.verified && (
-                            <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />
+                            <BadgeCheck className="h-4 w-4 text-primary" />
+                          )}
+                          {founderIds.has(friend.user_id) && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex-shrink-0">
+                                  <PulseLogo className="h-4 w-4 text-primary" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Pulse Founder</p>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                         {friend.username && (
@@ -186,4 +220,4 @@ export function FriendsList() {
       />
     </>
   );
-}
+});

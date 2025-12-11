@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfWeek, endOfWeek, format } from 'date-fns';
@@ -29,13 +29,17 @@ export function useLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentWeek, setCurrentWeek] = useState(() => {
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchRef = useRef<number>(0);
+
+  // Memoize currentWeek to prevent unnecessary recalculations
+  const currentWeek = useMemo(() => {
     const now = new Date();
     return {
       start: startOfWeek(now, { weekStartsOn: 1 }),
       end: endOfWeek(now, { weekStartsOn: 1 }),
     };
-  });
+  }, []);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!user) return;
@@ -141,8 +145,22 @@ export function useLeaderboard() {
     }
   }, [user, currentWeek]);
 
+  // Debounced update function to prevent excessive API calls
   const updateWeeklyScore = useCallback(async () => {
     if (!user) return;
+
+    // Debounce: cancel any pending update
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    // Throttle: don't fetch more than once per 2 seconds
+    const now = Date.now();
+    if (now - lastFetchRef.current < 2000) {
+      updateTimeoutRef.current = setTimeout(() => updateWeeklyScore(), 2000);
+      return;
+    }
+    lastFetchRef.current = now;
 
     const weekStart = format(currentWeek.start, 'yyyy-MM-dd');
     const weekEnd = format(currentWeek.end, 'yyyy-MM-dd');
@@ -156,7 +174,6 @@ export function useLeaderboard() {
       .lte('score_date', weekEnd);
 
     if (dailyScores && dailyScores.length > 0) {
-      // Count days where user was actually active (score > 0 or tasks completed > 0)
       const activeDays = dailyScores.filter(day => day.daily_score > 0 || day.tasks_completed > 0).length;
       
       const stats = dailyScores.reduce(
@@ -200,6 +217,13 @@ export function useLeaderboard() {
     if (user) {
       loadData();
     }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
   }, [user, fetchLeaderboard, fetchWeeklyStats]);
 
   // Listen for daily score updates (dispatched AFTER daily_action_scores is saved)
@@ -208,7 +232,6 @@ export function useLeaderboard() {
       updateWeeklyScore();
     };
 
-    // Listen to daily-score-updated which fires after DB is updated
     window.addEventListener('daily-score-updated', handleScoreUpdate);
     window.addEventListener('streak-updated', handleScoreUpdate);
     
@@ -218,12 +241,12 @@ export function useLeaderboard() {
     };
   }, [updateWeeklyScore]);
 
-  // Subscribe to realtime changes on daily_action_scores for cross-tab/device updates
+  // Single combined realtime subscription for better performance
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('leaderboard-score-updates')
+      .channel('leaderboard-combined')
       .on(
         'postgres_changes',
         {
@@ -232,23 +255,8 @@ export function useLeaderboard() {
           table: 'daily_action_scores',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
-          updateWeeklyScore();
-        }
+        () => updateWeeklyScore()
       )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, updateWeeklyScore]);
-
-  // Subscribe to realtime changes on weekly_leaderboards for live leaderboard updates
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('weekly-leaderboards-realtime')
       .on(
         'postgres_changes',
         {
@@ -256,17 +264,14 @@ export function useLeaderboard() {
           schema: 'public',
           table: 'weekly_leaderboards'
         },
-        () => {
-          // Refresh leaderboard when any weekly score changes
-          fetchLeaderboard();
-        }
+        () => fetchLeaderboard()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchLeaderboard]);
+  }, [user, updateWeeklyScore, fetchLeaderboard]);
 
   return {
     leaderboard,
