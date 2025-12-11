@@ -307,43 +307,14 @@ export default function Chat() {
     <AppShell>
       <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
         {/* Header - sticky */}
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50 sticky top-0 bg-background z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
-              <Sparkles className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">{aiSettings.aiName}</h1>
-              <p className="text-sm text-muted-foreground">Your personal AI assistant</p>
-            </div>
+        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50 sticky top-0 bg-background z-10">
+          <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
+            <Sparkles className="h-5 w-5 text-accent" />
           </div>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                disabled={messages.length === 0}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete All
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete all messages in this conversation. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearChat} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Clear
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div>
+            <h1 className="text-xl font-bold">{aiSettings.aiName}</h1>
+            <p className="text-sm text-muted-foreground">Your personal AI assistant</p>
+          </div>
         </div>
 
         {/* Messages */}
@@ -371,8 +342,38 @@ export default function Chat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <ChatInput onSend={sendMessage} isLoading={isLoading} aiName={aiSettings.aiName} />
+        {/* Input area with Delete All */}
+        <div className="flex flex-col gap-2">
+          <ChatInput onSend={sendMessage} isLoading={isLoading} aiName={aiSettings.aiName} />
+          {messages.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="self-center text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all messages in this conversation. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearChat} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </div>
     </AppShell>
   );
