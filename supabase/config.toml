@@ -59,3 +59,6 @@ verify_jwt = false
 
 [functions.inactive-user-reminder]
 verify_jwt = false
+
+[functions.overdue-task-reminder]
+verify_jwt = false
