@@ -193,6 +193,10 @@ export function useFriends() {
 
     console.log('[Friends] Accepting friend request:', { requestId, senderId, userId: user.id });
 
+    // Optimistically remove from pending requests immediately
+    setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    setPendingCount(prev => Math.max(0, prev - 1));
+
     // Update request status
     const { error: updateError } = await supabase
       .from('friend_requests')
@@ -201,6 +205,8 @@ export function useFriends() {
 
     if (updateError) {
       console.error('[Friends] Failed to update request status:', updateError);
+      // Revert optimistic update on error
+      await fetchPendingRequests();
       return { error: updateError.message };
     }
 
@@ -220,6 +226,7 @@ export function useFriends() {
         .from('friend_requests')
         .update({ status: 'pending' })
         .eq('id', requestId);
+      await fetchPendingRequests();
       return { error: `Failed to create friendship: ${friendshipError.message}` };
     }
 
@@ -237,23 +244,31 @@ export function useFriends() {
         .from('friend_requests')
         .update({ status: 'pending' })
         .eq('id', requestId);
+      await fetchPendingRequests();
       return { error: 'Friendship was not created. Please try again.' };
     }
 
     console.log('[Friends] Friendship created and verified successfully');
-    await Promise.all([fetchFriends(), fetchPendingRequests()]);
+    await fetchFriends();
     return { error: null };
   };
 
   const declineFriendRequest = async (requestId: string) => {
+    // Optimistically remove from pending requests immediately
+    setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    setPendingCount(prev => Math.max(0, prev - 1));
+
     const { error } = await supabase
       .from('friend_requests')
       .update({ status: 'declined' })
       .eq('id', requestId);
 
-    if (error) return { error: error.message };
+    if (error) {
+      // Revert optimistic update on error
+      await fetchPendingRequests();
+      return { error: error.message };
+    }
 
-    await fetchPendingRequests();
     return { error: null };
   };
 
