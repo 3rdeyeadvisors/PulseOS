@@ -6,6 +6,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Task {
   id: string;
@@ -19,6 +29,8 @@ export function TasksCard() {
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState('');
   const [adding, setAdding] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
 
   useEffect(() => {
     if (user && session) fetchTasks();
@@ -90,14 +102,76 @@ export function TasksCard() {
     }
   };
 
-  const deleteTask = async (id: string) => {
+  const handleDeleteClick = (task: Task) => {
+    if (task.completed) {
+      // Show warning for completed tasks
+      setTaskToDelete(task);
+      setShowDeleteWarning(true);
+    } else {
+      // Delete directly for incomplete tasks
+      deleteTask(task.id, false);
+    }
+  };
+
+  const deleteTask = async (id: string, wasCompleted: boolean) => {
     try {
       const { error } = await supabase.from('tasks').delete().eq('id', id);
 
       if (error) throw error;
       setTasks((prev) => prev.filter((t) => t.id !== id));
+
+      // If the task was completed, we need to deduct points
+      if (wasCompleted) {
+        await deductPointsForDeletedTask();
+        toast.info('Task deleted and points deducted');
+      }
     } catch (err) {
       toast.error('Failed to delete task');
+    }
+  };
+
+  const deductPointsForDeletedTask = async () => {
+    if (!user) return;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // Get current daily score
+      const { data: currentScore } = await supabase
+        .from('daily_action_scores')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('score_date', today)
+        .maybeSingle();
+
+      if (currentScore) {
+        const newTasksCompleted = Math.max(0, currentScore.tasks_completed - 1);
+        const pointsDeducted = 10; // 10 points per task
+        const newDailyScore = Math.max(0, currentScore.daily_score - pointsDeducted);
+
+        await supabase
+          .from('daily_action_scores')
+          .update({
+            tasks_completed: newTasksCompleted,
+            daily_score: newDailyScore,
+          })
+          .eq('user_id', user.id)
+          .eq('score_date', today);
+
+        // Dispatch event to update UI and leaderboard
+        window.dispatchEvent(new CustomEvent('task-updated'));
+        window.dispatchEvent(new CustomEvent('daily-score-updated'));
+      }
+    } catch (err) {
+      console.error('Failed to deduct points:', err);
+    }
+  };
+
+  const confirmDeleteCompletedTask = () => {
+    if (taskToDelete) {
+      deleteTask(taskToDelete.id, true);
+      setTaskToDelete(null);
+      setShowDeleteWarning(false);
     }
   };
 
@@ -174,7 +248,7 @@ export function TasksCard() {
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => deleteTask(task.id)}
+                onClick={() => handleDeleteClick(task)}
               >
                 <Trash2 className="h-3 w-3 text-destructive" />
               </Button>
@@ -182,6 +256,29 @@ export function TasksCard() {
           ))
         )}
       </div>
+
+      {/* Warning dialog for deleting completed tasks */}
+      <AlertDialog open={showDeleteWarning} onOpenChange={setShowDeleteWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete completed task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This task has already been completed and you received points for it. 
+              If you delete it, <strong>10 points will be deducted</strong> from your daily score 
+              and the leaderboard will be updated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteCompletedTask}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
