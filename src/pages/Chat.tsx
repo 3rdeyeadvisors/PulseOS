@@ -320,13 +320,13 @@ export default function Chat() {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-muted-foreground hover:text-destructive"
+                className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                 disabled={messages.length === 0}
               >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete All
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
