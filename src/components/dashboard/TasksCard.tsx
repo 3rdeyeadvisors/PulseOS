@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle2, Circle, Plus, Trash2, ListTodo } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Trash2, ListTodo, Users } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { TaskInviteModal } from './TaskInviteModal';
 
 interface Task {
   id: string;
@@ -32,6 +33,8 @@ export function TasksCard() {
   const [adding, setAdding] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [taskToInvite, setTaskToInvite] = useState<Task | null>(null);
 
   useEffect(() => {
     if (user && session) fetchTasks();
@@ -248,14 +251,29 @@ export function TasksCard() {
                 >
                   {task.title}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDeleteClick(task)}
-                >
-                  <Trash2 className="h-3 w-3 text-destructive" />
-                </Button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTaskToInvite(task);
+                      setInviteModalOpen(true);
+                    }}
+                    title="Invite friends"
+                  >
+                    <Users className="h-3 w-3 text-primary" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => handleDeleteClick(task)}
+                  >
+                    <Trash2 className="h-3 w-3 text-destructive" />
+                  </Button>
+                </div>
               </div>
             ))
           )}
@@ -284,6 +302,19 @@ export function TasksCard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Task Invite Modal */}
+      {taskToInvite && (
+        <TaskInviteModal
+          open={inviteModalOpen}
+          onOpenChange={(open) => {
+            setInviteModalOpen(open);
+            if (!open) setTaskToInvite(null);
+          }}
+          taskId={taskToInvite.id}
+          taskTitle={taskToInvite.title}
+        />
+      )}
     </div>
   );
 }
