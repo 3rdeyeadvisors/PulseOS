@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.leaderboard-reminder]
 verify_jwt = false
+
+[functions.cleanup-completed-tasks]
+verify_jwt = false
