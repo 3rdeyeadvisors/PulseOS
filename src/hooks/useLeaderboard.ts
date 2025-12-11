@@ -12,6 +12,7 @@ interface LeaderboardEntry {
   rank: number;
   verified?: boolean;
   isCurrentUser?: boolean;
+  isFounder?: boolean;
 }
 
 interface WeeklyStats {
@@ -52,18 +53,28 @@ export function useLeaderboard() {
       console.error('Error fetching leaderboard:', error);
       setLeaderboard([]);
     } else if (leaderboardData && leaderboardData.length > 0) {
-      // Fetch verified status for all users
+      // Fetch verified status and roles for all users
       const userIds = leaderboardData.map((entry: any) => entry.user_id);
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, verified')
-        .in('user_id', userIds);
+      
+      const [profilesResult, rolesResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('user_id, verified')
+          .in('user_id', userIds),
+        supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds)
+          .eq('role', 'admin')
+      ]);
 
-      const verifiedMap = new Map(profilesData?.map(p => [p.user_id, p.verified]) || []);
+      const verifiedMap = new Map(profilesResult.data?.map(p => [p.user_id, p.verified]) || []);
+      const founderSet = new Set(rolesResult.data?.map(r => r.user_id) || []);
 
       const entries = leaderboardData.map((entry: any) => ({
         ...entry,
         verified: verifiedMap.get(entry.user_id) || false,
+        isFounder: founderSet.has(entry.user_id),
         isCurrentUser: entry.user_id === user.id,
       }));
       setLeaderboard(entries);
