@@ -39,7 +39,7 @@ const affirmations = [
 
 export function GreetingCard() {
   const { user, session } = useAuth();
-  const [fullName, setFullName] = useState<string>('');
+  const [fullName, setFullName] = useState<string | null>(null); // null = loading
   const [greeting, setGreeting] = useState<string>('');
   const [affirmation, setAffirmation] = useState<string>('');
 
@@ -70,18 +70,22 @@ export function GreetingCard() {
       
       if (error) {
         console.error('Profile fetch error:', error);
+        setFullName(''); // Set to empty on error
         return;
       }
       
       if (data?.full_name) {
         setFullName(data.full_name.split(' ')[0]);
+      } else {
+        setFullName(''); // No name found
       }
     }
     
     fetchProfile();
   }, [user, session]);
 
-  const displayName = fullName || user?.email?.split('@')[0] || 'there';
+  // Don't show email - use neutral fallback while loading or if no name
+  const displayName = fullName === null ? '' : (fullName || 'there');
 
   return (
     <div className="col-span-full p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-card to-accent/10 border border-primary/20 shadow-glow overflow-hidden">

@@ -43,8 +43,9 @@ export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string>('');
+  const [fullName, setFullName] = useState<string | null>(null); // null = loading
   const [aiName, setAiName] = useState<string>('Pulse');
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -67,10 +68,13 @@ export function AppShell({ children }: AppShellProps) {
       if (profile) {
         setAvatarUrl(profile.avatar_url);
         setFullName(profile.full_name || '');
+      } else {
+        setFullName(''); // No profile found, set to empty
       }
       if (prefs?.ai_name) {
         setAiName(prefs.ai_name);
       }
+      setProfileLoaded(true);
     }
     fetchUserData();
   }, [user]);
@@ -83,7 +87,11 @@ export function AppShell({ children }: AppShellProps) {
     if (fullName) {
       return fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
-    return user?.email?.[0]?.toUpperCase() || 'U';
+    // Only show email initial if profile is loaded and no name
+    if (profileLoaded) {
+      return user?.email?.[0]?.toUpperCase() || 'U';
+    }
+    return '';
   };
 
   // Handle pull-to-refresh
@@ -147,9 +155,11 @@ export function AppShell({ children }: AppShellProps) {
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground">
-                {fullName || user?.email}
-              </span>
+              {profileLoaded && (
+                <span className="text-sm text-muted-foreground">
+                  {fullName || 'My Account'}
+                </span>
+              )}
             </Link>
             <Button 
               variant="ghost" 
