@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.cleanup-completed-tasks]
 verify_jwt = false
+
+[functions.inactive-user-reminder]
+verify_jwt = false
