@@ -9,6 +9,17 @@ import { ChatInput } from '@/components/chat/ChatInput';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { Loader2, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 interface UserContext {
@@ -295,8 +306,8 @@ export default function Chat() {
   return (
     <AppShell>
       <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
+        {/* Header - sticky */}
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50 sticky top-0 bg-background z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
               <Sparkles className="h-5 w-5 text-accent" />
@@ -306,17 +317,33 @@ export default function Chat() {
               <p className="text-sm text-muted-foreground">Your personal AI assistant</p>
             </div>
           </div>
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearChat}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive"
+                disabled={messages.length === 0}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete all messages in this conversation. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearChat} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Clear
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         {/* Messages */}
