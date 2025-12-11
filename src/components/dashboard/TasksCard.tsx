@@ -218,8 +218,11 @@ export function TasksCard() {
       </div>
 
       {/* Task list */}
-      <div className="h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-        <div className="space-y-1 pr-1">
+      <div 
+        className="max-h-48 overflow-y-scroll"
+        style={{ overscrollBehavior: 'contain' }}
+      >
+        <div className="space-y-1">
           {tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-2">No tasks yet</p>
           ) : (
