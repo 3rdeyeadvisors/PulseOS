@@ -1,17 +1,28 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { ProfileViewModal } from './ProfileViewModal';
-import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck } from 'lucide-react';
+import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export function Leaderboard() {
   const { leaderboard, weeklyStats, loading, currentWeek } = useLeaderboard();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredLeaderboard = useMemo(() => {
+    if (!searchQuery.trim()) return leaderboard;
+    const query = searchQuery.toLowerCase();
+    return leaderboard.filter((entry) => 
+      entry.full_name?.toLowerCase().includes(query) ||
+      entry.username?.toLowerCase().includes(query)
+    );
+  }, [leaderboard, searchQuery]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -119,56 +130,78 @@ export function Leaderboard() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {leaderboard.map((entry) => (
-              <button
-                key={entry.user_id}
-                onClick={() => setSelectedUserId(entry.user_id)}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left',
-                  entry.isCurrentUser 
-                    ? 'bg-primary/10 border border-primary/30' 
-                    : 'bg-muted/30 hover:bg-muted/50',
-                  entry.rank <= 3 && getRankBadgeClass(entry.rank)
+          <div className="space-y-3">
+            {/* Search input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search leaderboard..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Scrollable leaderboard list */}
+            <div className="max-h-[200px] overflow-y-auto">
+              <div className="space-y-2">
+                {filteredLeaderboard.length === 0 && searchQuery ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No results for "{searchQuery}"
+                  </p>
+                ) : (
+                  filteredLeaderboard.map((entry) => (
+                    <button
+                      key={entry.user_id}
+                      onClick={() => setSelectedUserId(entry.user_id)}
+                      className={cn(
+                        'flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left',
+                        entry.isCurrentUser 
+                          ? 'bg-primary/10 border border-primary/30' 
+                          : 'bg-muted/30 hover:bg-muted/50',
+                        entry.rank <= 3 && getRankBadgeClass(entry.rank)
+                      )}
+                    >
+                      <div className="w-8 flex justify-center">
+                        {getRankIcon(entry.rank)}
+                      </div>
+                      
+                      <Avatar className="h-10 w-10 border border-border cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+                        <AvatarImage src={entry.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {getInitials(entry.full_name, entry.username)}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className={cn(
+                            'font-medium truncate',
+                            entry.isCurrentUser && 'text-primary'
+                          )}>
+                            {entry.full_name || entry.username || 'Unknown'}
+                            {entry.isCurrentUser && ' (You)'}
+                          </p>
+                          {entry.verified && (
+                            <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                          )}
+                        </div>
+                        {entry.username && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            @{entry.username}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="font-bold">{entry.total_score}</p>
+                        <p className="text-xs text-muted-foreground">pts</p>
+                      </div>
+                    </button>
+                  ))
                 )}
-              >
-                <div className="w-8 flex justify-center">
-                  {getRankIcon(entry.rank)}
-                </div>
-                
-                <Avatar className="h-10 w-10 border border-border cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
-                  <AvatarImage src={entry.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {getInitials(entry.full_name, entry.username)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className={cn(
-                      'font-medium truncate',
-                      entry.isCurrentUser && 'text-primary'
-                    )}>
-                      {entry.full_name || entry.username || 'Unknown'}
-                      {entry.isCurrentUser && ' (You)'}
-                    </p>
-                    {entry.verified && (
-                      <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
-                    )}
-                  </div>
-                  {entry.username && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      @{entry.username}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="text-right">
-                  <p className="font-bold">{entry.total_score}</p>
-                  <p className="text-xs text-muted-foreground">pts</p>
-                </div>
-              </button>
-            ))}
+              </div>
+            </div>
           </div>
         )}
 
