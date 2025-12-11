@@ -10,6 +10,7 @@ interface CommunityMember {
   city: string | null;
   interests_public: boolean;
   verified: boolean | null;
+  isFounder?: boolean;
   interests?: string[];
 }
 
@@ -71,6 +72,16 @@ export function useCommunity() {
         p => !excludeIds.includes(p.user_id)
       );
 
+      // Fetch founder status (admin roles)
+      const profileUserIds = filteredProfiles.map(p => p.user_id);
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('user_id', profileUserIds)
+        .eq('role', 'admin');
+      
+      const founderSet = new Set(rolesData?.map(r => r.user_id) || []);
+
       // Fetch interests for those with public interests
       const membersWithInterests = await Promise.all(
         filteredProfiles.map(async (profile) => {
@@ -83,10 +94,11 @@ export function useCommunity() {
             
             return {
               ...profile,
+              isFounder: founderSet.has(profile.user_id),
               interests: prefs?.interests || [],
             };
           }
-          return { ...profile, interests: [] };
+          return { ...profile, isFounder: founderSet.has(profile.user_id), interests: [] };
         })
       );
 

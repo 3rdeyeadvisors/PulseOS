@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PulseLogo } from '@/components/ui/pulse-logo';
 import { Loader2, MapPin, BadgeCheck, UserPlus, UserMinus, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +26,7 @@ interface ProfileData {
   state: string | null;
   interests_public: boolean;
   verified?: boolean;
+  isFounder?: boolean;
 }
 
 export function ProfileViewModal({ userId, open, onOpenChange }: ProfileViewModalProps) {
@@ -54,16 +57,26 @@ export function ProfileViewModal({ userId, open, onOpenChange }: ProfileViewModa
           const profileData = data[0];
           setProfile(profileData);
 
-          // Fetch verified status separately
-          const { data: verifiedData } = await supabase
-            .from('profiles')
-            .select('verified')
-            .eq('user_id', userId)
-            .maybeSingle();
+          // Fetch verified status and founder role in parallel
+          const [verifiedResult, roleResult] = await Promise.all([
+            supabase
+              .from('profiles')
+              .select('verified')
+              .eq('user_id', userId)
+              .maybeSingle(),
+            supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', userId)
+              .eq('role', 'admin')
+              .maybeSingle()
+          ]);
 
-          if (verifiedData) {
-            setProfile(prev => prev ? { ...prev, verified: verifiedData.verified } : null);
-          }
+          setProfile(prev => prev ? { 
+            ...prev, 
+            verified: verifiedResult.data?.verified || false,
+            isFounder: !!roleResult.data
+          } : null);
 
           // Fetch interests if they're public
           if (profileData.interests_public) {
@@ -166,7 +179,19 @@ export function ProfileViewModal({ userId, open, onOpenChange }: ProfileViewModa
                 <h3 className="text-xl font-semibold">
                   {profile.full_name || profile.username || 'Unknown User'}
                 </h3>
-                {profile.verified && (
+                {profile.isFounder && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <PulseLogo className="h-5 w-5 text-primary" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Pulse Founder</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {profile.verified && !profile.isFounder && (
                   <BadgeCheck className="h-5 w-5 text-primary" />
                 )}
               </div>
