@@ -10,6 +10,7 @@ interface LeaderboardEntry {
   avatar_url: string | null;
   total_score: number;
   rank: number;
+  verified?: boolean;
   isCurrentUser?: boolean;
 }
 
@@ -49,14 +50,25 @@ export function useLeaderboard() {
 
     if (error) {
       console.error('Error fetching leaderboard:', error);
-      // If no data, show just the current user
       setLeaderboard([]);
-    } else {
-      const entries = (leaderboardData || []).map((entry: any) => ({
+    } else if (leaderboardData && leaderboardData.length > 0) {
+      // Fetch verified status for all users
+      const userIds = leaderboardData.map((entry: any) => entry.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, verified')
+        .in('user_id', userIds);
+
+      const verifiedMap = new Map(profilesData?.map(p => [p.user_id, p.verified]) || []);
+
+      const entries = leaderboardData.map((entry: any) => ({
         ...entry,
+        verified: verifiedMap.get(entry.user_id) || false,
         isCurrentUser: entry.user_id === user.id,
       }));
       setLeaderboard(entries);
+    } else {
+      setLeaderboard([]);
     }
   }, [user, currentWeek]);
 

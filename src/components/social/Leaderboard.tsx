@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { ProfileViewModal } from './ProfileViewModal';
-import { Trophy, Medal, Award, Crown, TrendingUp, Users } from 'lucide-react';
+import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -144,13 +144,18 @@ export function Leaderboard() {
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    'font-medium truncate',
-                    entry.isCurrentUser && 'text-primary'
-                  )}>
-                    {entry.full_name || entry.username || 'Unknown'}
-                    {entry.isCurrentUser && ' (You)'}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className={cn(
+                      'font-medium truncate',
+                      entry.isCurrentUser && 'text-primary'
+                    )}>
+                      {entry.full_name || entry.username || 'Unknown'}
+                      {entry.isCurrentUser && ' (You)'}
+                    </p>
+                    {entry.verified && (
+                      <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                    )}
+                  </div>
                   {entry.username && (
                     <p className="text-xs text-muted-foreground truncate">
                       @{entry.username}
