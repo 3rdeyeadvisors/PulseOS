@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Circle, Plus, Trash2, ListTodo } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,8 +46,7 @@ export function TasksCard() {
         .select('id, title, completed')
         .eq('user_id', user.id)
         .order('completed', { ascending: true })
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setTasks(data || []);
@@ -69,7 +69,7 @@ export function TasksCard() {
         .single();
 
       if (error) throw error;
-      setTasks((prev) => [data, ...prev].slice(0, 5));
+      setTasks((prev) => [data, ...prev]);
       setNewTask('');
       
       // Dispatch custom event to notify score card
@@ -218,44 +218,46 @@ export function TasksCard() {
       </div>
 
       {/* Task list */}
-      <div className="space-y-1">
-        {tasks.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-2">No tasks yet</p>
-        ) : (
-          tasks.map((task) => (
-            <div
-              key={task.id}
-              className="group flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/30 transition-colors"
-            >
-              <button
-                onClick={() => toggleTask(task.id, task.completed)}
-                className="shrink-0"
+      <ScrollArea className="max-h-48">
+        <div className="space-y-1 pr-3">
+          {tasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-2">No tasks yet</p>
+          ) : (
+            tasks.map((task) => (
+              <div
+                key={task.id}
+                className="group flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/30 transition-colors"
               >
-                {task.completed ? (
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                ) : (
-                  <Circle className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-              <span
-                className={`flex-1 text-sm truncate ${
-                  task.completed ? 'line-through text-muted-foreground' : ''
-                }`}
-              >
-                {task.title}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleDeleteClick(task)}
-              >
-                <Trash2 className="h-3 w-3 text-destructive" />
-              </Button>
-            </div>
-          ))
-        )}
-      </div>
+                <button
+                  onClick={() => toggleTask(task.id, task.completed)}
+                  className="shrink-0"
+                >
+                  {task.completed ? (
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+                <span
+                  className={`flex-1 text-sm truncate ${
+                    task.completed ? 'line-through text-muted-foreground' : ''
+                  }`}
+                >
+                  {task.title}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => handleDeleteClick(task)}
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
 
       {/* Warning dialog for deleting completed tasks */}
       <AlertDialog open={showDeleteWarning} onOpenChange={setShowDeleteWarning}>
