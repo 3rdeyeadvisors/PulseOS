@@ -206,17 +206,52 @@ export function useLeaderboard() {
     }
   }, [user, fetchLeaderboard, fetchWeeklyStats]);
 
-  // Listen for daily score updates
+  // Listen for daily score updates with debounce to ensure daily_action_scores is updated first
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const handleScoreUpdate = () => {
-      updateWeeklyScore();
+      // Debounce to ensure daily_action_scores is updated before we recalculate
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        updateWeeklyScore();
+      }, 500);
     };
 
     window.addEventListener('task-updated', handleScoreUpdate);
+    window.addEventListener('streak-updated', handleScoreUpdate);
+    
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('task-updated', handleScoreUpdate);
+      window.removeEventListener('streak-updated', handleScoreUpdate);
     };
   }, [updateWeeklyScore]);
+
+  // Subscribe to realtime changes on daily_action_scores for cross-tab/device updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('leaderboard-score-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'daily_action_scores',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          updateWeeklyScore();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, updateWeeklyScore]);
 
   return {
     leaderboard,
