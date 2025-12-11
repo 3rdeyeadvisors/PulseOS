@@ -25,14 +25,10 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus input when drawer opens
+  // Reset focus state when drawer closes
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      // Small delay to ensure drawer animation completes
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
+    if (!isOpen) {
+      setIsInputFocused(false);
     }
   }, [isOpen]);
 
