@@ -14,6 +14,7 @@ import { SongCard, PodcastCard, MovieCard } from '@/components/dashboard/MediaCa
 import { TasksCard } from '@/components/dashboard/TasksCard';
 import { DailyActionScoreCard } from '@/components/dashboard/DailyActionScoreCard';
 import { StreakCard } from '@/components/dashboard/StreakCard';
+import { ReceivedTaskInvites } from '@/components/dashboard/ReceivedTaskInvites';
 import { Loader2 } from 'lucide-react';
 
 const ALL_MODULES = ['greeting', 'action-score', 'streak', 'weather', 'gas', 'tasks', 'ai-insight', 'food', 'song', 'podcast', 'movie', 'daily-picks', 'news'];
@@ -72,6 +73,7 @@ export default function Today() {
           {isEnabled('greeting') && <GreetingCard />}
           {isEnabled('action-score') && <DailyActionScoreCard />}
           {isEnabled('streak') && <StreakCard />}
+          <ReceivedTaskInvites />
           {isEnabled('weather') && <WeatherCard />}
           {isEnabled('gas') && <GasCard />}
           {isEnabled('tasks') && <TasksCard />}

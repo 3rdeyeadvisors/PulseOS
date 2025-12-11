@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Circle, Plus, Trash2, ListTodo, Users } from 'lucide-react';
@@ -17,12 +17,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { TaskInviteModal } from './TaskInviteModal';
+
+interface Participant {
+  user_id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+}
 
 interface Task {
   id: string;
   title: string;
   completed: boolean;
+  isOwner: boolean;
+  participants: Participant[];
 }
 
 export function TasksCard() {
@@ -36,29 +52,126 @@ export function TasksCard() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [taskToInvite, setTaskToInvite] = useState<Task | null>(null);
 
-  useEffect(() => {
-    if (user && session) fetchTasks();
-  }, [user, session]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch user's own tasks
+      const { data: ownTasks, error: ownError } = await supabase
         .from('tasks')
         .select('id, title, completed')
         .eq('user_id', user.id)
         .order('completed', { ascending: true })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setTasks(data || []);
+      if (ownError) throw ownError;
+
+      // Fetch tasks where user has accepted an invite
+      const { data: acceptedInvites, error: inviteError } = await supabase
+        .from('task_invites')
+        .select('task_id')
+        .eq('receiver_id', user.id)
+        .eq('status', 'accepted');
+
+      if (inviteError) throw inviteError;
+
+      // Get the shared tasks
+      const sharedTaskIds = acceptedInvites?.map(i => i.task_id) || [];
+      let sharedTasks: { id: string; title: string; completed: boolean }[] = [];
+      
+      if (sharedTaskIds.length > 0) {
+        const { data: shared, error: sharedError } = await supabase
+          .from('tasks')
+          .select('id, title, completed')
+          .in('id', sharedTaskIds);
+        
+        if (!sharedError && shared) {
+          sharedTasks = shared;
+        }
+      }
+
+      // Combine all task IDs to fetch participants
+      const allTaskIds = [
+        ...(ownTasks?.map(t => t.id) || []),
+        ...sharedTaskIds
+      ];
+
+      // Fetch all accepted invites for these tasks to get participants
+      let participantsMap: Record<string, Participant[]> = {};
+      
+      if (allTaskIds.length > 0) {
+        const { data: allInvites } = await supabase
+          .from('task_invites')
+          .select('task_id, sender_id, receiver_id, status')
+          .in('task_id', allTaskIds)
+          .eq('status', 'accepted');
+
+        if (allInvites && allInvites.length > 0) {
+          // Get unique user IDs
+          const userIds = new Set<string>();
+          allInvites.forEach(inv => {
+            userIds.add(inv.sender_id);
+            userIds.add(inv.receiver_id);
+          });
+
+          // Fetch profiles
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, username, full_name, avatar_url')
+            .in('user_id', Array.from(userIds));
+
+          const profilesMap = new Map(profiles?.map(p => [p.user_id, p]));
+
+          // Build participants map per task
+          allInvites.forEach(inv => {
+            if (!participantsMap[inv.task_id]) {
+              participantsMap[inv.task_id] = [];
+            }
+            
+            const receiver = profilesMap.get(inv.receiver_id);
+            if (receiver && !participantsMap[inv.task_id].some(p => p.user_id === inv.receiver_id)) {
+              participantsMap[inv.task_id].push(receiver as Participant);
+            }
+          });
+        }
+      }
+
+      // Combine and deduplicate tasks
+      const ownTasksWithMeta = (ownTasks || []).map(t => ({
+        ...t,
+        isOwner: true,
+        participants: participantsMap[t.id] || []
+      }));
+
+      const sharedTasksWithMeta = sharedTasks
+        .filter(t => !ownTasks?.some(own => own.id === t.id))
+        .map(t => ({
+          ...t,
+          isOwner: false,
+          participants: participantsMap[t.id] || []
+        }));
+
+      setTasks([...ownTasksWithMeta, ...sharedTasksWithMeta]);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user && session) fetchTasks();
+  }, [user, session, fetchTasks]);
+
+  // Listen for task invite updates
+  useEffect(() => {
+    const handleInviteUpdate = () => {
+      fetchTasks();
+    };
+    
+    window.addEventListener('task-invite-updated', handleInviteUpdate);
+    return () => window.removeEventListener('task-invite-updated', handleInviteUpdate);
+  }, [fetchTasks]);
 
   const addTask = async () => {
     if (!newTask.trim() || !user || adding) return;
@@ -72,7 +185,7 @@ export function TasksCard() {
         .single();
 
       if (error) throw error;
-      setTasks((prev) => [data, ...prev]);
+      setTasks((prev) => [{ ...data, isOwner: true, participants: [] }, ...prev]);
       setNewTask('');
       
       // Dispatch custom event to notify score card
@@ -229,53 +342,102 @@ export function TasksCard() {
           {tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-2">No tasks yet</p>
           ) : (
-            tasks.map((task) => (
-              <div
-                key={task.id}
-                className="group flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/30 transition-colors"
-              >
-                <button
-                  onClick={() => toggleTask(task.id, task.completed)}
-                  className="shrink-0"
+            tasks.map((task) => {
+              const getInitials = (name: string | null | undefined) => {
+                if (!name) return '?';
+                return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+              };
+
+              return (
+                <div
+                  key={task.id}
+                  className="group flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/30 transition-colors"
                 >
-                  {task.completed ? (
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-                <span
-                  className={`flex-1 text-sm truncate ${
-                    task.completed ? 'line-through text-muted-foreground' : ''
-                  }`}
-                >
-                  {task.title}
-                </span>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTaskToInvite(task);
-                      setInviteModalOpen(true);
-                    }}
-                    title="Invite friends"
+                  <button
+                    onClick={() => toggleTask(task.id, task.completed)}
+                    className="shrink-0"
                   >
-                    <Users className="h-3 w-3 text-primary" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => handleDeleteClick(task)}
-                  >
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </Button>
+                    {task.completed ? (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <span
+                      className={`text-sm truncate block ${
+                        task.completed ? 'line-through text-muted-foreground' : ''
+                      }`}
+                    >
+                      {task.title}
+                    </span>
+                    {/* Show participants */}
+                    {task.participants.length > 0 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <TooltipProvider>
+                          <div className="flex -space-x-1.5">
+                            {task.participants.slice(0, 3).map((p) => (
+                              <Tooltip key={p.user_id}>
+                                <TooltipTrigger asChild>
+                                  <Avatar className="h-4 w-4 border border-background">
+                                    <AvatarImage src={p.avatar_url || undefined} />
+                                    <AvatarFallback className="text-[8px]">
+                                      {getInitials(p.full_name || p.username)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="text-xs">
+                                  {p.full_name || p.username || 'Friend'}
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                            {task.participants.length > 3 && (
+                              <span className="text-[10px] text-muted-foreground ml-1.5">
+                                +{task.participants.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </TooltipProvider>
+                        <span className="text-[10px] text-muted-foreground">
+                          {task.isOwner ? 'challenged' : 'with you'}
+                        </span>
+                      </div>
+                    )}
+                    {/* Show "shared" indicator for tasks user accepted */}
+                    {!task.isOwner && task.participants.length === 0 && (
+                      <span className="text-[10px] text-primary">Shared task</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {task.isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTaskToInvite(task);
+                          setInviteModalOpen(true);
+                        }}
+                        title="Invite friends"
+                      >
+                        <Users className="h-3 w-3 text-primary" />
+                      </Button>
+                    )}
+                    {task.isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleDeleteClick(task)}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
