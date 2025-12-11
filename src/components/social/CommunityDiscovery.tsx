@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PulseLogo } from '@/components/ui/pulse-logo';
 import { useCommunity } from '@/hooks/useCommunity';
 import { useFriends } from '@/hooks/useFriends';
 import { ProfileViewModal } from './ProfileViewModal';
@@ -163,8 +165,20 @@ export function CommunityDiscovery() {
                             <p className="font-medium truncate">
                               {member.full_name || member.username || 'Unknown User'}
                             </p>
-                            {member.verified && (
-                              <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
+                            {member.isFounder && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="flex-shrink-0">
+                                    <PulseLogo className="h-4 w-4 text-primary" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Pulse Founder</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            {member.verified && !member.isFounder && (
+                              <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
                             )}
                           </div>
                           {member.username && (

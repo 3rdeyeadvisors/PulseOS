@@ -5,34 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PulseLogo } from '@/components/ui/pulse-logo';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { ProfileViewModal } from './ProfileViewModal';
 import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-// Pulse logo SVG component for founder badge
-const PulseLogo = ({ className }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 24 24" 
-    className={className}
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path 
-      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" 
-      fill="currentColor" 
-      opacity="0.2"
-    />
-    <path 
-      d="M4 12h3l2-4 3 8 2-4h6" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 export function Leaderboard() {
   const { leaderboard, weeklyStats, loading, currentWeek } = useLeaderboard();
