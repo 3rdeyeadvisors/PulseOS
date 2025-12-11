@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FloatingAIButton } from '@/components/FloatingAIButton';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { toast } from 'sonner';
 import { 
   Zap, 
   LayoutDashboard, 
@@ -83,6 +85,22 @@ export function AppShell({ children }: AppShellProps) {
     }
     return user?.email?.[0]?.toUpperCase() || 'U';
   };
+
+  // Handle pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    // Dispatch a global refresh event that components can listen to
+    window.dispatchEvent(new CustomEvent('app-refresh'));
+    
+    // Also dispatch specific events for different data types
+    window.dispatchEvent(new CustomEvent('task-updated'));
+    window.dispatchEvent(new CustomEvent('daily-score-updated'));
+    window.dispatchEvent(new CustomEvent('streak-updated'));
+    
+    // Small delay to ensure components have time to re-fetch
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    toast.success('Refreshed!', { duration: 1500 });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,10 +211,12 @@ export function AppShell({ children }: AppShellProps) {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-32 overflow-x-hidden">
-        {children}
-      </main>
+      {/* Main Content with Pull-to-Refresh */}
+      <PullToRefresh onRefresh={handleRefresh}>
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-32 overflow-x-hidden min-h-[calc(100vh-4rem)]">
+          {children}
+        </main>
+      </PullToRefresh>
 
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border/30 py-3 z-40">
