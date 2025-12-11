@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
-import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck } from 'lucide-react';
+import { ProfileViewModal } from './ProfileViewModal';
+import { Trophy, Medal, Award, Crown, TrendingUp, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export function Leaderboard() {
   const { leaderboard, weeklyStats, loading, currentWeek } = useLeaderboard();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -118,10 +121,11 @@ export function Leaderboard() {
         ) : (
           <div className="space-y-2">
             {leaderboard.map((entry) => (
-              <div
+              <button
                 key={entry.user_id}
+                onClick={() => setSelectedUserId(entry.user_id)}
                 className={cn(
-                  'flex items-center gap-3 p-3 rounded-lg transition-colors',
+                  'flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left',
                   entry.isCurrentUser 
                     ? 'bg-primary/10 border border-primary/30' 
                     : 'bg-muted/30 hover:bg-muted/50',
@@ -132,7 +136,7 @@ export function Leaderboard() {
                   {getRankIcon(entry.rank)}
                 </div>
                 
-                <Avatar className="h-10 w-10 border border-border">
+                <Avatar className="h-10 w-10 border border-border cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
                   <AvatarImage src={entry.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary/10 text-primary text-sm">
                     {getInitials(entry.full_name, entry.username)}
@@ -158,10 +162,16 @@ export function Leaderboard() {
                   <p className="font-bold">{entry.total_score}</p>
                   <p className="text-xs text-muted-foreground">pts</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
+
+        <ProfileViewModal
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(open) => !open && setSelectedUserId(null)}
+        />
       </CardContent>
     </Card>
   );

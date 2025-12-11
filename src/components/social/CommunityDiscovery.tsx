@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCommunity } from '@/hooks/useCommunity';
 import { useFriends } from '@/hooks/useFriends';
+import { ProfileViewModal } from './ProfileViewModal';
 import { toast } from 'sonner';
 import { MapPin, UserPlus, Users, Loader2, Globe, BadgeCheck } from 'lucide-react';
 
@@ -14,6 +15,7 @@ export function CommunityDiscovery() {
   const { sendFriendRequest } = useFriends();
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const handleSendRequest = async (userId: string) => {
     setSendingTo(userId);
@@ -115,42 +117,47 @@ export function CommunityDiscovery() {
                 key={member.user_id}
                 className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
               >
-                <Avatar className="h-12 w-12 border border-border">
-                  <AvatarImage src={member.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(member.full_name, member.username)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-medium truncate">
-                      {member.full_name || member.username || 'Unknown User'}
-                    </p>
-                    {member.verified && (
-                      <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
-                    )}
-                  </div>
-                  {member.username && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      @{member.username}
-                    </p>
-                  )}
-                  {member.interests_public && member.interests && member.interests.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {member.interests.slice(0, 3).map((interest) => (
-                        <Badge key={interest} variant="secondary" className="text-xs">
-                          {interest}
-                        </Badge>
-                      ))}
-                      {member.interests.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{member.interests.length - 3}
-                        </Badge>
+                <button
+                  onClick={() => setSelectedUserId(member.user_id)}
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                >
+                  <Avatar className="h-12 w-12 border border-border cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+                    <AvatarImage src={member.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {getInitials(member.full_name, member.username)}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium truncate">
+                        {member.full_name || member.username || 'Unknown User'}
+                      </p>
+                      {member.verified && (
+                        <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
                       )}
                     </div>
-                  )}
-                </div>
+                    {member.username && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        @{member.username}
+                      </p>
+                    )}
+                    {member.interests_public && member.interests && member.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {member.interests.slice(0, 3).map((interest) => (
+                          <Badge key={interest} variant="secondary" className="text-xs">
+                            {interest}
+                          </Badge>
+                        ))}
+                        {member.interests.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{member.interests.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </button>
 
                 {sentRequests.has(member.user_id) ? (
                   <Button variant="outline" size="sm" disabled>
@@ -176,6 +183,12 @@ export function CommunityDiscovery() {
             ))}
           </div>
         )}
+
+        <ProfileViewModal
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(open) => !open && setSelectedUserId(null)}
+        />
       </CardContent>
     </Card>
   );
