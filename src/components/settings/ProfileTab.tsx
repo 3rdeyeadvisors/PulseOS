@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Loader2, Save, Upload, User, AtSign, Globe, Eye, Check, X } from 'lucide-react';
+import { Loader2, Save, Upload, User, AtSign, Globe, Eye, Check, X, BadgeCheck } from 'lucide-react';
 
 export function ProfileTab() {
   const { user } = useAuth();
@@ -26,6 +26,7 @@ export function ProfileTab() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [originalUsername, setOriginalUsername] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export function ProfileTab() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, email, avatar_url, username, interests_public, profile_public')
+        .select('full_name, email, avatar_url, username, interests_public, profile_public, verified')
         .eq('user_id', user.id)
         .single();
 
@@ -46,6 +47,7 @@ export function ProfileTab() {
         setOriginalUsername(data.username);
         setInterestsPublic(data.interests_public || false);
         setProfilePublic(data.profile_public || false);
+        setVerified(data.verified || false);
       }
       setLoading(false);
     }
@@ -227,12 +229,19 @@ export function ProfileTab() {
         <CardContent className="space-y-6">
           {/* Avatar Section */}
           <div className="flex items-center gap-6">
-            <Avatar className="h-20 w-20 border-2 border-border">
-              <AvatarImage src={avatarUrl || undefined} alt={fullName || 'Profile'} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-20 w-20 border-2 border-border">
+                <AvatarImage src={avatarUrl || undefined} alt={fullName || 'Profile'} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              {verified && (
+                <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
+                  <BadgeCheck className="h-6 w-6 text-primary fill-primary/20" />
+                </div>
+              )}
+            </div>
             <div className="space-y-2">
               <input
                 ref={fileInputRef}
