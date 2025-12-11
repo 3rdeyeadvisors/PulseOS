@@ -165,6 +165,9 @@ export function CommunityDiscovery() {
                             <p className="font-medium truncate">
                               {member.full_name || member.username || 'Unknown User'}
                             </p>
+                            {member.verified && (
+                              <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                            )}
                             {member.isFounder && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -176,9 +179,6 @@ export function CommunityDiscovery() {
                                   <p>Pulse Founder</p>
                                 </TooltipContent>
                               </Tooltip>
-                            )}
-                            {member.verified && !member.isFounder && (
-                              <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
                             )}
                           </div>
                           {member.username && (
