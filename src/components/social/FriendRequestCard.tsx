@@ -1,4 +1,4 @@
-import { useState, memo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -21,7 +21,7 @@ interface FriendRequestCardProps {
   };
 }
 
-export const FriendRequestCard = memo(function FriendRequestCard({ request }: FriendRequestCardProps) {
+function FriendRequestCardComponent({ request }: FriendRequestCardProps) {
   const { acceptFriendRequest, declineFriendRequest } = useFriends();
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
@@ -113,4 +113,6 @@ export const FriendRequestCard = memo(function FriendRequestCard({ request }: Fr
       </div>
     </div>
   );
-});
+}
+
+export const FriendRequestCard = React.memo(FriendRequestCardComponent);

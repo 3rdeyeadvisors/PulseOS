@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, memo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import { useFriends } from '@/hooks/useFriends';
 import { supabase } from '@/integrations/supabase/client';
 import { ProfileViewModal } from './ProfileViewModal';
 
-export const FriendsList = memo(function FriendsList() {
+function FriendsListComponent() {
   const { friends, removeFriend, loading } = useFriends();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
@@ -220,4 +220,6 @@ export const FriendsList = memo(function FriendsList() {
       />
     </>
   );
-});
+}
+
+export const FriendsList = React.memo(FriendsListComponent);
