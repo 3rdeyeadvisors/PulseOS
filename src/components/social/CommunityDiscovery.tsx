@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { ProfileViewModal } from './ProfileViewModal';
 import { toast } from 'sonner';
 import { MapPin, UserPlus, Users, Loader2, Globe, BadgeCheck, Search } from 'lucide-react';
 
-export const CommunityDiscovery = memo(function CommunityDiscovery() {
+function CommunityDiscoveryComponent() {
   const { members, loading, userCity } = useCommunity();
   const { sendFriendRequest } = useFriends();
   const [sendingTo, setSendingTo] = useState<string | null>(null);
@@ -239,4 +239,6 @@ export const CommunityDiscovery = memo(function CommunityDiscovery() {
       </CardContent>
     </Card>
   );
-});
+}
+
+export const CommunityDiscovery = React.memo(CommunityDiscoveryComponent);

@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,7 @@ import { Trophy, Medal, Award, Crown, TrendingUp, Users, BadgeCheck, Search } fr
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-export const Leaderboard = memo(function Leaderboard() {
+function LeaderboardComponent() {
   const { leaderboard, weeklyStats, loading, currentWeek } = useLeaderboard();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -227,4 +227,6 @@ export const Leaderboard = memo(function Leaderboard() {
       </CardContent>
     </Card>
   );
-});
+}
+
+export const Leaderboard = React.memo(LeaderboardComponent);
