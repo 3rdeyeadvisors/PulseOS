@@ -253,6 +253,31 @@ export function useLeaderboard() {
     };
   }, [user, updateWeeklyScore]);
 
+  // Subscribe to realtime changes on weekly_leaderboards for live leaderboard updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('weekly-leaderboards-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'weekly_leaderboards'
+        },
+        () => {
+          // Refresh leaderboard when any weekly score changes
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchLeaderboard]);
+
   return {
     leaderboard,
     weeklyStats,
