@@ -17,13 +17,19 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    console.log("Starting cleanup of completed tasks...");
+    // Get the start of today in UTC
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const todayStr = today.toISOString();
+    
+    console.log(`Starting cleanup of completed tasks older than ${todayStr}...`);
 
-    // Get all completed tasks
+    // Get all completed tasks that were last updated before today
     const { data: completedTasks, error: fetchError } = await supabase
       .from('tasks')
-      .select('id, user_id, title')
-      .eq('completed', true);
+      .select('id, user_id, title, updated_at')
+      .eq('completed', true)
+      .lt('updated_at', todayStr);
 
     if (fetchError) {
       console.error('Error fetching completed tasks:', fetchError);
@@ -31,20 +37,21 @@ serve(async (req) => {
     }
 
     if (!completedTasks || completedTasks.length === 0) {
-      console.log("No completed tasks to delete");
+      console.log("No completed tasks from previous days to delete");
       return new Response(
-        JSON.stringify({ success: true, deletedCount: 0 }),
+        JSON.stringify({ success: true, deletedCount: 0, message: "No old completed tasks to delete" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`Found ${completedTasks.length} completed tasks to delete`);
+    console.log(`Found ${completedTasks.length} completed tasks from previous days to delete`);
 
-    // Delete all completed tasks
+    // Delete completed tasks from previous days
     const { error: deleteError } = await supabase
       .from('tasks')
       .delete()
-      .eq('completed', true);
+      .eq('completed', true)
+      .lt('updated_at', todayStr);
 
     if (deleteError) {
       console.error('Error deleting completed tasks:', deleteError);
@@ -57,7 +64,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         deletedCount: completedTasks.length,
-        message: `Deleted ${completedTasks.length} completed tasks`
+        message: `Deleted ${completedTasks.length} completed tasks from previous days`
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
