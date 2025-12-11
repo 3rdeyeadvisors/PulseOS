@@ -93,9 +93,9 @@ export function FriendsList() {
           />
         </div>
 
-        {/* Scrollable friends list */}
-        <ScrollArea className="max-h-[200px]">
-          <div className="space-y-3 pr-4">
+        {/* Scrollable friends list - shows ~2 friends then scrolls */}
+        <div className="max-h-[200px] overflow-y-auto">
+          <div className="space-y-3">
             {filteredFriends.length === 0 && searchQuery ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 No friends match "{searchQuery}"
@@ -159,7 +159,7 @@ export function FriendsList() {
               })
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       <AlertDialog open={!!confirmRemove} onOpenChange={() => setConfirmRemove(null)}>
