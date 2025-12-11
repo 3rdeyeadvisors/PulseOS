@@ -113,7 +113,7 @@ serve(async (req: Request): Promise<Response> => {
                       <tr>
                         <td style="padding: 0 32px 24px;">
                           <div style="background-color: #334155; border-radius: 12px; padding: 20px; text-align: center;">
-                            <p style="margin: 0 0 8px; font-size: 14px; color: #94a3b8;">Your streak needs attention!</p>
+                            <p style="margin: 0 0 8px; font-size: 14px; color: #e2e8f0;">Your streak needs attention!</p>
                             <p style="margin: 0; font-size: 24px; font-weight: 700; color: #fbbf24;">🔥 Come back today</p>
                           </div>
                         </td>
@@ -131,10 +131,10 @@ serve(async (req: Request): Promise<Response> => {
                       
                       <!-- Footer -->
                       <tr>
-                        <td style="padding: 24px 32px; background-color: #0f172a; border-top: 1px solid #334155;">
-                          <p style="margin: 0; font-size: 12px; color: #64748b; text-align: center;">
+                        <td style="padding: 24px 32px; background-color: #0f172a; border-top: 1px solid #475569;">
+                          <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">
                             You're receiving this because you haven't visited Pulse recently.<br>
-                            <a href="${appUrl}/app/settings" style="color: #64748b; text-decoration: underline;">Manage email preferences</a>
+                            <a href="${appUrl}/app/settings" style="color: #93c5fd; text-decoration: underline;">Manage email preferences</a>
                           </p>
                         </td>
                       </tr>
