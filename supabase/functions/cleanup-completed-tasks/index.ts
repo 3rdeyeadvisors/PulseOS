@@ -100,13 +100,12 @@ serve(async (req) => {
       
       console.log(`Processing user ${profile.user_id} (timezone: ${timezone}). Start of their today (UTC): ${startOfTodayStr}`);
 
-      // Get completed tasks created before today in user's local time
+      // Get ALL completed tasks - they should be cleared at midnight
       const { data: tasksToDelete, error: fetchError } = await supabase
         .from('tasks')
         .select('id, title')
         .eq('user_id', profile.user_id)
-        .eq('completed', true)
-        .lt('created_at', startOfTodayStr);
+        .eq('completed', true);
 
       if (fetchError) {
         console.error(`Error fetching tasks for user ${profile.user_id}:`, fetchError);
@@ -120,8 +119,7 @@ serve(async (req) => {
           .from('tasks')
           .delete()
           .eq('user_id', profile.user_id)
-          .eq('completed', true)
-          .lt('created_at', startOfTodayStr);
+          .eq('completed', true);
 
         if (deleteError) {
           console.error(`Error deleting tasks for user ${profile.user_id}:`, deleteError);
