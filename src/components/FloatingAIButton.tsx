@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, X, Sparkles, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,15 +22,31 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
   const [inputValue, setInputValue] = useState('');
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus input when drawer opens
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      // Small delay to ensure drawer animation completes
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
+      // Don't hide when input is focused (keyboard is likely open)
+      if (isInputFocused) return;
+      
       const currentScrollY = window.scrollY;
       
       // Hide when scrolling down, show when scrolling up
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
-        setIsOpen(false); // Close drawer when hiding
+        setIsOpen(false);
       } else {
         setIsVisible(true);
       }
@@ -40,7 +56,7 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, isInputFocused]);
 
   const handleQuickQuestion = (question: string) => {
     // Navigate to chat with the question
@@ -69,7 +85,9 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
       {/* Chat Drawer */}
       <div
         className={cn(
-          'fixed bottom-28 right-4 w-[calc(100%-2rem)] max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl z-50 transition-all duration-300',
+          'fixed right-4 w-[calc(100%-2rem)] max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl z-50 transition-all duration-300',
+          // Use different bottom positioning when input is focused (keyboard open)
+          isInputFocused ? 'bottom-4' : 'bottom-28',
           isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         )}
       >
@@ -92,29 +110,34 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
             </Button>
           </div>
 
-          {/* Quick Questions */}
-          <div className="space-y-2 mb-4">
-            <p className="text-xs text-muted-foreground">Quick questions:</p>
-            <div className="flex flex-wrap gap-2">
-              {quickQuestions.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleQuickQuestion(q)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-left"
-                >
-                  {q}
-                </button>
-              ))}
+          {/* Quick Questions - hide when input focused to save space */}
+          {!isInputFocused && (
+            <div className="space-y-2 mb-4">
+              <p className="text-xs text-muted-foreground">Quick questions:</p>
+              <div className="flex flex-wrap gap-2">
+                {quickQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleQuickQuestion(q)}
+                    className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-left"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Input */}
           <div className="flex gap-2">
             <Input
+              ref={inputRef}
               placeholder={`Ask ${aiName} anything...`}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               className="flex-1"
             />
             <Button size="icon" onClick={handleSubmit} disabled={!inputValue.trim()}>
