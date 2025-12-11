@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.send-invite-accepted-email]
 verify_jwt = false
+
+[functions.leaderboard-reminder]
+verify_jwt = false
