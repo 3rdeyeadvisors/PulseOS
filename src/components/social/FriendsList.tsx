@@ -14,11 +14,13 @@ import {
 import { toast } from 'sonner';
 import { Loader2, UserMinus, Users, BadgeCheck } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
+import { ProfileViewModal } from './ProfileViewModal';
 
 export function FriendsList() {
   const { friends, removeFriend, loading } = useFriends();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const handleRemove = async () => {
     if (!confirmRemove) return;
@@ -72,8 +74,11 @@ export function FriendsList() {
               key={friendship.id}
               className="flex items-center justify-between p-4 rounded-lg bg-card border border-border"
             >
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12 border border-border">
+              <button
+                onClick={() => setSelectedUserId(friend.user_id)}
+                className="flex items-center gap-3 text-left"
+              >
+                <Avatar className="h-12 w-12 border border-border cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
                   <AvatarImage src={friend.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {getInitials(friend.full_name, friend.username)}
@@ -95,7 +100,7 @@ export function FriendsList() {
                     <p className="text-xs text-muted-foreground">{friend.city}</p>
                   )}
                 </div>
-              </div>
+              </button>
 
               <Button
                 size="sm"
@@ -134,6 +139,12 @@ export function FriendsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ProfileViewModal
+        userId={selectedUserId}
+        open={!!selectedUserId}
+        onOpenChange={(open) => !open && setSelectedUserId(null)}
+      />
     </>
   );
 }
