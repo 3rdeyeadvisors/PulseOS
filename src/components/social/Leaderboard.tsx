@@ -184,6 +184,9 @@ export function Leaderboard() {
                             {entry.full_name || entry.username || 'Unknown'}
                             {entry.isCurrentUser && ' (You)'}
                           </p>
+                          {entry.verified && (
+                            <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                          )}
                           {entry.isFounder && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -195,9 +198,6 @@ export function Leaderboard() {
                                 <p>Pulse Founder</p>
                               </TooltipContent>
                             </Tooltip>
-                          )}
-                          {entry.verified && !entry.isFounder && (
-                            <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
                           )}
                         </div>
                         {entry.username && (

@@ -179,6 +179,9 @@ export function ProfileViewModal({ userId, open, onOpenChange }: ProfileViewModa
                 <h3 className="text-xl font-semibold">
                   {profile.full_name || profile.username || 'Unknown User'}
                 </h3>
+                {profile.verified && (
+                  <BadgeCheck className="h-5 w-5 text-primary" />
+                )}
                 {profile.isFounder && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -190,9 +193,6 @@ export function ProfileViewModal({ userId, open, onOpenChange }: ProfileViewModa
                       <p>Pulse Founder</p>
                     </TooltipContent>
                   </Tooltip>
-                )}
-                {profile.verified && !profile.isFounder && (
-                  <BadgeCheck className="h-5 w-5 text-primary" />
                 )}
               </div>
 
