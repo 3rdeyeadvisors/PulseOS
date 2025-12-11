@@ -76,74 +76,57 @@ export function useLeaderboard() {
     if (!user) return;
 
     const weekStart = format(currentWeek.start, 'yyyy-MM-dd');
+    const weekEnd = format(currentWeek.end, 'yyyy-MM-dd');
 
-    // Fetch or calculate weekly stats
-    const { data: existingStats } = await supabase
-      .from('weekly_leaderboards')
+    // Always recalculate from daily scores to ensure accuracy
+    const { data: dailyScores } = await supabase
+      .from('daily_action_scores')
       .select('*')
       .eq('user_id', user.id)
-      .eq('week_start', weekStart)
-      .maybeSingle();
+      .gte('score_date', weekStart)
+      .lte('score_date', weekEnd);
 
-    if (existingStats) {
-      setWeeklyStats({
-        total_score: existingStats.total_score,
-        tasks_completed: existingStats.tasks_completed,
-        recommendations_tried: existingStats.recommendations_tried,
-        social_engagement: existingStats.social_engagement,
-        streak_days: existingStats.streak_days,
-        rank: existingStats.rank,
-      });
-    } else {
-      // Calculate from daily scores
-      const weekEnd = format(currentWeek.end, 'yyyy-MM-dd');
+    if (dailyScores && dailyScores.length > 0) {
+      // Count days where user was actually active (score > 0 or tasks completed > 0)
+      const activeDays = dailyScores.filter(day => day.daily_score > 0 || day.tasks_completed > 0).length;
       
-      const { data: dailyScores } = await supabase
-        .from('daily_action_scores')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('score_date', weekStart)
-        .lte('score_date', weekEnd);
+      const stats = dailyScores.reduce(
+        (acc, day) => ({
+          total_score: acc.total_score + (day.daily_score || 0),
+          tasks_completed: acc.tasks_completed + (day.tasks_completed || 0),
+          recommendations_tried: acc.recommendations_tried + (day.recommendations_tried || 0),
+          social_engagement: acc.social_engagement + (day.social_engagement || 0),
+        }),
+        { total_score: 0, tasks_completed: 0, recommendations_tried: 0, social_engagement: 0 }
+      );
 
-      if (dailyScores && dailyScores.length > 0) {
-        const stats = dailyScores.reduce(
-          (acc, day) => ({
-            total_score: acc.total_score + day.daily_score,
-            tasks_completed: acc.tasks_completed + day.tasks_completed,
-            recommendations_tried: acc.recommendations_tried + day.recommendations_tried,
-            social_engagement: acc.social_engagement + (day.social_engagement || 0),
-            streak_days: acc.streak_days + 1,
-          }),
-          { total_score: 0, tasks_completed: 0, recommendations_tried: 0, social_engagement: 0, streak_days: 0 }
-        );
+      const weeklyStats = { ...stats, streak_days: activeDays, rank: null };
+      setWeeklyStats(weeklyStats);
 
-        setWeeklyStats({ ...stats, rank: null });
-
-        // Upsert the weekly leaderboard entry
-        await supabase
-          .from('weekly_leaderboards')
-          .upsert({
-            user_id: user.id,
-            week_start: weekStart,
-            week_end: weekEnd,
-            total_score: stats.total_score,
-            tasks_completed: stats.tasks_completed,
-            recommendations_tried: stats.recommendations_tried,
-            social_engagement: stats.social_engagement,
-            streak_days: stats.streak_days,
-          }, {
-            onConflict: 'user_id,week_start',
-          });
-      } else {
-        setWeeklyStats({
-          total_score: 0,
-          tasks_completed: 0,
-          recommendations_tried: 0,
-          social_engagement: 0,
-          streak_days: 0,
-          rank: null,
+      // Upsert the weekly leaderboard entry
+      await supabase
+        .from('weekly_leaderboards')
+        .upsert({
+          user_id: user.id,
+          week_start: weekStart,
+          week_end: weekEnd,
+          total_score: stats.total_score,
+          tasks_completed: stats.tasks_completed,
+          recommendations_tried: stats.recommendations_tried,
+          social_engagement: stats.social_engagement,
+          streak_days: activeDays,
+        }, {
+          onConflict: 'user_id,week_start',
         });
-      }
+    } else {
+      setWeeklyStats({
+        total_score: 0,
+        tasks_completed: 0,
+        recommendations_tried: 0,
+        social_engagement: 0,
+        streak_days: 0,
+        rank: null,
+      });
     }
   }, [user, currentWeek]);
 
@@ -162,15 +145,17 @@ export function useLeaderboard() {
       .lte('score_date', weekEnd);
 
     if (dailyScores && dailyScores.length > 0) {
+      // Count days where user was actually active (score > 0 or tasks completed > 0)
+      const activeDays = dailyScores.filter(day => day.daily_score > 0 || day.tasks_completed > 0).length;
+      
       const stats = dailyScores.reduce(
         (acc, day) => ({
-          total_score: acc.total_score + day.daily_score,
-          tasks_completed: acc.tasks_completed + day.tasks_completed,
-          recommendations_tried: acc.recommendations_tried + day.recommendations_tried,
+          total_score: acc.total_score + (day.daily_score || 0),
+          tasks_completed: acc.tasks_completed + (day.tasks_completed || 0),
+          recommendations_tried: acc.recommendations_tried + (day.recommendations_tried || 0),
           social_engagement: acc.social_engagement + (day.social_engagement || 0),
-          streak_days: acc.streak_days + 1,
         }),
-        { total_score: 0, tasks_completed: 0, recommendations_tried: 0, social_engagement: 0, streak_days: 0 }
+        { total_score: 0, tasks_completed: 0, recommendations_tried: 0, social_engagement: 0 }
       );
 
       // Upsert the weekly leaderboard entry
@@ -184,7 +169,7 @@ export function useLeaderboard() {
           tasks_completed: stats.tasks_completed,
           recommendations_tried: stats.recommendations_tried,
           social_engagement: stats.social_engagement,
-          streak_days: stats.streak_days,
+          streak_days: activeDays,
         }, {
           onConflict: 'user_id,week_start',
         });
