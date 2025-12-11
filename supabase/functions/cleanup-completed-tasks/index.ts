@@ -22,14 +22,14 @@ serve(async (req) => {
     today.setUTCHours(0, 0, 0, 0);
     const todayStr = today.toISOString();
     
-    console.log(`Starting cleanup of completed tasks older than ${todayStr}...`);
+    console.log(`Starting cleanup of completed tasks. Today starts at: ${todayStr}`);
 
-    // Get all completed tasks that were last updated before today
+    // Get all completed tasks that were CREATED before today (regardless of when completed)
     const { data: completedTasks, error: fetchError } = await supabase
       .from('tasks')
-      .select('id, user_id, title, updated_at')
+      .select('id, user_id, title, created_at, updated_at')
       .eq('completed', true)
-      .lt('updated_at', todayStr);
+      .lt('created_at', todayStr);
 
     if (fetchError) {
       console.error('Error fetching completed tasks:', fetchError);
@@ -44,14 +44,14 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${completedTasks.length} completed tasks from previous days to delete`);
+    console.log(`Found ${completedTasks.length} completed tasks from previous days to delete:`, completedTasks.map(t => t.title));
 
-    // Delete completed tasks from previous days
+    // Delete completed tasks that were created before today
     const { error: deleteError } = await supabase
       .from('tasks')
       .delete()
       .eq('completed', true)
-      .lt('updated_at', todayStr);
+      .lt('created_at', todayStr);
 
     if (deleteError) {
       console.error('Error deleting completed tasks:', deleteError);
