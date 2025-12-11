@@ -180,6 +180,9 @@ export function useTaskInvites() {
   const acceptInvite = async (inviteId: string) => {
     if (!user) return;
 
+    // Get the invite details first
+    const invite = receivedInvites.find((i) => i.id === inviteId);
+
     const { error } = await supabase
       .from('task_invites')
       .update({ status: 'accepted' })
@@ -189,6 +192,31 @@ export function useTaskInvites() {
       console.error('Error accepting task invite:', error);
       toast.error('Failed to accept invite');
       return;
+    }
+
+    // Notify the sender that invite was accepted
+    if (invite) {
+      try {
+        // Get receiver profile for notification
+        const { data: receiverProfile } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('user_id', user.id)
+          .single();
+
+        const receiverName = receiverProfile?.full_name || receiverProfile?.username || 'A friend';
+
+        // Create in-app notification for sender
+        await supabase.from('notifications').insert([{
+          user_id: invite.sender_id,
+          type: 'task_reminder' as const,
+          title: 'Challenge Accepted!',
+          message: `${receiverName} accepted your task challenge: ${invite.task?.title}`,
+          data: { taskId: invite.task_id, inviteId },
+        }]);
+      } catch (err) {
+        console.error('Error sending acceptance notification:', err);
+      }
     }
 
     toast.success('Task challenge accepted!');
