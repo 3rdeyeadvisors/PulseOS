@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Circle, Plus, Trash2, ListTodo } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -218,8 +218,8 @@ export function TasksCard() {
       </div>
 
       {/* Task list */}
-      <ScrollArea className="max-h-48">
-        <div className="space-y-1 pr-3">
+      <div className="h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        <div className="space-y-1 pr-1">
           {tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-2">No tasks yet</p>
           ) : (
@@ -257,7 +257,7 @@ export function TasksCard() {
             ))
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Warning dialog for deleting completed tasks */}
       <AlertDialog open={showDeleteWarning} onOpenChange={setShowDeleteWarning}>
