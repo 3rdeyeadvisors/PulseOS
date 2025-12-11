@@ -308,25 +308,25 @@ export default function Chat() {
       <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
         {/* Header - sticky */}
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50 sticky top-0 bg-background z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-accent/10 border border-accent/20 flex-shrink-0">
               <Sparkles className="h-5 w-5 text-accent" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold">{aiSettings.aiName}</h1>
-              <p className="text-sm text-muted-foreground">Your personal AI assistant</p>
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold truncate">{aiSettings.aiName}</h1>
+              <p className="text-sm text-muted-foreground hidden sm:block">Your personal AI assistant</p>
             </div>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-muted-foreground hover:text-destructive"
+                className="text-muted-foreground hover:text-destructive hover:border-destructive flex-shrink-0"
                 disabled={messages.length === 0}
               >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear
+                <Trash2 className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Clear</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
