@@ -319,16 +319,16 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Floating Clear Button */}
+        {/* Floating Clear Button - top right */}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
               size="icon"
-              className="fixed bottom-32 left-4 z-50 rounded-full shadow-lg h-12 w-12"
+              className="fixed top-20 right-4 z-50 rounded-full shadow-lg h-10 w-10"
               disabled={messages.length === 0}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
