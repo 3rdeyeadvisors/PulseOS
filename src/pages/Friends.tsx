@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppShell } from '@/components/layout/AppShell';
@@ -15,7 +15,8 @@ import { useActivityInvites } from '@/hooks/useActivityInvites';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck, Search } from 'lucide-react';
 
 export default function Friends() {
   const navigate = useNavigate();
@@ -23,8 +24,28 @@ export default function Friends() {
   const { needsUsername, loading: usernameLoading, refreshUsername } = useUsername();
   const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading, refreshRequests, friends } = useFriends();
   const { receivedInvites } = useActivityInvites();
+  const [requestsSearch, setRequestsSearch] = useState('');
+  const [sentSearch, setSentSearch] = useState('');
   
   const inviteCount = receivedInvites.length;
+
+  const filteredPendingRequests = useMemo(() => {
+    if (!requestsSearch.trim()) return pendingRequests;
+    const query = requestsSearch.toLowerCase();
+    return pendingRequests.filter((request) =>
+      request.sender?.full_name?.toLowerCase().includes(query) ||
+      request.sender?.username?.toLowerCase().includes(query)
+    );
+  }, [pendingRequests, requestsSearch]);
+
+  const filteredSentRequests = useMemo(() => {
+    if (!sentSearch.trim()) return sentRequests;
+    const query = sentSearch.toLowerCase();
+    return sentRequests.filter((request) =>
+      (request as any).receiver?.full_name?.toLowerCase().includes(query) ||
+      (request as any).receiver?.username?.toLowerCase().includes(query)
+    );
+  }, [sentRequests, sentSearch]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -168,9 +189,31 @@ export default function Friends() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {pendingRequests.map((request) => (
-                      <FriendRequestCard key={request.id} request={request} />
-                    ))}
+                    {/* Search input */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search requests..."
+                        value={requestsSearch}
+                        onChange={(e) => setRequestsSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {/* Scrollable requests list */}
+                    <div className="max-h-[200px] overflow-y-auto">
+                      <div className="space-y-3">
+                        {filteredPendingRequests.length === 0 && requestsSearch ? (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            No results for "{requestsSearch}"
+                          </p>
+                        ) : (
+                          filteredPendingRequests.map((request) => (
+                            <FriendRequestCard key={request.id} request={request} />
+                          ))
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -200,29 +243,51 @@ export default function Friends() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {sentRequests.map((request) => (
-                      <div
-                        key={request.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-card border border-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                            <Send className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="font-medium">
-                              {(request as any).receiver?.full_name || (request as any).receiver?.username || 'Unknown User'}
-                            </p>
-                            {(request as any).receiver?.username && (
-                              <p className="text-sm text-muted-foreground">
-                                @{(request as any).receiver.username}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <Badge variant="secondary">Pending</Badge>
+                    {/* Search input */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search sent requests..."
+                        value={sentSearch}
+                        onChange={(e) => setSentSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {/* Scrollable sent requests list */}
+                    <div className="max-h-[200px] overflow-y-auto">
+                      <div className="space-y-3">
+                        {filteredSentRequests.length === 0 && sentSearch ? (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            No results for "{sentSearch}"
+                          </p>
+                        ) : (
+                          filteredSentRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              className="flex items-center justify-between p-4 rounded-lg bg-card border border-border"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                  <Send className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <div>
+                                  <p className="font-medium">
+                                    {(request as any).receiver?.full_name || (request as any).receiver?.username || 'Unknown User'}
+                                  </p>
+                                  {(request as any).receiver?.username && (
+                                    <p className="text-sm text-muted-foreground">
+                                      @{(request as any).receiver.username}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge variant="secondary">Pending</Badge>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
