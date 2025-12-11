@@ -392,6 +392,7 @@ export type Database = {
           onboarding_completed: boolean | null
           profile_public: boolean | null
           state: string | null
+          timezone: string | null
           updated_at: string
           user_id: string
           username: string | null
@@ -415,6 +416,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           profile_public?: boolean | null
           state?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -438,6 +440,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           profile_public?: boolean | null
           state?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
