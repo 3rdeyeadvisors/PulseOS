@@ -206,24 +206,18 @@ export function useLeaderboard() {
     }
   }, [user, fetchLeaderboard, fetchWeeklyStats]);
 
-  // Listen for daily score updates with debounce to ensure daily_action_scores is updated first
+  // Listen for daily score updates (dispatched AFTER daily_action_scores is saved)
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
     const handleScoreUpdate = () => {
-      // Debounce to ensure daily_action_scores is updated before we recalculate
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        updateWeeklyScore();
-      }, 500);
+      updateWeeklyScore();
     };
 
-    window.addEventListener('task-updated', handleScoreUpdate);
+    // Listen to daily-score-updated which fires after DB is updated
+    window.addEventListener('daily-score-updated', handleScoreUpdate);
     window.addEventListener('streak-updated', handleScoreUpdate);
     
     return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('task-updated', handleScoreUpdate);
+      window.removeEventListener('daily-score-updated', handleScoreUpdate);
       window.removeEventListener('streak-updated', handleScoreUpdate);
     };
   }, [updateWeeklyScore]);

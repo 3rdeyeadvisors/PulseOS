@@ -87,6 +87,8 @@ export function DailyActionScoreCard() {
 
       if (updatedScore) {
         setScore(updatedScore);
+        // Dispatch event after successful update so weekly leaderboard can sync
+        window.dispatchEvent(new CustomEvent('daily-score-updated'));
       }
     } else {
       // Create new score
@@ -108,6 +110,8 @@ export function DailyActionScoreCard() {
 
       if (newScore) {
         setScore(newScore);
+        // Dispatch event after successful insert so weekly leaderboard can sync
+        window.dispatchEvent(new CustomEvent('daily-score-updated'));
       }
     }
     
