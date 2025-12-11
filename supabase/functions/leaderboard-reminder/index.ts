@@ -183,8 +183,8 @@ serve(async (req) => {
                   Complete tasks, try recommendations, and engage with friends to climb the leaderboard! 🚀
                 </p>
                 
-                <a href="${appUrl}/app" style="display: inline-block; background-color: #6366f1; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
-                  Open Pulse
+                <a href="${appUrl}/app/friends" style="display: inline-block; background-color: #6366f1; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
+                  View Leaderboard
                 </a>
                 
                 <p style="color: #6b7280; font-size: 12px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
