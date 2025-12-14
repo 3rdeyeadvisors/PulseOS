@@ -2,13 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Users, Activity, Palette, LayoutGrid, Shield } from 'lucide-react';
+import { Loader2, Users, Activity, Palette, LayoutGrid, Shield, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
-
-const ADMIN_EMAILS = ['kevinguerrier.kg@gmail.com', '3rdeyeadvisors@gmail.com', 'kevinroberts5678@gmail.com', 'kevin@pulselife.com'];
 
 interface UserData {
   id: string;
@@ -23,22 +21,52 @@ interface UserData {
 export default function Admin() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<UserData[]>([]);
   const [stats, setStats] = useState({ totalUsers: 0, activeToday: 0, themes: {} as Record<string, number> });
   const [dataLoading, setDataLoading] = useState(true);
 
+  // Check admin role from database (server-side enforcement)
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-      return;
+    async function checkAdminRole() {
+      if (!user) {
+        if (!loading) {
+          navigate('/auth');
+        }
+        return;
+      }
+
+      try {
+        // Query the user_roles table to check for admin role
+        // This uses RLS policy "Users can view their own roles"
+        const { data: roleData, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking admin role:', error);
+          setIsAdmin(false);
+          return;
+        }
+
+        if (roleData) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+          // Redirect non-admins immediately
+          navigate('/app');
+        }
+      } catch (err) {
+        console.error('Admin check failed:', err);
+        setIsAdmin(false);
+        navigate('/app');
+      }
     }
 
-    if (user && !ADMIN_EMAILS.includes(user.email || '')) {
-      navigate('/app');
-    } else if (user) {
-      setIsAdmin(true);
-    }
+    checkAdminRole();
   }, [user, loading, navigate]);
 
   useEffect(() => {
@@ -46,11 +74,21 @@ export default function Admin() {
       if (!isAdmin) return;
 
       try {
-        // Fetch all profiles
-        const { data: profiles } = await supabase
+        // Fetch all profiles - relies on RLS policy "Admins can view all profiles"
+        const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, user_id, email, full_name, city, created_at')
           .order('created_at', { ascending: false });
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          // If we get an RLS error, the user isn't really an admin
+          if (profilesError.code === 'PGRST301' || profilesError.message?.includes('policy')) {
+            setIsAdmin(false);
+            navigate('/app');
+            return;
+          }
+        }
 
         // Fetch preferences for theme data
         const { data: prefs } = await supabase
@@ -80,7 +118,7 @@ export default function Admin() {
 
         setStats({
           totalUsers: usersWithPrefs.length,
-          activeToday: Math.floor(usersWithPrefs.length * 0.6), // Mock active users
+          activeToday: Math.floor(usersWithPrefs.length * 0.6), // TODO: Implement real active tracking
           themes: themeCount,
         });
       } catch (err) {
@@ -91,12 +129,30 @@ export default function Admin() {
     }
 
     fetchAdminData();
-  }, [isAdmin]);
+  }, [isAdmin, navigate]);
 
-  if (loading || !isAdmin) {
+  // Show loading while checking auth and admin status
+  if (loading || isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If not admin, show access denied (this is a fallback, they should be redirected)
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+        <AlertTriangle className="h-12 w-12 text-destructive" />
+        <h1 className="text-xl font-bold">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <button
+          onClick={() => navigate('/app')}
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+        >
+          Go to App
+        </button>
       </div>
     );
   }
@@ -108,6 +164,9 @@ export default function Admin() {
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">PulseOS Admin</h1>
+            <Badge variant="outline" className="ml-2 text-xs">
+              Role-Protected
+            </Badge>
           </div>
           <button
             onClick={() => navigate('/app')}
