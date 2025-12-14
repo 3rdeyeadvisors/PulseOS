@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,14 +9,27 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Loader2, Save, Upload, User, AtSign, Globe, Eye, Check, X, BadgeCheck } from 'lucide-react';
+import { Loader2, Save, Upload, User, AtSign, Globe, Eye, Check, X, BadgeCheck, Trash2, AlertTriangle } from 'lucide-react';
 
 export function ProfileTab() {
-  const { user } = useAuth();
+  const { user, deleteAccount } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -27,6 +41,8 @@ export function ProfileTab() {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [originalUsername, setOriginalUsername] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -193,6 +209,26 @@ export function ProfileTab() {
       setOriginalUsername(username ? username.toLowerCase() : null);
     }
     setSaving(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error('Please type DELETE to confirm');
+      return;
+    }
+
+    setDeleting(true);
+    
+    const { error } = await deleteAccount();
+    
+    if (error) {
+      toast.error(error.message || 'Failed to delete account');
+      setDeleting(false);
+    } else {
+      toast.success('Your account has been deleted');
+      setDeleteDialogOpen(false);
+      navigate('/');
+    }
   };
 
   const getInitials = () => {
@@ -382,6 +418,92 @@ export function ProfileTab() {
             <strong>Note:</strong> Your exact location (address, zip code) is always private. 
             Only your city will be shown if you enable community discovery.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            Irreversible actions that will permanently affect your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="font-medium">Delete Account</p>
+              <p className="text-sm text-muted-foreground">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+            </div>
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    Delete Your Account?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="space-y-4">
+                    <p>
+                      This action is <strong>permanent and cannot be undone</strong>. All your data will be deleted, including:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Your profile and preferences</li>
+                      <li>All tasks and chat history</li>
+                      <li>Friend connections and invites</li>
+                      <li>Leaderboard entries and streaks</li>
+                      <li>All notifications and email preferences</li>
+                    </ul>
+                    <div className="pt-4">
+                      <Label htmlFor="delete-confirm" className="text-foreground font-medium">
+                        Type <span className="font-mono bg-muted px-1.5 py-0.5 rounded">DELETE</span> to confirm:
+                      </Label>
+                      <Input
+                        id="delete-confirm"
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                        placeholder="Type DELETE"
+                        className="mt-2"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText !== 'DELETE' || deleting}
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete My Account
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardContent>
       </Card>
     </div>
