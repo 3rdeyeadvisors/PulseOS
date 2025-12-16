@@ -68,3 +68,9 @@ verify_jwt = true
 
 [functions.setup-demo-account]
 verify_jwt = false
+
+[functions.send-verified-thank-you]
+verify_jwt = false
+
+[functions.send-task-invite-email]
+verify_jwt = false
