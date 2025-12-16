@@ -93,7 +93,7 @@ serve(async (req: Request): Promise<Response> => {
     // Send notification email to support
     await resend.emails.send({
       from: "PulseOS <support@notifications.pulseos.tech>",
-      to: ["support@notifications.pulseos.tech"],
+      to: ["support@pulseos.tech"],
       subject: `[Contact Form] ${safeSubject}`,
       html: `
 <!DOCTYPE html>
