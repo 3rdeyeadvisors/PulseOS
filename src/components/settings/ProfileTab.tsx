@@ -452,8 +452,8 @@ export function ProfileTab() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="space-y-1 flex-1">
               <p className="font-medium">Delete Account</p>
               <p className="text-sm text-muted-foreground">
                 Permanently delete your account and all associated data. This action cannot be undone.
@@ -461,7 +461,7 @@ export function ProfileTab() {
             </div>
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
+                <Button variant="destructive" size="sm" className="w-full sm:w-auto shrink-0">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Account
                 </Button>
