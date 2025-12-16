@@ -194,7 +194,7 @@ serve(async (req: Request): Promise<Response> => {
             "Authorization": `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "PulseOS <onboarding@resend.dev>",
+            from: "PulseOS <support@notifications.pulseos.tech>",
             to: [user.email],
             subject: "🎉 You're Verified! Grandfathered for Life",
             html: generateEmailHtml(displayName),
@@ -208,6 +208,9 @@ serve(async (req: Request): Promise<Response> => {
         }
 
         console.log(`Email sent to ${user.email}:`, emailResult);
+        
+        // Rate limit: wait 600ms between emails to stay under 2/sec limit
+        await new Promise(resolve => setTimeout(resolve, 600));
         
         // Log the email
         await supabase.from("email_logs").insert({
