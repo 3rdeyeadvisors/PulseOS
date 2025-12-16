@@ -414,6 +414,25 @@ export function ProfileTab() {
             />
           </div>
 
+          {/* Discoverability status */}
+          {profilePublic && !username && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                <strong>You're not discoverable yet!</strong> Set a username above so others can find you.
+              </p>
+            </div>
+          )}
+
+          {profilePublic && username && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <Check className="h-4 w-4 text-green-500 shrink-0" />
+              <p className="text-xs text-green-600 dark:text-green-400">
+                <strong>You're discoverable!</strong> Users in your city can find you as @{username}.
+              </p>
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
             <strong>Note:</strong> Your exact location (address, zip code) is always private. 
             Only your city will be shown if you enable community discovery.

@@ -119,9 +119,12 @@ function CommunityDiscoveryComponent() {
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">No One Nearby Yet</h3>
-            <p className="text-sm text-muted-foreground">
-              Be the first in {userCity} to make your profile public, or check back later!
+            <p className="text-sm text-muted-foreground mb-3">
+              Be the first in {userCity}! To be discoverable, users need both a <strong>username</strong> and <strong>public profile</strong> enabled in Settings.
             </p>
+            <Button variant="outline" size="sm" asChild>
+              <a href="/app/settings">Check Your Settings</a>
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">
