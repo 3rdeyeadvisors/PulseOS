@@ -198,14 +198,14 @@ export default function Contact() {
         {/* Direct contact info */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>
-            You can also reach us directly at{' '}
-            <a 
-              href="mailto:support@notifications.pulseos.tech" 
-              className="text-primary hover:underline"
-            >
-              support@notifications.pulseos.tech
-            </a>
-          </p>
+          You can also reach us directly at{' '}
+          <a 
+            href="mailto:support@pulseos.tech" 
+            className="text-primary hover:underline"
+          >
+            support@pulseos.tech
+          </a>
+        </p>
         </div>
       </main>
 
