@@ -215,8 +215,8 @@ export default function Privacy() {
                 </a>
               </li>
               <li><strong>Support:</strong>{' '}
-                <a href="mailto:support@pulseos.app" className="text-primary hover:underline">
-                  support@pulseos.app
+                <a href="mailto:support@pulseos.tech" className="text-primary hover:underline">
+                  support@pulseos.tech
                 </a>
               </li>
               <li><strong>Contact Form:</strong>{' '}

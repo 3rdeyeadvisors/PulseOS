@@ -152,8 +152,8 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold mb-4 text-foreground">13. Contact Information</h2>
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms of Service, please contact us at{' '}
-              <a href="mailto:support@notifications.pulseos.tech" className="text-primary hover:underline">
-                support@notifications.pulseos.tech
+              <a href="mailto:support@pulseos.tech" className="text-primary hover:underline">
+                support@pulseos.tech
               </a>
             </p>
           </section>
