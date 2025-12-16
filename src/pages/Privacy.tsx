@@ -210,8 +210,8 @@ export default function Privacy() {
             </p>
             <ul className="list-none pl-0 text-muted-foreground space-y-2 mt-4">
               <li><strong>Email:</strong>{' '}
-                <a href="mailto:privacy@pulseos.app" className="text-primary hover:underline">
-                  privacy@pulseos.app
+                <a href="mailto:privacy@pulseos.tech" className="text-primary hover:underline">
+                  privacy@pulseos.tech
                 </a>
               </li>
               <li><strong>Support:</strong>{' '}
