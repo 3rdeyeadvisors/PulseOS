@@ -321,11 +321,11 @@ export function TasksCard() {
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addTask()}
-          className="h-8 text-sm"
+          className="h-10 sm:h-9 text-sm"
         />
         <Button
           size="icon"
-          className="h-8 w-8 shrink-0"
+          className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
           onClick={addTask}
           disabled={adding || !newTask.trim()}
         >
@@ -355,12 +355,12 @@ export function TasksCard() {
                 >
                   <button
                     onClick={() => toggleTask(task.id, task.completed)}
-                    className="shrink-0"
+                    className="shrink-0 h-10 w-10 sm:h-8 sm:w-8 flex items-center justify-center -ml-2"
                   >
                     {task.completed ? (
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <CheckCircle2 className="h-5 w-5 sm:h-4 sm:w-4 text-primary" />
                     ) : (
-                      <Circle className="h-4 w-4 text-muted-foreground" />
+                      <Circle className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground" />
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
@@ -408,12 +408,12 @@ export function TasksCard() {
                       <span className="text-[10px] text-primary">Shared task</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     {task.isOwner && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-9 w-9 sm:h-7 sm:w-7"
                         onClick={(e) => {
                           e.stopPropagation();
                           setTaskToInvite(task);
@@ -421,17 +421,17 @@ export function TasksCard() {
                         }}
                         title="Invite friends"
                       >
-                        <Users className="h-3 w-3 text-primary" />
+                        <Users className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-primary" />
                       </Button>
                     )}
                     {task.isOwner && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-9 w-9 sm:h-7 sm:w-7"
                         onClick={() => handleDeleteClick(task)}
                       >
-                        <Trash2 className="h-3 w-3 text-destructive" />
+                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-destructive" />
                       </Button>
                     )}
                   </div>
