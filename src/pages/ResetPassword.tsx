@@ -18,19 +18,36 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isComplete, setIsComplete] = useState(false);
-  const [resetCode, setResetCode] = useState<string | null>(null);
+  const [isValidSession, setIsValidSession] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check URL search params for our custom code
-    const searchParams = new URLSearchParams(window.location.search);
-    const code = searchParams.get('code');
+    // Listen for PASSWORD_RECOVERY event from Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsValidSession(true);
+        setLoading(false);
+      } else if (event === 'SIGNED_IN' && session) {
+        // User might already be in recovery mode
+        setIsValidSession(true);
+        setLoading(false);
+      }
+    });
 
-    if (code) {
-      setResetCode(code);
-    }
-    
-    setLoading(false);
+    // Check if there's already a session (user came from email link)
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsValidSession(true);
+      }
+      setLoading(false);
+    };
+
+    // Small delay to allow auth state to settle
+    setTimeout(checkSession, 500);
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -46,38 +63,20 @@ export default function ResetPassword() {
       toast.error('Passwords do not match');
       return;
     }
-
-    if (!resetCode) {
-      toast.error('Invalid reset link. Please request a new one.');
-      return;
-    }
     
     setIsSubmitting(true);
 
     try {
-      // Call the edge function to verify token and update password
-      const { data, error } = await supabase.functions.invoke('verify-reset-token', {
-        body: { 
-          code: resetCode,
-          new_password: password 
-        },
-      });
-
+      const { error } = await supabase.auth.updateUser({ password });
+      
       if (error) {
-        console.error('Edge function error:', error);
-        toast.error('An error occurred. Please try again.');
-        setIsSubmitting(false);
-        return;
+        toast.error(error.message);
+      } else {
+        setIsComplete(true);
+        toast.success('Password updated successfully!');
+        // Sign out so they can log in with new password
+        await supabase.auth.signOut();
       }
-
-      if (!data.success) {
-        toast.error(data.error || 'Failed to reset password');
-        setIsSubmitting(false);
-        return;
-      }
-
-      setIsComplete(true);
-      toast.success('Password updated successfully!');
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error('An error occurred. Please try again.');
@@ -96,13 +95,11 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
-      {/* Background gradient effect */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
       </div>
       
-      {/* Logo */}
       <div className="flex items-center gap-3 mb-8 relative z-10">
         <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
           <Zap className="h-8 w-8 text-primary" />
@@ -136,7 +133,7 @@ export default function ResetPassword() {
                 Go to Login
               </Button>
             </div>
-          ) : !resetCode ? (
+          ) : !isValidSession ? (
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">
                 This password reset link is invalid or has expired.

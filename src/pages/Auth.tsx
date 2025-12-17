@@ -139,11 +139,9 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('request-password-reset', {
-        body: {
-          email: resetEmail,
-          redirectTo: `${window.location.origin}/account/recover`,
-        },
+      // Use standard Supabase password reset - works on published domains
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) throw error;
