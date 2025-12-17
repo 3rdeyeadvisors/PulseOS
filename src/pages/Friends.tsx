@@ -24,7 +24,7 @@ export default function Friends() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isActive, loading: subscriptionLoading, startCheckout, checkoutLoading } = useSubscription();
-  const { needsUsername, loading: usernameLoading, refreshUsername } = useUsername();
+  const { needsUsername, loading: usernameLoading, refreshUsername, dismissPrompt } = useUsername();
   const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading, refreshRequests, friends } = useFriends();
   const { receivedInvites } = useActivityInvites();
   const [requestsSearch, setRequestsSearch] = useState('');
@@ -112,7 +112,8 @@ export default function Friends() {
     <AppShell>
       <UsernameSetupModal 
         open={needsUsername} 
-        onComplete={refreshUsername} 
+        onComplete={refreshUsername}
+        onDismiss={dismissPrompt}
       />
 
       <div className="max-w-4xl mx-auto space-y-6">

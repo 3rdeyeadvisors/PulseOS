@@ -17,9 +17,10 @@ import { Loader2, Check, X, AtSign } from 'lucide-react';
 interface UsernameSetupModalProps {
   open: boolean;
   onComplete: () => void;
+  onDismiss?: () => void;
 }
 
-export function UsernameSetupModal({ open, onComplete }: UsernameSetupModalProps) {
+export function UsernameSetupModal({ open, onComplete, onDismiss }: UsernameSetupModalProps) {
   const { user } = useAuth();
   const [username, setUsername] = useState('');
   const [checking, setChecking] = useState(false);
@@ -99,9 +100,13 @@ export function UsernameSetupModal({ open, onComplete }: UsernameSetupModalProps
     return null;
   };
 
+  const handleDismiss = () => {
+    onDismiss?.();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleDismiss()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AtSign className="h-5 w-5 text-primary" />
@@ -147,7 +152,10 @@ export function UsernameSetupModal({ open, onComplete }: UsernameSetupModalProps
           </div>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-between gap-2">
+          <Button variant="ghost" onClick={handleDismiss}>
+            Skip for now
+          </Button>
           <Button
             onClick={handleSave}
             disabled={!isAvailable || saving || checking}
