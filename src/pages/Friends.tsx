@@ -24,7 +24,7 @@ export default function Friends() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isActive, loading: subscriptionLoading, startCheckout, checkoutLoading } = useSubscription();
-  const { needsUsername, loading: usernameLoading, refreshUsername, dismissPrompt } = useUsername();
+  const { username, needsUsername, loading: usernameLoading, refreshUsername, dismissPrompt } = useUsername();
   const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading, refreshRequests, friends } = useFriends();
   const { receivedInvites } = useActivityInvites();
   const [requestsSearch, setRequestsSearch] = useState('');
@@ -142,6 +142,8 @@ export default function Friends() {
               onRequestSent={refreshRequests} 
               sentRequests={sentRequests}
               friends={friends}
+              currentUsername={username}
+              onUsernameSet={refreshUsername}
             />
           </CardContent>
         </Card>
