@@ -154,17 +154,33 @@ serve(async (req: Request): Promise<Response> => {
   try {
     console.log("Starting verified thank-you email send...");
 
+    // Parse optional userId from request body
+    let targetUserId: string | null = null;
+    try {
+      const body = await req.json();
+      targetUserId = body.userId || null;
+    } catch {
+      // No body or invalid JSON, send to all verified users
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch all verified users with their emails
-    const { data: verifiedUsers, error: fetchError } = await supabase
+    // Build query - either specific user or all verified users
+    let query = supabase
       .from("profiles")
       .select("user_id, email, full_name, username")
       .eq("verified", true)
       .not("email", "is", null);
+
+    if (targetUserId) {
+      query = query.eq("user_id", targetUserId);
+      console.log(`Sending to specific user: ${targetUserId}`);
+    }
+
+    const { data: verifiedUsers, error: fetchError } = await query;
 
     if (fetchError) {
       console.error("Error fetching verified users:", fetchError);
