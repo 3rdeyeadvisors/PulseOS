@@ -140,7 +140,7 @@ export function SubscriptionTab() {
                 <CardDescription>Unlock your full potential</CardDescription>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold">$14.99</div>
+                <div className="text-3xl font-bold">$4.99</div>
                 <div className="text-sm text-muted-foreground">/month</div>
               </div>
             </div>
