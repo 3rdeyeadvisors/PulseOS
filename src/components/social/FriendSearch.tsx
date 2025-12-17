@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, Search, UserPlus, Check, AtSign, BadgeCheck, Mail, Send } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UsernameSetupModal } from './UsernameSetupModal';
 
 interface SearchResult {
   user_id: string;
@@ -23,9 +24,17 @@ interface FriendSearchProps {
   onRequestSent?: () => void;
   sentRequests?: Array<{ receiver_id: string }>;
   friends?: Array<{ friend?: { user_id: string } }>;
+  currentUsername?: string | null;
+  onUsernameSet?: () => void;
 }
 
-export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, friends: parentFriends }: FriendSearchProps) {
+export function FriendSearch({ 
+  onRequestSent, 
+  sentRequests: parentSentRequests, 
+  friends: parentFriends,
+  currentUsername,
+  onUsernameSet,
+}: FriendSearchProps) {
   const { user } = useAuth();
   const { sendFriendRequest, friends: hookFriends, sentRequests: hookSentRequests } = useFriends();
   
@@ -41,6 +50,7 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
   const [inviteEmail, setInviteEmail] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [searchType, setSearchType] = useState<'username' | 'email'>('username');
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -100,6 +110,12 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
   const handleSendRequest = async () => {
     if (!result) return;
 
+    // Check if user has a username first
+    if (!currentUsername) {
+      setShowUsernameModal(true);
+      return;
+    }
+
     setSending(true);
     const { error } = await sendFriendRequest(result.user_id);
 
@@ -116,6 +132,12 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
 
   const handleInviteByEmail = async () => {
     if (!inviteEmail.trim() || !user) return;
+
+    // Check if user has a username first
+    if (!currentUsername) {
+      setShowUsernameModal(true);
+      return;
+    }
 
     if (!isValidEmail(inviteEmail)) {
       toast.error('Please enter a valid email address');
@@ -167,6 +189,12 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
     }
 
     setSendingInvite(false);
+  };
+
+  const handleUsernameComplete = () => {
+    setShowUsernameModal(false);
+    onUsernameSet?.();
+    toast.success('Username set! You can now add friends.');
   };
 
   const isAlreadyFriend = result && friends.some(
@@ -329,6 +357,12 @@ export function FriendSearch({ onRequestSent, sentRequests: parentSentRequests, 
           </TabsContent>
         </Tabs>
       </CardContent>
+
+      <UsernameSetupModal
+        open={showUsernameModal}
+        onComplete={handleUsernameComplete}
+        onDismiss={() => setShowUsernameModal(false)}
+      />
     </Card>
   );
 }
