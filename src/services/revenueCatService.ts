@@ -1,9 +1,9 @@
 import { Purchases, LOG_LEVEL, CustomerInfo } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
-// RevenueCat API keys - you'll need to set these up in RevenueCat dashboard
-const REVENUECAT_IOS_KEY = 'your_ios_api_key'; // Replace with your iOS key
-const REVENUECAT_ANDROID_KEY = 'your_android_api_key'; // Replace with your Android key
+// RevenueCat API keys
+const REVENUECAT_IOS_KEY = 'test_NdINrUfxEWJunaHyvJoPDZriZhL';
+const REVENUECAT_ANDROID_KEY = 'your_android_api_key'; // Replace with your Android key when ready
 
 export const isNativePlatform = () => {
   return Capacitor.isNativePlatform();
