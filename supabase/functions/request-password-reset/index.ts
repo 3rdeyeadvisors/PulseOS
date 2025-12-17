@@ -85,10 +85,10 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Build the reset link with our custom token (using 'code' parameter to avoid interception)
+    // Build the reset link with our custom token
     const resetLink = `${redirectTo}?code=${token}`;
 
-    console.log(`Generated custom reset link for user ${user.id}`);
+    console.log(`Reset link: ${resetLink}`);
     console.log(`Sending password reset email to ${email}`);
 
     // Send custom branded email via Resend
