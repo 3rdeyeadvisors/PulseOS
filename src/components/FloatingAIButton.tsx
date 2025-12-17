@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, X, Sparkles, Send } from 'lucide-react';
+import { MessageCircle, X, Sparkles, Send, Crown, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const quickQuestions = [
   "Find me something cheap to do today",
@@ -18,6 +19,7 @@ interface FloatingAIButtonProps {
 
 export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
   const navigate = useNavigate();
+  const { isActive, loading: subscriptionLoading, startCheckout, checkoutLoading } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isVisible, setIsVisible] = useState(true);
@@ -68,6 +70,11 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
     }
   };
 
+  // Don't render while loading subscription status
+  if (subscriptionLoading) {
+    return null;
+  }
+
   return (
     <>
       {/* Overlay */}
@@ -106,49 +113,81 @@ export function FloatingAIButton({ aiName = 'Pulse' }: FloatingAIButtonProps) {
             </Button>
           </div>
 
-          {/* Quick Questions */}
-          <div className="space-y-2 mb-4">
-            <p className="text-xs text-muted-foreground">Quick questions:</p>
-            <div className="flex flex-wrap gap-2">
-              {quickQuestions.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleQuickQuestion(q)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-left"
-                >
-                  {q}
-                </button>
-              ))}
+          {/* Premium Paywall for non-subscribers */}
+          {!isActive ? (
+            <div className="text-center py-4">
+              <div className="mx-auto p-3 rounded-xl bg-primary/10 border border-primary/20 mb-3 w-fit">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-1">Premium Feature</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Unlock the AI assistant with Premium
+              </p>
+              <Button onClick={startCheckout} disabled={checkoutLoading} className="w-full">
+                {checkoutLoading ? (
+                  <span className="animate-spin mr-2">⏳</span>
+                ) : (
+                  <Crown className="h-4 w-4 mr-2" />
+                )}
+                Start Free Trial
+              </Button>
+              <button
+                onClick={() => {
+                  navigate('/settings?tab=subscription');
+                  setIsOpen(false);
+                }}
+                className="w-full mt-2 text-xs text-center text-primary hover:underline"
+              >
+                View Plans
+              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Quick Questions */}
+              <div className="space-y-2 mb-4">
+                <p className="text-xs text-muted-foreground">Quick questions:</p>
+                <div className="flex flex-wrap gap-2">
+                  {quickQuestions.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleQuickQuestion(q)}
+                      className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-left"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {/* Input */}
-          <div className="flex gap-2">
-            <Input
-              ref={inputRef}
-              placeholder={`Ask ${aiName} anything...`}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
-              className="flex-1"
-            />
-            <Button size="icon" onClick={handleSubmit} disabled={!inputValue.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+              {/* Input */}
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  placeholder={`Ask ${aiName} anything...`}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                  className="flex-1"
+                />
+                <Button size="icon" onClick={handleSubmit} disabled={!inputValue.trim()}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
 
-          {/* Full Chat Link */}
-          <button
-            onClick={() => {
-              navigate('/app/chat');
-              setIsOpen(false);
-            }}
-            className="w-full mt-3 text-xs text-center text-primary hover:underline"
-          >
-            Open full chat →
-          </button>
+              {/* Full Chat Link */}
+              <button
+                onClick={() => {
+                  navigate('/app/chat');
+                  setIsOpen(false);
+                }}
+                className="w-full mt-3 text-xs text-center text-primary hover:underline"
+              >
+                Open full chat →
+              </button>
+            </>
+          )}
         </div>
       </div>
 
