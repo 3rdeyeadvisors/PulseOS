@@ -114,7 +114,7 @@ export const checkNativeSubscription = async (): Promise<{
 
     // Check for active entitlements - check both platform-specific names
     const androidEntitlement = customerInfo.entitlements.active['PulseOS android Pro'];
-    const iosEntitlement = customerInfo.entitlements.active['PulseOS iOS Pro'];
+    const iosEntitlement = customerInfo.entitlements.active['PulseOS Pro'];
     const genericEntitlement = customerInfo.entitlements.active['premium'];
     
     const activeEntitlement = androidEntitlement || iosEntitlement || genericEntitlement;
