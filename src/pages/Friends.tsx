@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { AppShell } from '@/components/layout/AppShell';
 import { FriendSearch } from '@/components/social/FriendSearch';
 import { FriendRequestCard } from '@/components/social/FriendRequestCard';
@@ -16,11 +17,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck, Search, Lock, Crown } from 'lucide-react';
 
 export default function Friends() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { isActive, loading: subscriptionLoading, startCheckout, checkoutLoading } = useSubscription();
   const { needsUsername, loading: usernameLoading, refreshUsername } = useUsername();
   const { pendingRequests, sentRequests, pendingCount, loading: friendsLoading, refreshRequests, friends } = useFriends();
   const { receivedInvites } = useActivityInvites();
@@ -53,7 +56,7 @@ export default function Friends() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading || usernameLoading) {
+  if (authLoading || usernameLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -63,6 +66,46 @@ export default function Friends() {
 
   if (!user) {
     return null;
+  }
+
+  // Premium paywall for non-subscribers
+  if (!isActive) {
+    return (
+      <AppShell>
+        <div className="max-w-lg mx-auto flex items-center justify-center min-h-[60vh]">
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto p-4 rounded-2xl bg-primary/10 border border-primary/20 mb-4 w-fit">
+                <Lock className="h-10 w-10 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Premium Feature</CardTitle>
+              <CardDescription className="text-base">
+                Connect with friends, compete on leaderboards, and send activity invites with Premium.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>Build your social network and plan activities together</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button onClick={startCheckout} disabled={checkoutLoading} size="lg">
+                  {checkoutLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Crown className="h-4 w-4 mr-2" />
+                  )}
+                  Start 14-Day Free Trial
+                </Button>
+                <Button variant="ghost" onClick={() => navigate('/settings?tab=subscription')}>
+                  View Plans
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
