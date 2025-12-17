@@ -223,7 +223,7 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Main Content with Pull-to-Refresh */}
       <PullToRefresh onRefresh={handleRefresh}>
-        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-32 overflow-x-hidden min-h-[calc(100vh-4rem)]">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 overflow-x-hidden min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </PullToRefresh>
