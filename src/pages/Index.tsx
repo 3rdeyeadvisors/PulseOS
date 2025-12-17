@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music, Loader2, Crown, Check, X } from 'lucide-react';
 
 export default function Index() {
@@ -139,8 +138,7 @@ export default function Index() {
               <p className="text-sm text-muted-foreground text-center">Track your progress and build momentum with personalized daily goals</p>
             </div>
             
-            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm relative">
-              <Badge className="absolute -top-2 -right-2 bg-primary text-xs">Premium</Badge>
+            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
               <div className="p-2.5 rounded-lg bg-amber-500/10">
                 <Trophy className="h-5 w-5 text-amber-500" />
               </div>
@@ -148,8 +146,7 @@ export default function Index() {
               <p className="text-sm text-muted-foreground text-center">Compete with friends and see who can achieve the most each week</p>
             </div>
             
-            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm relative">
-              <Badge className="absolute -top-2 -right-2 bg-primary text-xs">Premium</Badge>
+            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
               <div className="p-2.5 rounded-lg bg-blue-500/10">
                 <Users className="h-5 w-5 text-blue-500" />
               </div>
@@ -157,8 +154,7 @@ export default function Index() {
               <p className="text-sm text-muted-foreground text-center">Find friends by username or email and build your social circle</p>
             </div>
             
-            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm relative">
-              <Badge className="absolute -top-2 -right-2 bg-primary text-xs">Premium</Badge>
+            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
               <div className="p-2.5 rounded-lg bg-emerald-500/10">
                 <Send className="h-5 w-5 text-emerald-500" />
               </div>
