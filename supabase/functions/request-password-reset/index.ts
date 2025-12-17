@@ -23,10 +23,13 @@ serve(async (req: Request): Promise<Response> => {
     const { email, redirectTo }: PasswordResetRequest = await req.json();
     
     console.log(`Processing password reset request for ${email}`);
+    console.log(`Redirect URL: ${redirectTo}`);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 
     // Create admin client to generate the reset link
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
+      supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
         auth: {
@@ -47,7 +50,6 @@ serve(async (req: Request): Promise<Response> => {
 
     if (linkError) {
       console.error("Error generating reset link:", linkError);
-      // Don't reveal if email exists or not for security
       return new Response(
         JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
         {
@@ -57,14 +59,11 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Extract the action link from the response
-    const resetLink = data.properties?.action_link;
+    // Get the token hash from the response
+    const tokenHash = data.properties?.hashed_token;
     
-    console.log("Generated reset link:", resetLink);
-    console.log("Requested redirectTo:", redirectTo);
-    
-    if (!resetLink) {
-      console.error("No action link returned");
+    if (!tokenHash) {
+      console.error("No token hash returned");
       return new Response(
         JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
         {
@@ -74,6 +73,10 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Construct the correct reset link with our redirect URL
+    const resetLink = `${supabaseUrl}/auth/v1/verify?token=${tokenHash}&type=recovery&redirect_to=${encodeURIComponent(redirectTo)}`;
+
+    console.log(`Generated reset link: ${resetLink}`);
     console.log(`Sending password reset email to ${email}`);
 
     // Send custom branded email via Resend
@@ -162,7 +165,6 @@ serve(async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in request-password-reset function:", error);
-    // Return success even on error to not reveal email existence
     return new Response(
       JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
       {
