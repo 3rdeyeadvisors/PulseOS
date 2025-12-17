@@ -126,7 +126,7 @@ export default function Index() {
 
           {/* Social Proof */}
           <p className="text-sm text-muted-foreground mb-16">
-            Free tier available • 14-day Premium trial • No credit card required
+            Free tier available • 14-day Premium trial
           </p>
           
           {/* Benefits Grid */}
