@@ -22,8 +22,16 @@ export function useSubscription() {
   const [portalLoading, setPortalLoading] = useState(false);
 
   const checkSubscription = useCallback(async () => {
-    if (!user || !session) {
+    if (!user) {
       setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
+    // Ensure we have a valid session before calling
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession?.access_token) {
+      console.log('No valid session for subscription check, skipping');
       setLoading(false);
       return;
     }
@@ -32,7 +40,10 @@ export function useSubscription() {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
-        console.error('Error checking subscription:', error);
+        // Don't log auth errors as they're expected during session transitions
+        if (!error.message?.includes('Authentication') && !error.message?.includes('missing sub claim')) {
+          console.error('Error checking subscription:', error);
+        }
         return;
       }
 
@@ -42,7 +53,7 @@ export function useSubscription() {
     } finally {
       setLoading(false);
     }
-  }, [user, session]);
+  }, [user]);
 
   useEffect(() => {
     checkSubscription();
