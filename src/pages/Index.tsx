@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music, Loader2 } from 'lucide-react';
+import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music, Loader2, Crown, Check, X } from 'lucide-react';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -47,6 +47,23 @@ export default function Index() {
       </div>
     );
   }
+
+  const freeFeatures = [
+    'Personalized dashboard',
+    'Weather & news updates',
+    'Task management',
+    'Daily Action Score',
+    'Weekly leaderboards',
+    'Friend connections',
+    'Activity invites',
+  ];
+
+  const premiumFeatures = [
+    'Everything in Free',
+    'AI Personal Assistant',
+    'Smart recommendations',
+    'Priority support',
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -108,7 +125,7 @@ export default function Index() {
 
           {/* Social Proof */}
           <p className="text-sm text-muted-foreground mb-16">
-            Free to use • No credit card required
+            Free tier available • 14-day Premium trial • No credit card required
           </p>
           
           {/* Benefits Grid */}
@@ -146,11 +163,115 @@ export default function Index() {
             </div>
           </div>
 
+          {/* Pricing Section */}
+          <div className="mt-20 max-w-4xl mx-auto" id="pricing">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+              <Crown className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Simple Pricing</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Choose Your Plan</h2>
+            <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
+              Start free and upgrade when you're ready to unlock the full power of your AI assistant.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {/* Free Plan */}
+              <div className="p-6 rounded-2xl bg-card border border-border text-left">
+                <h3 className="text-xl font-bold mb-2">Free</h3>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-bold">$0</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">Perfect for getting started</p>
+                
+                <Link to="/auth">
+                  <Button variant="outline" className="w-full mb-6">
+                    Get Started
+                  </Button>
+                </Link>
+                
+                <ul className="space-y-3">
+                  {freeFeatures.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3 text-sm">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                  <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <X className="h-4 w-4 flex-shrink-0" />
+                    <span>AI Personal Assistant</span>
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Premium Plan */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border-2 border-primary/30 text-left relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                    Most Popular
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2">Premium</h3>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-bold">$14.99</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">14-day free trial included</p>
+                
+                <Link to="/auth">
+                  <Button className="w-full mb-6">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Start Free Trial
+                  </Button>
+                </Link>
+                
+                <ul className="space-y-3">
+                  {premiumFeatures.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3 text-sm">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className={feature === 'AI Personal Assistant' ? 'font-medium' : ''}>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Assistant Feature Highlight */}
+          <div className="mt-20 max-w-4xl mx-auto">
+            <div className="p-8 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-shrink-0">
+                  <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
+                    <Sparkles className="h-12 w-12 text-primary" />
+                  </div>
+                </div>
+                <div className="text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium mb-3">
+                    <Crown className="h-3 w-3" />
+                    Premium Feature
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">AI Personal Assistant</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Get personalized help with daily planning, smart recommendations based on your preferences, 
+                    and answers to any question about your day. Your AI assistant learns your habits and adapts to your lifestyle.
+                  </p>
+                  <Link to="/auth">
+                    <Button variant="outline" size="sm">
+                      Try Free for 14 Days
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Social Features Highlight */}
           <div className="mt-20 max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6">
               <Users className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium text-blue-500">New Social Features</span>
+              <span className="text-sm font-medium text-blue-500">Social Features</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Life is Better Together</h2>
             <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
@@ -263,12 +384,17 @@ export default function Index() {
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
               Join PulseOS today and start living more intentionally with your personalized life dashboard.
             </p>
-            <Link to="/auth">
-              <Button size="lg" className="h-12 px-8 text-base">
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/auth">
+                <Button size="lg" className="h-12 px-8 text-base">
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Free tier forever • Premium: 14-day free trial, then $14.99/month
+            </p>
           </div>
         </div>
       </main>
