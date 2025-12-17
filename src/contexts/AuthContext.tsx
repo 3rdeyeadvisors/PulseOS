@@ -114,10 +114,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteAccount = async () => {
     try {
+      // First, try to get/refresh the current session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error('No valid session for delete account');
+        return { error: new Error('Your session has expired. Please log out and log back in, then try again.') };
+      }
+
+      // Try to refresh the session to ensure we have a valid token
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Failed to refresh session:', refreshError);
+        return { error: new Error('Your session has expired. Please log out and log back in, then try again.') };
+      }
+
       const { data, error } = await supabase.functions.invoke('delete-account');
       
       if (error) {
         console.error('Delete account error:', error);
+        // Check for auth errors specifically
+        if (error.message?.includes('401') || error.message?.includes('Invalid') || error.message?.includes('expired')) {
+          return { error: new Error('Your session has expired. Please log out and log back in, then try again.') };
+        }
         return { error: new Error(error.message || 'Failed to delete account') };
       }
       
