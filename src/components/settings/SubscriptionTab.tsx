@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink, RotateCcw, Smartphone } from 'lucide-react';
 import { format } from 'date-fns';
+import { EmbeddedCheckoutModal } from './EmbeddedCheckoutModal';
+import { isNativePlatform } from '@/services/revenueCatService';
 
 const features = [
   'AI-powered personal assistant',
@@ -18,6 +21,8 @@ const features = [
 ];
 
 export function SubscriptionTab() {
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  
   const {
     subscription,
     loading,
@@ -31,7 +36,23 @@ export function SubscriptionTab() {
     startCheckout,
     openCustomerPortal,
     restorePurchases,
+    checkSubscription,
   } = useSubscription();
+
+  // Use embedded checkout for web, native purchase for mobile
+  const handleStartCheckout = () => {
+    if (isNativePlatform()) {
+      startCheckout();
+    } else {
+      setCheckoutOpen(true);
+    }
+  };
+
+  const handleCheckoutComplete = () => {
+    setCheckoutOpen(false);
+    // Refresh subscription status after checkout
+    checkSubscription();
+  };
 
   if (loading) {
     return (
@@ -108,7 +129,7 @@ export function SubscriptionTab() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                 {/* Show subscribe/upgrade button */}
                 {(!isActive || (isTrialing && !hasStripeSubscription)) && (
-                  <Button onClick={startCheckout} disabled={checkoutLoading}>
+                  <Button onClick={handleStartCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
@@ -189,7 +210,7 @@ export function SubscriptionTab() {
               ))}
             </div>
 
-            <Button onClick={startCheckout} disabled={checkoutLoading} className="w-full" size="lg">
+            <Button onClick={handleStartCheckout} disabled={checkoutLoading} className="w-full" size="lg">
               {checkoutLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
@@ -230,6 +251,13 @@ export function SubscriptionTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Embedded Checkout Modal for Web */}
+      <EmbeddedCheckoutModal 
+        open={checkoutOpen} 
+        onOpenChange={setCheckoutOpen}
+        onComplete={handleCheckoutComplete}
+      />
     </div>
   );
 }
