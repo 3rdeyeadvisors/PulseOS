@@ -38,10 +38,16 @@ export function useUsername() {
     checkUsername();
   };
 
+  // Allow user to dismiss the prompt without setting a username
+  const dismissPrompt = () => {
+    setNeedsUsername(false);
+  };
+
   return {
     username,
     needsUsername,
     loading,
     refreshUsername,
+    dismissPrompt,
   };
 }
