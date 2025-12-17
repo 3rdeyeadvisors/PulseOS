@@ -259,10 +259,11 @@ export default function Index() {
                     <Crown className="h-3 w-3" />
                     Premium Feature
                   </div>
-                  <h3 className="text-xl font-bold mb-2">AI Personal Assistant</h3>
+                  <h3 className="text-xl font-bold mb-2">Your AI That Actually Knows You</h3>
                   <p className="text-muted-foreground mb-4">
-                    Get personalized help with daily planning, smart recommendations based on your preferences, 
-                    and answers to any question about your day. Your AI assistant learns your habits and adapts to your lifestyle.
+                    Ask anything — from what to eat tonight to how to tackle your busiest day. 
+                    Get instant answers tailored to your location, preferences, and schedule. 
+                    No more generic advice. Just smart, personalized help whenever you need it.
                   </p>
                   <Link to="/auth">
                     <Button variant="outline" size="sm">
