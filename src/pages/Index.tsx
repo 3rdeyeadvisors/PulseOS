@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Zap, ArrowRight, Sparkles, Calendar, Heart, Users, TrendingUp, Trophy, UserPlus, Send, BadgeCheck, MapPin, Utensils, Music, Loader2, Crown, Check, X } from 'lucide-react';
 
 export default function Index() {
@@ -53,15 +54,15 @@ export default function Index() {
     'Weather & news updates',
     'Task management',
     'Daily Action Score',
-    'Weekly leaderboards',
-    'Friend connections',
-    'Activity invites',
+    'Food recommendations',
   ];
 
   const premiumFeatures = [
     'Everything in Free',
     'AI Personal Assistant',
-    'Smart recommendations',
+    'Friend connections',
+    'Activity invites',
+    'Weekly leaderboards',
     'Priority support',
   ];
 
@@ -138,7 +139,8 @@ export default function Index() {
               <p className="text-sm text-muted-foreground text-center">Track your progress and build momentum with personalized daily goals</p>
             </div>
             
-            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm relative">
+              <Badge className="absolute -top-2 -right-2 bg-primary text-xs">Premium</Badge>
               <div className="p-2.5 rounded-lg bg-amber-500/10">
                 <Trophy className="h-5 w-5 text-amber-500" />
               </div>
@@ -146,7 +148,8 @@ export default function Index() {
               <p className="text-sm text-muted-foreground text-center">Compete with friends and see who can achieve the most each week</p>
             </div>
             
-            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm relative">
+              <Badge className="absolute -top-2 -right-2 bg-primary text-xs">Premium</Badge>
               <div className="p-2.5 rounded-lg bg-blue-500/10">
                 <Users className="h-5 w-5 text-blue-500" />
               </div>
@@ -154,7 +157,8 @@ export default function Index() {
               <p className="text-sm text-muted-foreground text-center">Find friends by username or email and build your social circle</p>
             </div>
             
-            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm relative">
+              <Badge className="absolute -top-2 -right-2 bg-primary text-xs">Premium</Badge>
               <div className="p-2.5 rounded-lg bg-emerald-500/10">
                 <Send className="h-5 w-5 text-emerald-500" />
               </div>
@@ -200,6 +204,14 @@ export default function Index() {
                   <li className="flex items-center gap-3 text-sm text-muted-foreground">
                     <X className="h-4 w-4 flex-shrink-0" />
                     <span>AI Personal Assistant</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <X className="h-4 w-4 flex-shrink-0" />
+                    <span>Friend connections</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <X className="h-4 w-4 flex-shrink-0" />
+                    <span>Activity invites</span>
                   </li>
                 </ul>
               </div>
@@ -271,12 +283,12 @@ export default function Index() {
           <div className="mt-20 max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6">
               <Users className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium text-blue-500">Social Features</span>
+              <span className="text-sm font-medium text-blue-500">Premium Social Features</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Life is Better Together</h2>
             <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
               Connect with friends, compete on leaderboards, and plan activities together. 
-              PulseOS makes staying social effortless.
+              Unlock social features with Premium.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
