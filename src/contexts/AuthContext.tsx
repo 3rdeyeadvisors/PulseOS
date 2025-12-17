@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-
+import { initializeRevenueCat, loginRevenueCat, logoutRevenueCat, isNativePlatform } from '@/services/revenueCatService';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -45,12 +45,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize RevenueCat on native platforms
+    if (isNativePlatform()) {
+      initializeRevenueCat();
+    }
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Handle RevenueCat user identity on native platforms
+        if (isNativePlatform()) {
+          if (event === 'SIGNED_IN' && session?.user) {
+            loginRevenueCat(session.user.id);
+          } else if (event === 'SIGNED_OUT') {
+            logoutRevenueCat();
+          }
+        }
 
         // Send welcome notifications on signup (SIGNED_IN event after signup)
         if (event === 'SIGNED_IN' && session?.user) {
@@ -77,6 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Login to RevenueCat if user already has session
+      if (isNativePlatform() && session?.user) {
+        loginRevenueCat(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink } from 'lucide-react';
+import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink, RotateCcw, Smartphone } from 'lucide-react';
 import { format } from 'date-fns';
 
 const features = [
@@ -27,8 +27,10 @@ export function SubscriptionTab() {
     isGrandfathered,
     isTrialing,
     hasStripeSubscription,
+    isNative,
     startCheckout,
     openCustomerPortal,
+    restorePurchases,
   } = useSubscription();
 
   if (loading) {
@@ -91,12 +93,20 @@ export function SubscriptionTab() {
               </div>
             )}
 
+            {/* Native subscription info */}
+            {isActive && subscription?.is_native && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <Smartphone className="h-5 w-5 text-green-500" />
+                <span className="text-sm text-green-700 dark:text-green-300">
+                  Subscribed via App Store. Manage in your device settings.
+                </span>
+              </div>
+            )}
+
             {/* Actions - only show for non-grandfathered users */}
             {!isGrandfathered && (
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                {/* Show subscribe/upgrade button for:
-                    - Users not active at all
-                    - Database-only trial users (no Stripe subscription yet) */}
+                {/* Show subscribe/upgrade button */}
                 {(!isActive || (isTrialing && !hasStripeSubscription)) && (
                   <Button onClick={startCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? (
@@ -104,12 +114,16 @@ export function SubscriptionTab() {
                     ) : (
                       <CreditCard className="h-4 w-4 mr-2" />
                     )}
-                    {isTrialing ? 'Add Payment Method' : 'Start Free Trial'}
+                    {isNative 
+                      ? 'Subscribe Now' 
+                      : isTrialing 
+                      ? 'Add Payment Method' 
+                      : 'Start Free Trial'}
                   </Button>
                 )}
                 
-                {/* Show manage subscription for users with Stripe subscriptions */}
-                {hasStripeSubscription && (
+                {/* Show manage subscription for users with Stripe subscriptions (web only) */}
+                {hasStripeSubscription && !subscription?.is_native && (
                   <Button variant="outline" onClick={openCustomerPortal} disabled={portalLoading}>
                     {portalLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -117,6 +131,18 @@ export function SubscriptionTab() {
                       <ExternalLink className="h-4 w-4 mr-2" />
                     )}
                     Manage Subscription
+                  </Button>
+                )}
+
+                {/* Restore purchases button for native platforms */}
+                {isNative && !isActive && (
+                  <Button variant="outline" onClick={restorePurchases} disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                    )}
+                    Restore Purchases
                   </Button>
                 )}
               </div>
@@ -144,11 +170,13 @@ export function SubscriptionTab() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
-              <span className="text-sm font-medium text-primary">
-                Start with a 14-day free trial — no credit card required until trial ends
-              </span>
-            </div>
+            {!isNative && (
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                <span className="text-sm font-medium text-primary">
+                  Start with a 14-day free trial — no credit card required until trial ends
+                </span>
+              </div>
+            )}
 
             <div className="grid gap-3">
               {features.map((feature) => (
@@ -167,8 +195,16 @@ export function SubscriptionTab() {
               ) : (
                 <Crown className="h-4 w-4 mr-2" />
               )}
-              Start 14-Day Free Trial
+              {isNative ? 'Subscribe Now' : 'Start 14-Day Free Trial'}
             </Button>
+
+            {/* Restore purchases for native */}
+            {isNative && (
+              <Button variant="ghost" onClick={restorePurchases} disabled={loading} className="w-full">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restore Previous Purchase
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
