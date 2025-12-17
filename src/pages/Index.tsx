@@ -254,7 +254,7 @@ export default function Index() {
                     <Sparkles className="h-12 w-12 text-primary" />
                   </div>
                 </div>
-                <div className="text-left">
+                <div className="text-center md:text-left">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium mb-3">
                     <Crown className="h-3 w-3" />
                     Premium Feature
