@@ -54,11 +54,21 @@ export function ModulesTab() {
   }, [user]);
 
   const toggleModule = (moduleId: string) => {
+    const module = modules.find(m => m.id === moduleId);
+    const wasEnabled = enabledModules.includes(moduleId);
+    
     setEnabledModules((prev) =>
       prev.includes(moduleId)
         ? prev.filter((id) => id !== moduleId)
         : [...prev, moduleId]
     );
+    
+    // Show immediate feedback about the change
+    if (wasEnabled) {
+      toast.info(`${module?.label || moduleId} will be hidden. Click Save to apply.`);
+    } else {
+      toast.info(`${module?.label || moduleId} will be shown. Click Save to apply.`);
+    }
   };
 
   const handleSave = async () => {
