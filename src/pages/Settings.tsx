@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,17 +10,55 @@ import { ModulesTab } from '@/components/settings/ModulesTab';
 import { ThemesTab } from '@/components/settings/ThemesTab';
 import { PulseAITab } from '@/components/settings/PulseAITab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
-import { Loader2, User, MapPin, Heart, LayoutGrid, Palette, Sparkles, Bell } from 'lucide-react';
+import { SubscriptionTab } from '@/components/settings/SubscriptionTab';
+import { Loader2, User, MapPin, Heart, LayoutGrid, Palette, Sparkles, Bell, Crown } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading } = useAuth();
+  
+  // Get tab from URL params, default to 'profile'
+  const tabFromUrl = searchParams.get('tab') || 'profile';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Handle checkout success/cancel messages
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    
+    if (success === 'true') {
+      toast.success('Subscription started! Welcome to Pulse Life Premium.');
+      // Clean up URL params
+      searchParams.delete('success');
+      setSearchParams(searchParams);
+    } else if (canceled === 'true') {
+      toast.info('Checkout canceled. You can subscribe anytime.');
+      searchParams.delete('canceled');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Sync tab state with URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    searchParams.set('tab', value);
+    setSearchParams(searchParams);
+  };
 
   if (loading) {
     return (
@@ -42,11 +80,15 @@ export default function Settings() {
           <p className="text-muted-foreground">Customize your PulseOS experience</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 h-auto gap-1 bg-secondary/50 p-1">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 h-auto gap-1 bg-secondary/50 p-1">
             <TabsTrigger value="profile" className="flex items-center gap-2 py-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center gap-2 py-2">
+              <Crown className="h-4 w-4" />
+              <span className="hidden sm:inline">Plan</span>
             </TabsTrigger>
             <TabsTrigger value="lifestyle" className="flex items-center gap-2 py-2">
               <MapPin className="h-4 w-4" />
@@ -76,6 +118,9 @@ export default function Settings() {
 
           <TabsContent value="profile">
             <ProfileTab />
+          </TabsContent>
+          <TabsContent value="subscription">
+            <SubscriptionTab />
           </TabsContent>
           <TabsContent value="lifestyle">
             <LifestyleTab />
