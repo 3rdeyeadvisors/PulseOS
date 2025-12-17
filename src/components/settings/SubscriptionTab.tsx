@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink } from 'lucide-react';
+import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 const features = [
@@ -117,7 +117,7 @@ export function SubscriptionTab() {
                 )}
 
                 <Button variant="ghost" onClick={checkSubscription} size="icon" title="Refresh status">
-                  <Loader2 className="h-4 w-4" />
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
             )}
