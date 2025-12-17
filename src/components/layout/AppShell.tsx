@@ -111,10 +111,10 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background safe-x">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50 safe-top">
+        <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
           {/* Logo */}
           <Link to="/app" className="flex items-center gap-3">
             <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
@@ -223,21 +223,21 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Main Content with Pull-to-Refresh */}
       <PullToRefresh onRefresh={handleRefresh}>
-        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 overflow-x-hidden min-h-[calc(100vh-4rem)]">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 overflow-x-hidden min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </PullToRefresh>
 
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border/30 py-3 z-40">
+      <footer className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border/30 py-3 z-40 safe-bottom">
         <div className="container mx-auto px-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
           <span>© 2025 PulseOS</span>
           <span className="text-border">•</span>
-          <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+          <Link to="/privacy" className="hover:text-foreground transition-colors touch-target flex items-center justify-center">Privacy</Link>
           <span className="text-border">•</span>
-          <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+          <Link to="/terms" className="hover:text-foreground transition-colors touch-target flex items-center justify-center">Terms</Link>
           <span className="text-border">•</span>
-          <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+          <Link to="/contact" className="hover:text-foreground transition-colors touch-target flex items-center justify-center">Contact</Link>
         </div>
       </footer>
 

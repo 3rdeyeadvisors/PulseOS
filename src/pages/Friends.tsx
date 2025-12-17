@@ -146,40 +146,40 @@ export default function Friends() {
         </Card>
 
         <Tabs defaultValue="leaderboard" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="leaderboard" className="gap-1 px-1">
-              <Trophy className="h-4 w-4" />
-              <span className="hidden xl:inline">Leaderboard</span>
+          <TabsList className="grid w-full grid-cols-6 h-auto gap-0.5 p-1">
+            <TabsTrigger value="leaderboard" className="gap-1 px-1 min-h-[44px] flex-col sm:flex-row">
+              <Trophy className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">Leaderboard</span>
             </TabsTrigger>
-            <TabsTrigger value="invites" className="gap-1 px-1">
-              <CalendarCheck className="h-4 w-4" />
-              <span className="hidden xl:inline">Invites</span>
+            <TabsTrigger value="invites" className="gap-1 px-1 min-h-[44px] flex-col sm:flex-row relative">
+              <CalendarCheck className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">Invites</span>
               {inviteCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                <Badge variant="destructive" className="absolute -top-1 -right-1 sm:static sm:ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                   {inviteCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="community" className="gap-1 px-1">
-              <Globe className="h-4 w-4" />
-              <span className="hidden xl:inline">Community</span>
+            <TabsTrigger value="community" className="gap-1 px-1 min-h-[44px] flex-col sm:flex-row">
+              <Globe className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">Community</span>
             </TabsTrigger>
-            <TabsTrigger value="friends" className="gap-1 px-1">
-              <Users className="h-4 w-4" />
-              <span className="hidden xl:inline">Friends</span>
+            <TabsTrigger value="friends" className="gap-1 px-1 min-h-[44px] flex-col sm:flex-row">
+              <Users className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">Friends</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-1 px-1">
-              <Inbox className="h-4 w-4" />
-              <span className="hidden xl:inline">Requests</span>
+            <TabsTrigger value="requests" className="gap-1 px-1 min-h-[44px] flex-col sm:flex-row relative">
+              <Inbox className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">Requests</span>
               {pendingCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                <Badge variant="destructive" className="absolute -top-1 -right-1 sm:static sm:ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                   {pendingCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="sent" className="gap-1 px-1">
-              <Send className="h-4 w-4" />
-              <span className="hidden xl:inline">Sent</span>
+            <TabsTrigger value="sent" className="gap-1 px-1 min-h-[44px] flex-col sm:flex-row">
+              <Send className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">Sent</span>
             </TabsTrigger>
           </TabsList>
 
