@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Loader2, Search, UserPlus, Check, AtSign, BadgeCheck, Mail, Send } from 'lucide-react';
+import { Loader2, Search, UserPlus, Check, AtSign, BadgeCheck, Mail, Send, AlertCircle } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UsernameSetupModal } from './UsernameSetupModal';
 
 interface SearchResult {
@@ -214,6 +215,14 @@ export function FriendSearch({
   return (
     <Card>
       <CardContent className="pt-6 space-y-4">
+        {!currentUsername && (
+          <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-amber-600 dark:text-amber-400">
+              You'll need to create a username before adding friends.
+            </AlertDescription>
+          </Alert>
+        )}
         <Tabs defaultValue="search" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="search">Find Friends</TabsTrigger>
