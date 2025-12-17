@@ -2,13 +2,15 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { useChatMessages } from '@/hooks/useChatMessages';
-import { Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Trash2, Crown, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +23,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-
 interface UserContext {
   profile: {
     full_name: string | null;
@@ -53,6 +54,7 @@ export default function Chat() {
   const location = useLocation();
   const { user, loading } = useAuth();
   const { preferences, loading: prefsLoading } = usePreferences();
+  const { isActive, loading: subscriptionLoading, startCheckout, checkoutLoading } = useSubscription();
   const initialMessage = (location.state as { initialMessage?: string })?.initialMessage;
   const { messages: savedMessages, setMessages: setSavedMessages, loadingHistory, saveMessage, clearMessages } = useChatMessages(user?.id);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -291,7 +293,7 @@ export default function Chat() {
     toast.success('Chat history cleared');
   };
 
-  if (loading || loadingHistory || prefsLoading) {
+  if (loading || loadingHistory || prefsLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -301,6 +303,46 @@ export default function Chat() {
 
   if (!user) {
     return null;
+  }
+
+  // Premium paywall for non-subscribers
+  if (!isActive) {
+    return (
+      <AppShell>
+        <div className="max-w-lg mx-auto flex items-center justify-center min-h-[60vh]">
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto p-4 rounded-2xl bg-primary/10 border border-primary/20 mb-4 w-fit">
+                <Lock className="h-10 w-10 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Premium Feature</CardTitle>
+              <CardDescription className="text-base">
+                The AI personal assistant is available exclusively for Premium members.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                <span>Get personalized help, recommendations, and more</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button onClick={startCheckout} disabled={checkoutLoading} size="lg">
+                  {checkoutLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Crown className="h-4 w-4 mr-2" />
+                  )}
+                  Start 14-Day Free Trial
+                </Button>
+                <Button variant="ghost" onClick={() => navigate('/settings?tab=subscription')}>
+                  View Plans
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
