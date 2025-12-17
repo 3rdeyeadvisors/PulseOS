@@ -138,17 +138,25 @@ export default function Auth() {
     
     setIsSubmitting(true);
     
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    
-    setIsSubmitting(false);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      const { data, error } = await supabase.functions.invoke('request-password-reset', {
+        body: {
+          email: resetEmail,
+          redirectTo: `${window.location.origin}/reset-password`,
+        },
+      });
+      
+      if (error) throw error;
+      
       setResetSent(true);
       toast.success('Password reset email sent! Check your inbox.');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      // Still show success to not reveal if email exists
+      setResetSent(true);
+      toast.success('If an account exists, a reset email will be sent.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
