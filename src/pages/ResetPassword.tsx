@@ -18,76 +18,20 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isComplete, setIsComplete] = useState(false);
-  const [isValidSession, setIsValidSession] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [tokenHash, setTokenHash] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const handleRecovery = async () => {
-      // Check URL search params for our custom token
-      const searchParams = new URLSearchParams(window.location.search);
-      const token = searchParams.get('token_hash');
-      const type = searchParams.get('type');
+    // Check URL search params for token_hash
+    const searchParams = new URLSearchParams(window.location.search);
+    const token = searchParams.get('token_hash');
+    const type = searchParams.get('type');
 
-      if (token && type === 'recovery') {
-        // Store the token for use when submitting
-        setTokenHash(token);
-        setIsValidSession(true);
-        setLoading(false);
-        return;
-      }
-
-      // Also check for hash fragment (legacy Supabase flow)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const hashType = hashParams.get('type');
-
-      if (accessToken && refreshToken && hashType === 'recovery') {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        
-        if (!error) {
-          setIsValidSession(true);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Check for code param (PKCE flow)
-      const code = searchParams.get('code');
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) {
-          setIsValidSession(true);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Check if user already has a valid session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsValidSession(true);
-      }
-      setLoading(false);
-    };
+    if (token && type === 'recovery') {
+      setTokenHash(token);
+    }
     
-    handleRecovery();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsValidSession(true);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    setLoading(false);
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -103,34 +47,38 @@ export default function ResetPassword() {
       toast.error('Passwords do not match');
       return;
     }
+
+    if (!tokenHash) {
+      toast.error('Invalid reset link. Please request a new one.');
+      return;
+    }
     
     setIsSubmitting(true);
 
     try {
-      // If we have a token hash, verify it first
-      if (tokenHash) {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
+      // Call the edge function to verify token and update password server-side
+      const { data, error } = await supabase.functions.invoke('verify-reset-token', {
+        body: { 
           token_hash: tokenHash,
-          type: 'recovery',
-        });
+          new_password: password 
+        },
+      });
 
-        if (verifyError) {
-          console.error('Token verification error:', verifyError);
-          toast.error('Reset link is invalid or has expired. Please request a new one.');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // Now update the password
-      const { error } = await supabase.auth.updateUser({ password });
-      
       if (error) {
-        toast.error(error.message);
-      } else {
-        setIsComplete(true);
-        toast.success('Password updated successfully!');
+        console.error('Edge function error:', error);
+        toast.error('An error occurred. Please try again.');
+        setIsSubmitting(false);
+        return;
       }
+
+      if (!data.success) {
+        toast.error(data.error || 'Failed to reset password');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setIsComplete(true);
+      toast.success('Password updated successfully!');
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error('An error occurred. Please try again.');
@@ -189,7 +137,7 @@ export default function ResetPassword() {
                 Go to Login
               </Button>
             </div>
-          ) : !isValidSession ? (
+          ) : !tokenHash ? (
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">
                 This password reset link is invalid or has expired.
