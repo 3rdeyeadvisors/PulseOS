@@ -14,6 +14,13 @@ interface PasswordResetRequest {
   redirectTo: string;
 }
 
+// Generate a random token
+function generateToken(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,9 +30,8 @@ serve(async (req: Request): Promise<Response> => {
     const { email, redirectTo }: PasswordResetRequest = await req.json();
     
     console.log(`Processing password reset request for ${email}`);
-    console.log(`Redirect URL: ${redirectTo}`);
 
-    // Create admin client to generate the reset link
+    // Create admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -37,41 +43,52 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    // Generate the password reset link using admin API
-    const { data, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: email,
-    });
-
-    if (linkError) {
-      console.error("Error generating reset link:", linkError);
-      return new Response(
-        JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    // Get the token hash from the response - this is what we need for verifyOtp
-    const tokenHash = data.properties?.hashed_token;
+    // Look up the user by email
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
-    if (!tokenHash) {
-      console.error("No token hash returned");
+    if (userError) {
+      console.error("Error listing users:", userError);
       return new Response(
         JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Send user directly to our app with the token - bypassing Supabase's verify endpoint
-    const resetLink = `${redirectTo}?token_hash=${tokenHash}&type=recovery`;
+    const user = userData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    
+    if (!user) {
+      console.log("User not found, returning success anyway for security");
+      return new Response(
+        JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    console.log(`Generated reset link: ${resetLink}`);
+    // Generate a custom token
+    const token = generateToken();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    // Store the token in our custom table
+    const { error: insertError } = await supabaseAdmin
+      .from('password_reset_tokens')
+      .insert({
+        user_id: user.id,
+        token: token,
+        expires_at: expiresAt.toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error storing reset token:", insertError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Failed to generate reset link" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Build the reset link with our custom token (using 'code' parameter to avoid interception)
+    const resetLink = `${redirectTo}?code=${token}`;
+
+    console.log(`Generated custom reset link for user ${user.id}`);
     console.log(`Sending password reset email to ${email}`);
 
     // Send custom branded email via Resend
@@ -153,19 +170,13 @@ serve(async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ success: true, message: "Password reset email sent!" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in request-password-reset function:", error);
     return new Response(
       JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });
