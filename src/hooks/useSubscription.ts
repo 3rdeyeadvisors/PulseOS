@@ -144,7 +144,7 @@ export function useSubscription() {
       }
 
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
       }
     } catch (err) {
       console.error('Error creating checkout:', err);
@@ -175,7 +175,7 @@ export function useSubscription() {
       }
 
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
       }
     } catch (err) {
       console.error('Error opening customer portal:', err);
