@@ -18,41 +18,29 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isComplete, setIsComplete] = useState(false);
-  const [isValidSession, setIsValidSession] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [resetCode, setResetCode] = useState('');
+  const [hasCodeFromUrl, setHasCodeFromUrl] = useState(false);
 
   useEffect(() => {
-    // Listen for PASSWORD_RECOVERY event from Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event);
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsValidSession(true);
-        setLoading(false);
-      } else if (event === 'SIGNED_IN' && session) {
-        // User might already be in recovery mode
-        setIsValidSession(true);
-        setLoading(false);
-      }
-    });
-
-    // Check if there's already a session (user came from email link)
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsValidSession(true);
-      }
-      setLoading(false);
-    };
-
-    // Small delay to allow auth state to settle
-    setTimeout(checkSession, 500);
-
-    return () => subscription.unsubscribe();
+    // Check URL for code parameter
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+    if (code) {
+      setResetCode(code);
+      setHasCodeFromUrl(true);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!resetCode.trim()) {
+      toast.error('Please enter your reset code');
+      return;
+    }
+
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       toast.error(passwordResult.error.errors[0].message);
@@ -67,16 +55,28 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      
+      const { data, error } = await supabase.functions.invoke('verify-reset-token', {
+        body: { 
+          code: resetCode.trim(),
+          new_password: password 
+        },
+      });
+
       if (error) {
-        toast.error(error.message);
-      } else {
-        setIsComplete(true);
-        toast.success('Password updated successfully!');
-        // Sign out so they can log in with new password
-        await supabase.auth.signOut();
+        console.error('Edge function error:', error);
+        toast.error('An error occurred. Please try again.');
+        setIsSubmitting(false);
+        return;
       }
+
+      if (!data.success) {
+        toast.error(data.error || 'Failed to reset password');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setIsComplete(true);
+      toast.success('Password updated successfully!');
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error('An error occurred. Please try again.');
@@ -84,14 +84,6 @@ export default function ResetPassword() {
     
     setIsSubmitting(false);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
@@ -115,7 +107,7 @@ export default function ResetPassword() {
           <CardDescription>
             {isComplete 
               ? 'Your password has been successfully changed'
-              : 'Enter your new password below'
+              : 'Enter your reset code and new password'
             }
           </CardDescription>
         </CardHeader>
@@ -133,17 +125,26 @@ export default function ResetPassword() {
                 Go to Login
               </Button>
             </div>
-          ) : !isValidSession ? (
-            <div className="text-center space-y-4">
-              <p className="text-muted-foreground">
-                This password reset link is invalid or has expired.
-              </p>
-              <Button onClick={() => navigate('/auth')} variant="outline" className="w-full">
-                Back to Login
-              </Button>
-            </div>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-code">Reset Code</Label>
+                <Input
+                  id="reset-code"
+                  type="text"
+                  placeholder="XXXX-XXXX"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
+                  required
+                  autoComplete="off"
+                  className="font-mono text-center text-lg tracking-wider"
+                  maxLength={9}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the code from your email
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
                 <div className="relative">
@@ -197,6 +198,15 @@ export default function ResetPassword() {
                 ) : (
                   'Update Password'
                 )}
+              </Button>
+
+              <Button 
+                type="button" 
+                variant="ghost" 
+                className="w-full" 
+                onClick={() => navigate('/auth')}
+              >
+                Back to Login
               </Button>
             </form>
           )}
