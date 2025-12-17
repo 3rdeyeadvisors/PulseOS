@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 
 // RevenueCat API keys
 const REVENUECAT_IOS_KEY = 'test_NdINrUfxEWJunaHyvJoPDZriZhL';
-const REVENUECAT_ANDROID_KEY = 'your_android_api_key'; // Replace with your Android key when ready
+const REVENUECAT_ANDROID_KEY = 'test_lgmTYVzCSLVpnOEmYgngglIqvqM';
 
 export const isNativePlatform = () => {
   return Capacitor.isNativePlatform();
