@@ -10,7 +10,9 @@ const features = [
   'Weather & news dashboard',
   'Task management with reminders',
   'Food & entertainment suggestions',
-  'Social features & leaderboards',
+  'Friends & social features',
+  'Weekly leaderboards',
+  'Activity invites',
   'All premium modules',
   'Priority support',
 ];
