@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface VerifyRequest {
-  token_hash: string;
+  code: string;
   new_password: string;
 }
 
@@ -17,17 +17,21 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { token_hash, new_password }: VerifyRequest = await req.json();
+    const { code, new_password }: VerifyRequest = await req.json();
     
-    console.log("Verifying reset token and updating password");
+    console.log("Verifying custom reset token");
 
-    if (!token_hash || !new_password) {
+    if (!code || !new_password) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing token or password" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (new_password.length < 6) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Password must be at least 6 characters" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -43,40 +47,41 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    // Verify the OTP token server-side
-    const { data: verifyData, error: verifyError } = await supabaseAdmin.auth.verifyOtp({
-      token_hash: token_hash,
-      type: 'recovery',
-    });
+    // Look up the token in our custom table
+    const { data: tokenData, error: tokenError } = await supabaseAdmin
+      .from('password_reset_tokens')
+      .select('*')
+      .eq('token', code)
+      .eq('used', false)
+      .single();
 
-    if (verifyError) {
-      console.error("Token verification error:", verifyError);
+    if (tokenError || !tokenData) {
+      console.error("Token not found or already used:", tokenError);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Reset link is invalid or has expired. Please request a new one." 
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ success: false, error: "Reset link is invalid or has already been used. Please request a new one." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    if (!verifyData.user) {
-      console.error("No user returned from verification");
+    // Check if token has expired
+    const expiresAt = new Date(tokenData.expires_at);
+    if (expiresAt < new Date()) {
+      console.error("Token has expired");
+      // Mark token as used
+      await supabaseAdmin
+        .from('password_reset_tokens')
+        .update({ used: true })
+        .eq('id', tokenData.id);
+      
       return new Response(
-        JSON.stringify({ success: false, error: "Could not verify user" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ success: false, error: "Reset link has expired. Please request a new one." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     // Update the user's password using admin API
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      verifyData.user.id,
+      tokenData.user_id,
       { password: new_password }
     );
 
@@ -84,30 +89,27 @@ serve(async (req: Request): Promise<Response> => {
       console.error("Password update error:", updateError);
       return new Response(
         JSON.stringify({ success: false, error: updateError.message }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log("Password updated successfully for user:", verifyData.user.id);
+    // Mark token as used
+    await supabaseAdmin
+      .from('password_reset_tokens')
+      .update({ used: true })
+      .eq('id', tokenData.id);
+
+    console.log("Password updated successfully for user:", tokenData.user_id);
 
     return new Response(
       JSON.stringify({ success: true, message: "Password updated successfully" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in verify-reset-token function:", error);
     return new Response(
       JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });

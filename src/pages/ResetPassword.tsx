@@ -18,17 +18,16 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isComplete, setIsComplete] = useState(false);
-  const [tokenHash, setTokenHash] = useState<string | null>(null);
+  const [resetCode, setResetCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check URL search params for token_hash
+    // Check URL search params for our custom code
     const searchParams = new URLSearchParams(window.location.search);
-    const token = searchParams.get('token_hash');
-    const type = searchParams.get('type');
+    const code = searchParams.get('code');
 
-    if (token && type === 'recovery') {
-      setTokenHash(token);
+    if (code) {
+      setResetCode(code);
     }
     
     setLoading(false);
@@ -48,7 +47,7 @@ export default function ResetPassword() {
       return;
     }
 
-    if (!tokenHash) {
+    if (!resetCode) {
       toast.error('Invalid reset link. Please request a new one.');
       return;
     }
@@ -56,10 +55,10 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      // Call the edge function to verify token and update password server-side
+      // Call the edge function to verify token and update password
       const { data, error } = await supabase.functions.invoke('verify-reset-token', {
         body: { 
-          token_hash: tokenHash,
+          code: resetCode,
           new_password: password 
         },
       });
@@ -137,7 +136,7 @@ export default function ResetPassword() {
                 Go to Login
               </Button>
             </div>
-          ) : !tokenHash ? (
+          ) : !resetCode ? (
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">
                 This password reset link is invalid or has expired.

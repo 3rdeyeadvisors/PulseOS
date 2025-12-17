@@ -326,6 +326,33 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       preferences: {
         Row: {
           ai_formality_level: number | null
@@ -642,6 +669,7 @@ export type Database = {
         Args: { _friend_id: string; _user_id: string }
         Returns: boolean
       }
+      cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
       create_friendship: {
         Args: { _friend_id: string; _user_id: string }
         Returns: undefined
