@@ -118,7 +118,7 @@ const generateEmailHtml = (userName: string) => `
           <!-- CTA Button -->
           <tr>
             <td style="padding: 0 40px 40px 40px; text-align: center;">
-              <a href="https://da82dfe4-27e3-438a-a7ae-849ba31da71a.lovableproject.com/app" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">
+              <a href="https://pulseos.tech/app" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">
                 Open PulseOS →
               </a>
             </td>
