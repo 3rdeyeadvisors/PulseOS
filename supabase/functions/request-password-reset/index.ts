@@ -60,6 +60,9 @@ serve(async (req: Request): Promise<Response> => {
     // Extract the action link from the response
     const resetLink = data.properties?.action_link;
     
+    console.log("Generated reset link:", resetLink);
+    console.log("Requested redirectTo:", redirectTo);
+    
     if (!resetLink) {
       console.error("No action link returned");
       return new Response(
