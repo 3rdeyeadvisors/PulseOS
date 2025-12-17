@@ -216,7 +216,7 @@ export function SubscriptionTab() {
               ) : (
                 <Crown className="h-4 w-4 mr-2" />
               )}
-              {isNative ? 'Subscribe Now' : 'Start 14-Day Free Trial'}
+              {isNative ? 'Subscribe Now' : isTrialing ? 'Add Payment Method' : 'Start 14-Day Free Trial'}
             </Button>
 
             {/* Restore purchases for native */}
