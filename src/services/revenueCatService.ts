@@ -112,14 +112,18 @@ export const checkNativeSubscription = async (): Promise<{
       return { isActive: false };
     }
 
-    // Check for active entitlements - 'premium' is a common entitlement name
-    const premiumEntitlement = customerInfo.entitlements.active['premium'];
+    // Check for active entitlements - check both platform-specific names
+    const androidEntitlement = customerInfo.entitlements.active['PulseOS android Pro'];
+    const iosEntitlement = customerInfo.entitlements.active['PulseOS iOS Pro'];
+    const genericEntitlement = customerInfo.entitlements.active['premium'];
     
-    if (premiumEntitlement) {
+    const activeEntitlement = androidEntitlement || iosEntitlement || genericEntitlement;
+    
+    if (activeEntitlement) {
       return {
         isActive: true,
-        expirationDate: premiumEntitlement.expirationDate || undefined,
-        productId: premiumEntitlement.productIdentifier,
+        expirationDate: activeEntitlement.expirationDate || undefined,
+        productId: activeEntitlement.productIdentifier,
       };
     }
 
