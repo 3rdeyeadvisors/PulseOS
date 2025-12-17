@@ -129,17 +129,11 @@ serve(async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 32px 40px 40px;">
               <p style="color: #1e293b; font-size: 16px; line-height: 1.7; margin: 0 0 24px;">
-                We received a request to reset your password for your PulseOS account.
+                We received a request to reset your password for your PulseOS account. Click the button below to set a new password.
               </p>
               
-              <!-- Reset Code Box -->
-              <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-                <p style="color: #64748b; font-size: 14px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Your Reset Code</p>
-                <p style="font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 32px; font-weight: 700; color: #1e293b; margin: 0; letter-spacing: 4px;">${formattedCode}</p>
-              </div>
-              
               <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px; text-align: center;">
-                Go to the password reset page and enter this code, or click the button below:
+                Click the button below to reset your password:
               </p>
               
               <!-- CTA Button -->
@@ -152,6 +146,10 @@ serve(async (req: Request): Promise<Response> => {
                   </td>
                 </tr>
               </table>
+              
+              <p style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0 0 16px; text-align: center;">
+                Or enter this code manually: <strong style="color: #64748b;">${formattedCode}</strong>
+              </p>
               
               <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0 0 8px; text-align: center;">
                 This code expires in 1 hour.

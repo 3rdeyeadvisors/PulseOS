@@ -101,13 +101,15 @@ export default function ResetPassword() {
       
       <Card className="w-full max-w-md relative z-10 border-border/50 shadow-card">
         <CardHeader>
-          <CardTitle className="text-xl">
+        <CardTitle className="text-xl">
             {isComplete ? 'Password Updated' : 'Create New Password'}
           </CardTitle>
           <CardDescription>
             {isComplete 
               ? 'Your password has been successfully changed'
-              : 'Enter your reset code and new password'
+              : hasCodeFromUrl 
+                ? 'Enter your new password below'
+                : 'Enter your reset code and new password'
             }
           </CardDescription>
         </CardHeader>
@@ -127,23 +129,25 @@ export default function ResetPassword() {
             </div>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="reset-code">Reset Code</Label>
-                <Input
-                  id="reset-code"
-                  type="text"
-                  placeholder="XXXX-XXXX"
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
-                  required
-                  autoComplete="off"
-                  className="font-mono text-center text-lg tracking-wider"
-                  maxLength={9}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter the code from your email
-                </p>
-              </div>
+              {!hasCodeFromUrl && (
+                <div className="space-y-2">
+                  <Label htmlFor="reset-code">Reset Code</Label>
+                  <Input
+                    id="reset-code"
+                    type="text"
+                    placeholder="XXXX-XXXX"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value.toUpperCase())}
+                    required
+                    autoComplete="off"
+                    className="font-mono text-center text-lg tracking-wider"
+                    maxLength={9}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the code from your email
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
