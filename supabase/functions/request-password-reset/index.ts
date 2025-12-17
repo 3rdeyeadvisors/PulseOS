@@ -14,11 +14,16 @@ interface PasswordResetRequest {
   redirectTo: string;
 }
 
-// Generate a random token
-function generateToken(): string {
-  const array = new Uint8Array(32);
+// Generate a short, user-friendly code (8 characters)
+function generateCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars like 0,O,1,I
+  let code = '';
+  const array = new Uint8Array(8);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  for (let i = 0; i < 8; i++) {
+    code += chars[array[i] % chars.length];
+  }
+  return code;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -31,7 +36,6 @@ serve(async (req: Request): Promise<Response> => {
     
     console.log(`Processing password reset request for ${email}`);
 
-    // Create admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -64,34 +68,35 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Generate a custom token
-    const token = generateToken();
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    // Generate a short code
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // Store the token in our custom table
+    // Store the token
     const { error: insertError } = await supabaseAdmin
       .from('password_reset_tokens')
       .insert({
         user_id: user.id,
-        token: token,
+        token: code,
         expires_at: expiresAt.toISOString(),
       });
 
     if (insertError) {
       console.error("Error storing reset token:", insertError);
       return new Response(
-        JSON.stringify({ success: false, error: "Failed to generate reset link" }),
+        JSON.stringify({ success: false, error: "Failed to generate reset code" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Build the reset link with our custom token
-    const resetLink = `${redirectTo}?code=${token}`;
+    // Format code with dash for readability: XXXX-XXXX
+    const formattedCode = `${code.slice(0, 4)}-${code.slice(4)}`;
+    const resetLink = `${redirectTo}?code=${code}`;
 
+    console.log(`Generated reset code: ${formattedCode}`);
     console.log(`Reset link: ${resetLink}`);
-    console.log(`Sending password reset email to ${email}`);
 
-    // Send custom branded email via Resend
+    // Send branded email via Resend
     const emailResponse = await resend.emails.send({
       from: "PulseOS <support@notifications.pulseos.tech>",
       to: [email],
@@ -124,7 +129,17 @@ serve(async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 32px 40px 40px;">
               <p style="color: #1e293b; font-size: 16px; line-height: 1.7; margin: 0 0 24px;">
-                We received a request to reset your password for your PulseOS account. Click the button below to create a new password.
+                We received a request to reset your password for your PulseOS account.
+              </p>
+              
+              <!-- Reset Code Box -->
+              <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+                <p style="color: #64748b; font-size: 14px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Your Reset Code</p>
+                <p style="font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 32px; font-weight: 700; color: #1e293b; margin: 0; letter-spacing: 4px;">${formattedCode}</p>
+              </div>
+              
+              <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px; text-align: center;">
+                Go to the password reset page and enter this code, or click the button below:
               </p>
               
               <!-- CTA Button -->
@@ -138,12 +153,12 @@ serve(async (req: Request): Promise<Response> => {
                 </tr>
               </table>
               
-              <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
-                This link will expire in 1 hour for security reasons.
+              <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0 0 8px; text-align: center;">
+                This code expires in 1 hour.
               </p>
               
-              <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0;">
-                If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+              <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0; text-align: center;">
+                If you didn't request this, you can safely ignore this email.
               </p>
             </td>
           </tr>
