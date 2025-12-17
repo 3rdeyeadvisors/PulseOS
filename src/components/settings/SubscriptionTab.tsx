@@ -42,26 +42,22 @@ export function SubscriptionTab() {
       {/* Current Plan Card */}
       <Card className={isActive ? 'border-primary/50 bg-primary/5' : ''}>
         <CardHeader>
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${isActive ? 'bg-primary/20' : 'bg-muted'}`}>
-                <Crown className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-              </div>
-              <div>
-                <CardTitle className="text-lg">
-                  {isGrandfathered ? 'Lifetime Access' : isActive ? 'Pulse Life Premium' : 'Free Plan'}
-                </CardTitle>
-                <CardDescription>
-                  {isGrandfathered 
-                    ? 'Thank you for being an early supporter!' 
-                    : isTrialing 
-                    ? '14-day free trial' 
-                    : isActive 
-                    ? 'Full access to all features' 
-                    : 'Upgrade to unlock all features'}
-                </CardDescription>
-              </div>
+          <div className="flex flex-col items-center text-center">
+            <div className={`p-2 rounded-lg ${isActive ? 'bg-primary/20' : 'bg-muted'} mb-3`}>
+              <Crown className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
             </div>
+            <CardTitle className="text-lg">
+              {isGrandfathered ? 'Lifetime Access' : isActive ? 'Pulse Life Premium' : 'Free Plan'}
+            </CardTitle>
+            <CardDescription>
+              {isGrandfathered 
+                ? 'Thank you for being an early supporter!' 
+                : isTrialing 
+                ? '14-day free trial' 
+                : isActive 
+                ? 'Full access to all features' 
+                : 'Upgrade to unlock all features'}
+            </CardDescription>
           </div>
         </CardHeader>
         {(isGrandfathered || isTrialing || (isActive && !isGrandfathered) || (!isActive && !isGrandfathered)) && (
