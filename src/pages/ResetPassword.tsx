@@ -20,21 +20,30 @@ export default function ResetPassword() {
   const [isComplete, setIsComplete] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tokenHash, setTokenHash] = useState<string | null>(null);
 
   useEffect(() => {
     const handleRecovery = async () => {
-      // Check for hash fragment (Supabase sends tokens this way)
+      // Check URL search params for our custom token
+      const searchParams = new URLSearchParams(window.location.search);
+      const token = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+
+      if (token && type === 'recovery') {
+        // Store the token for use when submitting
+        setTokenHash(token);
+        setIsValidSession(true);
+        setLoading(false);
+        return;
+      }
+
+      // Also check for hash fragment (legacy Supabase flow)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
-      const type = hashParams.get('type');
+      const hashType = hashParams.get('type');
 
-      // Also check URL search params (some flows use this)
-      const searchParams = new URLSearchParams(window.location.search);
-      const code = searchParams.get('code');
-
-      if (accessToken && refreshToken && type === 'recovery') {
-        // Set the session from hash tokens
+      if (accessToken && refreshToken && hashType === 'recovery') {
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
@@ -42,23 +51,19 @@ export default function ResetPassword() {
         
         if (!error) {
           setIsValidSession(true);
-          // Clean up the URL
           window.history.replaceState({}, document.title, window.location.pathname);
-        } else {
-          console.error('Error setting session:', error);
         }
         setLoading(false);
         return;
       }
 
+      // Check for code param (PKCE flow)
+      const code = searchParams.get('code');
       if (code) {
-        // Exchange code for session (PKCE flow)
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
           setIsValidSession(true);
           window.history.replaceState({}, document.title, window.location.pathname);
-        } else {
-          console.error('Error exchanging code:', error);
         }
         setLoading(false);
         return;
@@ -100,17 +105,38 @@ export default function ResetPassword() {
     }
     
     setIsSubmitting(true);
-    
-    const { error } = await supabase.auth.updateUser({ password });
+
+    try {
+      // If we have a token hash, verify it first
+      if (tokenHash) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery',
+        });
+
+        if (verifyError) {
+          console.error('Token verification error:', verifyError);
+          toast.error('Reset link is invalid or has expired. Please request a new one.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Now update the password
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        setIsComplete(true);
+        toast.success('Password updated successfully!');
+      }
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast.error('An error occurred. Please try again.');
+    }
     
     setIsSubmitting(false);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setIsComplete(true);
-      toast.success('Password updated successfully!');
-    }
   };
 
   if (loading) {

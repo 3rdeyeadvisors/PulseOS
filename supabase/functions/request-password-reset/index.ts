@@ -25,11 +25,9 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Processing password reset request for ${email}`);
     console.log(`Redirect URL: ${redirectTo}`);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-
     // Create admin client to generate the reset link
     const supabaseAdmin = createClient(
-      supabaseUrl,
+      Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
         auth: {
@@ -43,9 +41,6 @@ serve(async (req: Request): Promise<Response> => {
     const { data, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: email,
-      options: {
-        redirectTo: redirectTo,
-      },
     });
 
     if (linkError) {
@@ -59,7 +54,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get the token hash from the response
+    // Get the token hash from the response - this is what we need for verifyOtp
     const tokenHash = data.properties?.hashed_token;
     
     if (!tokenHash) {
@@ -73,8 +68,8 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Construct the correct reset link with our redirect URL
-    const resetLink = `${supabaseUrl}/auth/v1/verify?token=${tokenHash}&type=recovery&redirect_to=${encodeURIComponent(redirectTo)}`;
+    // Send user directly to our app with the token - bypassing Supabase's verify endpoint
+    const resetLink = `${redirectTo}?token_hash=${tokenHash}&type=recovery`;
 
     console.log(`Generated reset link: ${resetLink}`);
     console.log(`Sending password reset email to ${email}`);
