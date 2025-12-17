@@ -11,6 +11,7 @@ export interface SubscriptionStatus {
   trial_ends_at?: string;
   subscription_ends_at?: string;
   plan?: string;
+  has_stripe_subscription?: boolean;
 }
 
 export function useSubscription() {
@@ -111,6 +112,8 @@ export function useSubscription() {
   const isActive = subscription?.subscribed ?? false;
   const isGrandfathered = subscription?.is_grandfathered ?? false;
   const isTrialing = subscription?.is_trialing ?? false;
+  // Has Stripe subscription if subscription_ends_at is present (not just database trial)
+  const hasStripeSubscription = !!subscription?.subscription_ends_at;
 
   return {
     subscription,
@@ -120,6 +123,7 @@ export function useSubscription() {
     isActive,
     isGrandfathered,
     isTrialing,
+    hasStripeSubscription,
     checkSubscription,
     startCheckout,
     openCustomerPortal,

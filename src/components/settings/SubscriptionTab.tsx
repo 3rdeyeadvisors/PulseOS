@@ -26,6 +26,7 @@ export function SubscriptionTab() {
     isActive,
     isGrandfathered,
     isTrialing,
+    hasStripeSubscription,
     startCheckout,
     openCustomerPortal,
   } = useSubscription();
@@ -92,19 +93,23 @@ export function SubscriptionTab() {
 
             {/* Actions - only show for non-grandfathered users */}
             {!isGrandfathered && (
-              <div className="flex justify-center pt-2">
-                {!isActive && (
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                {/* Show subscribe/upgrade button for:
+                    - Users not active at all
+                    - Database-only trial users (no Stripe subscription yet) */}
+                {(!isActive || (isTrialing && !hasStripeSubscription)) && (
                   <Button onClick={startCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
                       <CreditCard className="h-4 w-4 mr-2" />
                     )}
-                    Start Free Trial
+                    {isTrialing ? 'Add Payment Method' : 'Start Free Trial'}
                   </Button>
                 )}
                 
-                {isActive && (
+                {/* Show manage subscription for users with Stripe subscriptions */}
+                {hasStripeSubscription && (
                   <Button variant="outline" onClick={openCustomerPortal} disabled={portalLoading}>
                     {portalLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
