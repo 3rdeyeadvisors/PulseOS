@@ -40,13 +40,14 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Check if user is grandfathered
+    // Check user_subscriptions table first
     const { data: subscriptionData } = await supabaseClient
       .from("user_subscriptions")
       .select("*")
       .eq("user_id", user.id)
       .single();
 
+    // Check if user is grandfathered
     if (subscriptionData?.is_grandfathered) {
       logStep("User is grandfathered", { userId: user.id });
       return new Response(JSON.stringify({
@@ -60,6 +61,32 @@ serve(async (req) => {
       });
     }
 
+    // Check for database-based trial (set on signup)
+    if (subscriptionData?.trial_ends_at && !subscriptionData?.stripe_subscription_id) {
+      const trialEndsAt = new Date(subscriptionData.trial_ends_at);
+      const now = new Date();
+      
+      if (trialEndsAt > now) {
+        logStep("User is in database trial", { 
+          userId: user.id, 
+          trialEndsAt: subscriptionData.trial_ends_at 
+        });
+        return new Response(JSON.stringify({
+          subscribed: true,
+          is_grandfathered: false,
+          status: "trialing",
+          is_trialing: true,
+          trial_ends_at: subscriptionData.trial_ends_at,
+          plan: "Premium (Trial)",
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      } else {
+        logStep("Database trial has expired", { userId: user.id });
+      }
+    }
+
     // Check Stripe for active subscription
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -67,7 +94,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
       
-      // Create or update subscription record
+      // Update subscription record to inactive (trial expired or never had one)
       await supabaseClient
         .from("user_subscriptions")
         .upsert({
