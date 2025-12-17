@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink, RefreshCw } from 'lucide-react';
+import { Crown, Check, Loader2, Calendar, Gift, CreditCard, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 
 const features = [
@@ -28,7 +28,6 @@ export function SubscriptionTab() {
     isTrialing,
     startCheckout,
     openCustomerPortal,
-    checkSubscription,
   } = useSubscription();
 
   if (loading) {
@@ -93,9 +92,9 @@ export function SubscriptionTab() {
 
             {/* Actions - only show for non-grandfathered users */}
             {!isGrandfathered && (
-              <div className="flex gap-3 pt-2">
+              <div className="flex justify-center pt-2">
                 {!isActive && (
-                  <Button onClick={startCheckout} disabled={checkoutLoading} className="flex-1">
+                  <Button onClick={startCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
@@ -115,10 +114,6 @@ export function SubscriptionTab() {
                     Manage Subscription
                   </Button>
                 )}
-
-                <Button variant="ghost" onClick={checkSubscription} size="icon" title="Refresh status">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
               </div>
             )}
           </CardContent>
