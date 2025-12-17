@@ -22,8 +22,49 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user has a valid recovery session
-    const checkSession = async () => {
+    const handleRecovery = async () => {
+      // Check for hash fragment (Supabase sends tokens this way)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
+
+      // Also check URL search params (some flows use this)
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get('code');
+
+      if (accessToken && refreshToken && type === 'recovery') {
+        // Set the session from hash tokens
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        
+        if (!error) {
+          setIsValidSession(true);
+          // Clean up the URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          console.error('Error setting session:', error);
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (code) {
+        // Exchange code for session (PKCE flow)
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error) {
+          setIsValidSession(true);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          console.error('Error exchanging code:', error);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Check if user already has a valid session
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsValidSession(true);
@@ -31,9 +72,9 @@ export default function ResetPassword() {
       setLoading(false);
     };
     
-    checkSession();
+    handleRecovery();
 
-    // Listen for auth state changes (recovery link clicked)
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true);
