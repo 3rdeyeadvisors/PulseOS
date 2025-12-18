@@ -112,6 +112,7 @@ serve(async (req) => {
           is_trialing: isStripeTrialing,
           trial_ends_at: trialEnd,
           subscription_ends_at: subscriptionEnd,
+          has_stripe_subscription: true,
           plan: "Premium",
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
