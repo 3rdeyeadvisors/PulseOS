@@ -46,6 +46,9 @@ export function AppShell({ children }: AppShellProps) {
   const [fullName, setFullName] = useState<string | null>(null); // null = loading
   const [aiName, setAiName] = useState<string>('Pulse');
   const [profileLoaded, setProfileLoaded] = useState(false);
+  
+  // Hide floating AI button on the chat page to avoid overlap with chat input
+  const isOnChatPage = location.pathname === '/app/chat';
 
   useEffect(() => {
     async function fetchUserData() {
@@ -241,8 +244,8 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </footer>
 
-      {/* Floating AI Button */}
-      <FloatingAIButton aiName={aiName} />
+      {/* Floating AI Button - hidden on chat page to avoid overlap */}
+      {!isOnChatPage && <FloatingAIButton aiName={aiName} />}
     </div>
   );
 }
