@@ -93,7 +93,7 @@ serve(async (req) => {
       // No body or invalid JSON, use defaults
     }
 
-    logStep("Creating checkout session", { embedded: useEmbedded });
+    logStep("Creating checkout session", { embedded: useEmbedded, isAlreadyTrialing });
 
     if (useEmbedded) {
       // Create embedded checkout session

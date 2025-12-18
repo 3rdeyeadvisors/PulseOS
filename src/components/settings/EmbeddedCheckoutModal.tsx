@@ -57,7 +57,7 @@ export function EmbeddedCheckoutModal({
       setError(message);
       throw err;
     }
-  }, []);
+  }, [isTrialing]);
 
   const handleComplete = useCallback(() => {
     onComplete?.();
