@@ -257,6 +257,7 @@ export function SubscriptionTab() {
         open={checkoutOpen} 
         onOpenChange={setCheckoutOpen}
         onComplete={handleCheckoutComplete}
+        isTrialing={isTrialing}
       />
     </div>
   );

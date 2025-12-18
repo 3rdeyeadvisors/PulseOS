@@ -20,12 +20,14 @@ interface EmbeddedCheckoutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete?: () => void;
+  isTrialing?: boolean;
 }
 
 export function EmbeddedCheckoutModal({ 
   open, 
   onOpenChange,
-  onComplete 
+  onComplete,
+  isTrialing = false
 }: EmbeddedCheckoutModalProps) {
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +38,8 @@ export function EmbeddedCheckoutModal({
       const { data, error: invokeError } = await supabase.functions.invoke('create-checkout', {
         body: { 
           embedded: true,
-          return_url: '/settings?tab=subscription'
+          return_url: '/settings?tab=subscription',
+          isTrialing
         }
       });
 

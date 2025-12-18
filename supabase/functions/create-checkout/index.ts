@@ -73,13 +73,15 @@ serve(async (req) => {
       logStep("Found existing Stripe customer", { customerId });
     }
 
-    // Parse request body to check for embedded mode
+    // Parse request body to check for embedded mode and trial status
     let useEmbedded = false;
+    let isAlreadyTrialing = false;
     let returnUrl = `${req.headers.get("origin")}/settings?tab=subscription`;
     
     try {
       const body = await req.json();
       useEmbedded = body?.embedded === true;
+      isAlreadyTrialing = body?.isTrialing === true;
       if (body?.return_url && typeof body.return_url === 'string') {
         // Validate return_url is from same origin
         const origin = req.headers.get("origin") || "";
@@ -107,7 +109,8 @@ serve(async (req) => {
         mode: "subscription",
         ui_mode: "embedded",
         subscription_data: {
-          trial_period_days: 14,
+          // Only add trial if user isn't already trialing
+          ...(isAlreadyTrialing ? {} : { trial_period_days: 14 }),
           metadata: {
             user_id: user.id,
           },
@@ -140,7 +143,8 @@ serve(async (req) => {
         ],
         mode: "subscription",
         subscription_data: {
-          trial_period_days: 14,
+          // Only add trial if user isn't already trialing
+          ...(isAlreadyTrialing ? {} : { trial_period_days: 14 }),
           metadata: {
             user_id: user.id,
           },
