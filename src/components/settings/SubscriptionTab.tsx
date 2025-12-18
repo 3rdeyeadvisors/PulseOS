@@ -127,7 +127,7 @@ export function SubscriptionTab() {
             {/* Actions - only show for non-grandfathered users */}
             {!isGrandfathered && (
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                {/* Show subscribe/upgrade button */}
+                {/* Show subscribe/upgrade button for non-active or trialing without Stripe */}
                 {(!isActive || (isTrialing && !hasStripeSubscription)) && (
                   <Button onClick={handleStartCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? (
@@ -153,6 +153,13 @@ export function SubscriptionTab() {
                     )}
                     Manage Subscription
                   </Button>
+                )}
+
+                {/* Show cancel/manage option for trialing users with Stripe subscription */}
+                {isTrialing && hasStripeSubscription && !subscription?.is_native && (
+                  <p className="text-xs text-muted-foreground text-center w-full mt-2">
+                    Cancel anytime via "Manage Subscription" above
+                  </p>
                 )}
 
                 {/* Restore purchases button for native platforms */}
