@@ -75,6 +75,27 @@ export default function ResetPassword() {
         return;
       }
 
+      // Auto-login with the new password
+      if (data.email) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: password,
+        });
+
+        if (signInError) {
+          console.error('Auto-login failed:', signInError);
+          // Fall back to showing success and manual login
+          setIsComplete(true);
+          toast.success('Password updated! Please log in with your new password.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        toast.success('Password updated successfully!');
+        navigate('/app');
+        return;
+      }
+
       setIsComplete(true);
       toast.success('Password updated successfully!');
     } catch (error: any) {
