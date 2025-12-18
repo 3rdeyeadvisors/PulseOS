@@ -135,9 +135,11 @@ export function useSubscription() {
       return;
     }
 
-    // Web: Use Stripe checkout
+    // Web: Use Stripe checkout (redirect fallback)
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { isTrialing: subscription?.is_trialing ?? false }
+      });
       
       if (error) {
         throw new Error(error.message);
