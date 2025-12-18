@@ -143,55 +143,99 @@ serve(async (req) => {
         console.log(`User ${user.full_name} is behind ${friendsAhead.length} friends. Sending email...`);
 
         try {
-          // Get the app URL from environment or use default
-          const appUrl = Deno.env.get('APP_URL') || 'https://pulselife.lovable.app';
-          
           const emailResponse = await resend.emails.send({
-            from: "Pulse <onboarding@resend.dev>",
+            from: "PulseOS <support@notifications.pulseos.tech>",
             to: [user.email],
             subject: `📊 You're ${scoreDiff} points behind ${topFriend.friend_name}!`,
             html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-                <h1 style="color: #1a1a2e; margin-bottom: 20px;">Hey ${user.full_name || 'there'}! 👋</h1>
-                
-                <p style="color: #333333; font-size: 16px; line-height: 1.6;">
-                  Your friend <strong style="color: #1a1a2e;">${topFriend.friend_name}</strong> is currently ahead of you on this week's leaderboard!
-                </p>
-                
-                <div style="background-color: #6366f1; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                  <p style="margin: 0 0 8px 0; color: #e0e0ff; font-size: 14px;">Your Score</p>
-                  <p style="margin: 0; font-size: 36px; font-weight: bold; color: #ffffff;">${userScore} pts</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+              <div style="display: inline-block; padding: 16px; background: rgba(255, 255, 255, 0.2); border-radius: 16px;">
+                <span style="font-size: 48px;">📊</span>
+              </div>
+              <h1 style="margin: 20px 0 0; font-size: 28px; font-weight: 700; color: #ffffff;">
+                Leaderboard Update
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 40px 40px;">
+              <p style="color: #1e293b; font-size: 18px; line-height: 1.6; margin: 0 0 20px;">
+                Hey ${user.full_name || 'there'}! 👋
+              </p>
+              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Your friend <strong style="color: #4f46e5;">${topFriend.friend_name}</strong> is currently ahead of you on this week's leaderboard!
+              </p>
+              
+              <!-- Score Cards -->
+              <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                <div style="flex: 1; padding: 20px; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-radius: 12px; border: 2px solid #c7d2fe; text-align: center;">
+                  <p style="color: #6366f1; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px;">Your Score</p>
+                  <p style="font-size: 36px; font-weight: 800; margin: 0; color: #4f46e5;">${userScore}</p>
+                  <p style="color: #64748b; font-size: 14px; margin: 4px 0 0;">points</p>
                 </div>
-                
-                <div style="background-color: #f3f4f6; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #e5e7eb;">
-                  <p style="margin: 0 0 8px 0; color: #4b5563; font-size: 14px;">Top Friend</p>
-                  <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1f2937;">
-                    ${topFriend.friend_name}: ${topFriend.total_score} pts
-                  </p>
-                  <p style="margin: 8px 0 0 0; color: #dc2626; font-weight: 600; font-size: 14px;">
-                    You're ${scoreDiff} points behind!
-                  </p>
-                </div>
-                
-                ${friendsAhead.length > 1 ? `
-                <p style="color: #4b5563; font-size: 14px;">
-                  ${friendsAhead.length - 1} other friend${friendsAhead.length > 2 ? 's are' : ' is'} also ahead of you this week.
-                </p>
-                ` : ''}
-                
-                <p style="color: #333333; font-size: 16px; line-height: 1.6;">
-                  Complete tasks, try recommendations, and engage with friends to climb the leaderboard! 🚀
-                </p>
-                
-                <a href="${appUrl}/app/friends" style="display: inline-block; background-color: #6366f1; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
-                  View Leaderboard
-                </a>
-                
-                <p style="color: #6b7280; font-size: 12px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
-                  You're receiving this because you have daily digest emails enabled. 
-                  <a href="${appUrl}/app/settings" style="color: #6366f1; text-decoration: underline;">Manage preferences</a>
+              </div>
+              
+              <div style="padding: 20px; background-color: #fef2f2; border-radius: 12px; border: 2px solid #fecaca; margin-bottom: 24px;">
+                <p style="color: #dc2626; font-size: 14px; font-weight: 600; margin: 0 0 8px;">🏆 ${topFriend.friend_name}'s Score</p>
+                <p style="font-size: 28px; font-weight: 700; margin: 0; color: #b91c1c;">${topFriend.total_score} pts</p>
+                <p style="margin: 8px 0 0; color: #dc2626; font-size: 14px;">
+                  You're <strong>${scoreDiff} points</strong> behind!
                 </p>
               </div>
+              
+              ${friendsAhead.length > 1 ? `
+              <p style="color: #64748b; font-size: 14px; margin: 0 0 24px;">
+                ${friendsAhead.length - 1} other friend${friendsAhead.length > 2 ? 's are' : ' is'} also ahead of you this week.
+              </p>
+              ` : ''}
+              
+              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Complete tasks, try recommendations, and engage with friends to climb the leaderboard! 🚀
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://pulseos.tech/app/friends" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px;">
+                      View Leaderboard →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 25px 40px; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+              <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
+                You're receiving this because you have daily digest emails enabled.<br>
+                <a href="https://pulseos.tech/app/settings" style="color: #6366f1; text-decoration: underline;">Manage email preferences</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
             `,
           });
 

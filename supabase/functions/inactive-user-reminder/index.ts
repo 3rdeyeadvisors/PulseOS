@@ -19,7 +19,7 @@ serve(async (req: Request): Promise<Response> => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const appUrl = "https://pulselife.com";
+    const appUrl = "https://pulseos.tech";
 
     // Calculate date 2 days ago
     const twoDaysAgo = new Date();
@@ -72,7 +72,7 @@ serve(async (req: Request): Promise<Response> => {
 
       try {
         await resend.emails.send({
-          from: "Pulse <notifications@pulselife.com>",
+          from: "PulseOS <support@notifications.pulseos.tech>",
           to: [user.email],
           subject: `We miss you, ${firstName}! 👋`,
           html: `
@@ -100,8 +100,8 @@ serve(async (req: Request): Promise<Response> => {
                       <!-- Content -->
                       <tr>
                         <td style="padding: 0 32px 24px;">
-                          <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #cbd5e1;">
-                            It's been ${daysSinceActive} days since we last saw you on Pulse. Your daily insights, personalized recommendations, and friends are waiting for you!
+                          <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #e2e8f0;">
+                            It's been ${daysSinceActive} days since we last saw you on PulseOS. Your daily insights, personalized recommendations, and friends are waiting for you!
                           </p>
                           <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #cbd5e1;">
                             Don't let your streak slip away - come back and see what's new today.
@@ -132,9 +132,9 @@ serve(async (req: Request): Promise<Response> => {
                       <!-- Footer -->
                       <tr>
                         <td style="padding: 24px 32px; background-color: #0f172a; border-top: 1px solid #475569;">
-                          <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">
-                            You're receiving this because you haven't visited Pulse recently.<br>
-                            <a href="${appUrl}/app/settings" style="color: #93c5fd; text-decoration: underline;">Manage email preferences</a>
+                          <p style="margin: 0; font-size: 13px; color: #94a3b8; text-align: center;">
+                            You're receiving this because you haven't visited PulseOS recently.<br>
+                            <a href="${appUrl}/app/settings" style="color: #60a5fa; text-decoration: underline;">Manage email preferences</a>
                           </p>
                         </td>
                       </tr>

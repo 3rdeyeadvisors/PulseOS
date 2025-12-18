@@ -108,12 +108,12 @@ serve(async (req: Request): Promise<Response> => {
       // Build task list HTML
       const taskListHtml = tasks.slice(0, 5).map(task => `
         <tr>
-          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 12px 16px; border-bottom: 1px solid #334155;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <div style="width: 20px; height: 20px; border: 2px solid #ef4444; border-radius: 4px; flex-shrink: 0;"></div>
               <div>
-                <p style="margin: 0; color: #1e293b; font-size: 15px; font-weight: 500;">${task.title}</p>
-                ${task.due_date ? `<p style="margin: 4px 0 0; color: #ef4444; font-size: 13px;">Due: ${new Date(task.due_date).toLocaleDateString()}</p>` : ''}
+                <p style="margin: 0; color: #f1f5f9; font-size: 15px; font-weight: 500;">${task.title}</p>
+                ${task.due_date ? `<p style="margin: 4px 0 0; color: #fca5a5; font-size: 13px;">Due: ${new Date(task.due_date).toLocaleDateString()}</p>` : ''}
               </div>
             </div>
           </td>
@@ -121,14 +121,14 @@ serve(async (req: Request): Promise<Response> => {
       `).join("");
 
       const moreTasksHtml = taskCount > 5 
-        ? `<p style="color: #64748b; font-size: 14px; text-align: center; margin: 16px 0 0;">...and ${taskCount - 5} more task${taskCount - 5 > 1 ? 's' : ''}</p>` 
+        ? `<p style="color: #94a3b8; font-size: 14px; text-align: center; margin: 16px 0 0;">...and ${taskCount - 5} more task${taskCount - 5 > 1 ? 's' : ''}</p>` 
         : '';
 
       try {
         await resend.emails.send({
           from: "PulseOS <support@notifications.pulseos.tech>",
           to: [profile.email],
-          subject: `⏰ You have ${taskCount} incomplete task${taskCount > 1 ? 's' : ''} waiting`,
+          subject: `📋 Your incomplete tasks from yesterday (${taskCount})`,
           html: `
 <!DOCTYPE html>
 <html>
@@ -148,7 +148,7 @@ serve(async (req: Request): Promise<Response> => {
                 <span style="font-size: 48px;">⏰</span>
               </div>
               <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">
-                Incomplete Tasks Need Attention
+                Your Tasks From Yesterday
               </h1>
             </td>
           </tr>
@@ -160,7 +160,7 @@ serve(async (req: Request): Promise<Response> => {
                 Hey ${displayName}! 👋
               </p>
               <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-                You have <strong style="color: #ef4444;">${taskCount} task${taskCount > 1 ? 's' : ''}</strong> that ${taskCount > 1 ? 'have' : 'has'} been waiting for your attention:
+                You have <strong style="color: #fca5a5;">${taskCount} task${taskCount > 1 ? 's' : ''}</strong> from yesterday that still need${taskCount > 1 ? '' : 's'} your attention:
               </p>
               
               <!-- Task List -->
@@ -208,7 +208,7 @@ serve(async (req: Request): Promise<Response> => {
         await supabase.from("email_logs").insert({
           user_id: userId,
           email_type: "overdue_task_reminder",
-          subject: `You have ${taskCount} incomplete task${taskCount > 1 ? 's' : ''} waiting`,
+          subject: `Your incomplete tasks from yesterday (${taskCount})`,
           status: "sent",
         });
 
