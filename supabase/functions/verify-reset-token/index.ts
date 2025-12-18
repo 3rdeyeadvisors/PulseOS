@@ -88,6 +88,19 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get user email first
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
+      tokenData.user_id
+    );
+
+    if (userError || !userData.user?.email) {
+      console.error("User lookup error:", userError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Could not find user" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Update password
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       tokenData.user_id,
@@ -111,7 +124,11 @@ serve(async (req: Request): Promise<Response> => {
     console.log("Password updated successfully for user:", tokenData.user_id);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Password updated successfully" }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Password updated successfully",
+        email: userData.user.email 
+      }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
