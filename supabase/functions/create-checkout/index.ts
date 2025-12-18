@@ -19,7 +19,8 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
   );
 
   try {
@@ -73,15 +74,33 @@ serve(async (req) => {
       logStep("Found existing Stripe customer", { customerId });
     }
 
-    // Parse request body to check for embedded mode and trial status
+    // Fetch user's current trial status from database
+    const { data: subscriptionData } = await supabaseClient
+      .from("user_subscriptions")
+      .select("trial_ends_at, status")
+      .eq("user_id", user.id)
+      .single();
+
+    // Calculate remaining trial days if user is in trial
+    let trialEndTimestamp: number | undefined;
+    const isInDatabaseTrial = subscriptionData?.trial_ends_at && 
+      new Date(subscriptionData.trial_ends_at) > new Date();
+    
+    if (isInDatabaseTrial) {
+      trialEndTimestamp = Math.floor(new Date(subscriptionData.trial_ends_at).getTime() / 1000);
+      logStep("User has remaining trial", { 
+        trialEndsAt: subscriptionData.trial_ends_at,
+        trialEndTimestamp 
+      });
+    }
+
+    // Parse request body to check for embedded mode
     let useEmbedded = false;
-    let isAlreadyTrialing = false;
     let returnUrl = `${req.headers.get("origin")}/settings?tab=subscription`;
     
     try {
       const body = await req.json();
       useEmbedded = body?.embedded === true;
-      isAlreadyTrialing = body?.isTrialing === true;
       if (body?.return_url && typeof body.return_url === 'string') {
         // Validate return_url is from same origin
         const origin = req.headers.get("origin") || "";
@@ -93,7 +112,7 @@ serve(async (req) => {
       // No body or invalid JSON, use defaults
     }
 
-    logStep("Creating checkout session", { embedded: useEmbedded, isAlreadyTrialing });
+    logStep("Creating checkout session", { embedded: useEmbedded, isInDatabaseTrial, trialEndTimestamp });
 
     if (useEmbedded) {
       // Create embedded checkout session
@@ -109,8 +128,10 @@ serve(async (req) => {
         mode: "subscription",
         ui_mode: "embedded",
         subscription_data: {
-          // Only add trial if user isn't already trialing
-          ...(isAlreadyTrialing ? {} : { trial_period_days: 14 }),
+          // Preserve remaining trial if user is in database trial, otherwise give new 14-day trial
+          ...(trialEndTimestamp 
+            ? { trial_end: trialEndTimestamp } 
+            : { trial_period_days: 14 }),
           metadata: {
             user_id: user.id,
           },
@@ -143,8 +164,10 @@ serve(async (req) => {
         ],
         mode: "subscription",
         subscription_data: {
-          // Only add trial if user isn't already trialing
-          ...(isAlreadyTrialing ? {} : { trial_period_days: 14 }),
+          // Preserve remaining trial if user is in database trial, otherwise give new 14-day trial
+          ...(trialEndTimestamp 
+            ? { trial_end: trialEndTimestamp } 
+            : { trial_period_days: 14 }),
           metadata: {
             user_id: user.id,
           },
