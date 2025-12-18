@@ -48,6 +48,19 @@ export function useSpeechRecognition({
   const [isSupported, setIsSupported] = useState(false);
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  
+  // Use refs to avoid recreating recognition on callback changes
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  
+  // Keep refs in sync
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
+  
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -72,19 +85,22 @@ export function useSpeechRecognition({
           }
         }
 
-        const currentTranscript = finalTranscript || interimTranscript;
-        setTranscript(currentTranscript);
+        // Update interim transcript for display
+        setTranscript(interimTranscript);
 
-        if (finalTranscript && onResult) {
-          onResult(finalTranscript);
+        // Only call onResult with final transcript
+        if (finalTranscript && onResultRef.current) {
+          onResultRef.current(finalTranscript);
+          setTranscript(''); // Clear after final result
         }
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
+        setTranscript('');
         
-        if (onError) {
+        if (onErrorRef.current) {
           const errorMessages: Record<string, string> = {
             'not-allowed': 'Microphone access denied. Please allow microphone access.',
             'no-speech': 'No speech detected. Please try again.',
@@ -92,12 +108,13 @@ export function useSpeechRecognition({
             'network': 'Network error. Please check your connection.',
             'aborted': 'Speech recognition was aborted.',
           };
-          onError(errorMessages[event.error] || `Error: ${event.error}`);
+          onErrorRef.current(errorMessages[event.error] || `Error: ${event.error}`);
         }
       };
 
       recognition.onend = () => {
         setIsListening(false);
+        setTranscript('');
       };
 
       recognition.onstart = () => {
@@ -113,11 +130,12 @@ export function useSpeechRecognition({
         recognitionRef.current.abort();
       }
     };
-  }, [continuous, language, onResult, onError]);
+  }, [continuous, language]); // Removed onResult and onError from deps
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       try {
+        setTranscript('');
         recognitionRef.current.start();
       } catch (error) {
         console.error('Failed to start speech recognition:', error);
