@@ -35,6 +35,49 @@ function isEightAM(timezone: string | null): boolean {
   }
 }
 
+// Get the start of today in the user's timezone (returns UTC timestamp)
+function getTodayStartInTimezone(timezone: string | null): string {
+  const tz = timezone || "America/New_York";
+  const now = new Date();
+  
+  try {
+    // Get the current date parts in the user's timezone
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const dateStr = formatter.format(now); // Returns YYYY-MM-DD format
+    
+    // Create a date at midnight in the user's timezone
+    // We need to find what UTC time corresponds to midnight in their timezone
+    const midnightLocal = new Date(`${dateStr}T00:00:00`);
+    
+    // Get the timezone offset for that date
+    const offsetFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "shortOffset",
+    });
+    const parts = offsetFormatter.formatToParts(midnightLocal);
+    const offsetPart = parts.find(p => p.type === "timeZoneName")?.value || "GMT";
+    
+    // Parse offset like "GMT-5" or "GMT+10"
+    const offsetMatch = offsetPart.match(/GMT([+-]?\d+)?/);
+    const offsetHours = offsetMatch && offsetMatch[1] ? parseInt(offsetMatch[1], 10) : 0;
+    
+    // Adjust to UTC
+    const utcMidnight = new Date(midnightLocal.getTime() - offsetHours * 60 * 60 * 1000);
+    return utcMidnight.toISOString();
+  } catch (error) {
+    console.error(`Error calculating today start for timezone ${tz}:`, error);
+    // Fallback to server's today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today.toISOString();
+  }
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -108,20 +151,19 @@ serve(async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Check if we already sent an overdue reminder today
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Check if we already sent an overdue reminder today (in user's timezone)
+      const todayStart = getTodayStartInTimezone(profile?.timezone);
 
       const { data: existingLog } = await supabase
         .from("email_logs")
         .select("id")
         .eq("user_id", userId)
         .eq("email_type", "overdue_task_reminder")
-        .gte("sent_at", today.toISOString())
+        .gte("sent_at", todayStart)
         .limit(1);
 
       if (existingLog && existingLog.length > 0) {
-        console.log(`Already sent overdue reminder to user ${userId} today, skipping`);
+        console.log(`Already sent overdue reminder to user ${userId} today (their timezone), skipping`);
         continue;
       }
 
