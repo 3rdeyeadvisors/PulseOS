@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent, useEffect } from 'react';
+import { useState, KeyboardEvent, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Loader2, Mic, MicOff } from 'lucide-react';
@@ -15,28 +15,18 @@ interface ChatInputProps {
 export function ChatInput({ onSend, isLoading, aiName }: ChatInputProps) {
   const [input, setInput] = useState('');
 
-  const { isListening, isSupported, transcript, toggleListening } = useSpeechRecognition({
-    onResult: (result) => {
-      setInput((prev) => (prev ? `${prev} ${result}` : result));
-    },
-    onError: (error) => {
-      toast.error(error);
-    },
-  });
+  const handleSpeechResult = useCallback((result: string) => {
+    setInput((prev) => (prev ? `${prev} ${result}` : result));
+  }, []);
 
-  // Update input with interim transcript while listening
-  useEffect(() => {
-    if (isListening && transcript) {
-      setInput((prev) => {
-        // Only update if the transcript is different from current input
-        const baseInput = prev.replace(/\s*$/, '');
-        if (!baseInput.endsWith(transcript)) {
-          return baseInput ? `${baseInput} ${transcript}` : transcript;
-        }
-        return prev;
-      });
-    }
-  }, [transcript, isListening]);
+  const handleSpeechError = useCallback((error: string) => {
+    toast.error(error);
+  }, []);
+
+  const { isListening, isSupported, transcript, toggleListening } = useSpeechRecognition({
+    onResult: handleSpeechResult,
+    onError: handleSpeechError,
+  });
 
   const handleSend = () => {
     if (input.trim() && !isLoading) {
@@ -60,11 +50,21 @@ export function ChatInput({ onSend, isLoading, aiName }: ChatInputProps) {
     toggleListening();
   };
 
+  // Combine typed input with interim transcript for display
+  const displayValue = isListening && transcript 
+    ? (input ? `${input} ${transcript}` : transcript)
+    : input;
+
   return (
     <div className="flex gap-2 pt-4 border-t border-border/50">
       <Textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
+        value={displayValue}
+        onChange={(e) => {
+          // Only allow changes when not displaying interim transcript
+          if (!isListening) {
+            setInput(e.target.value);
+          }
+        }}
         onKeyDown={handleKeyDown}
         placeholder={isListening ? 'Listening...' : `Message ${aiName}...`}
         className={cn(
@@ -72,6 +72,7 @@ export function ChatInput({ onSend, isLoading, aiName }: ChatInputProps) {
           isListening && "ring-2 ring-primary/50"
         )}
         disabled={isLoading}
+        readOnly={isListening}
       />
       {isSupported && (
         <Button
