@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper to detect if a query needs web search - be aggressive about searching
+// Helper to detect if a query needs web search
 function needsWebSearch(message: string): boolean {
   const searchTriggers = [
     /what is|what are|who is|who are|where is|when did|when was|when is|how to|how do|how much|how many/i,
@@ -20,14 +20,12 @@ function needsWebSearch(message: string): boolean {
     /restaurant|food|eat|dining|bar|cafe|coffee/i,
     /stock|crypto|bitcoin|market|investing/i,
     /schedule|hours|open|closed|available/i,
-    /\?$/, // Any question
+    /\?$/,
   ];
   
-  // Also search if message is longer than 10 words (likely a complex question)
   const wordCount = message.split(/\s+/).length;
   if (wordCount > 10) return true;
   
-  // Check if message matches any search triggers
   return searchTriggers.some(trigger => trigger.test(message));
 }
 
@@ -78,8 +76,8 @@ async function searchWeb(query: string): Promise<string> {
     const searchResult = data.choices?.[0]?.message?.content || "";
     
     if (searchResult) {
-      console.log("Web search successful, got result");
-      return `\n\n## Web Search Results:\n${searchResult}\n`;
+      console.log("Web search successful");
+      return `\n\n[WEB_SEARCH_RESULTS]\n${searchResult}\n[/WEB_SEARCH_RESULTS]\n`;
     }
     
     return "";
@@ -89,7 +87,7 @@ async function searchWeb(query: string): Promise<string> {
   }
 }
 
-// Helper to fetch live data from other edge functions
+// Helper to fetch live data
 async function fetchLiveContext(city?: string, country?: string): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -104,17 +102,16 @@ async function fetchLiveContext(city?: string, country?: string): Promise<string
     "Authorization": `Bearer ${serviceKey}`,
   };
 
-  let liveContext = "\n\n## Current World Context:\n";
+  let liveContext = "\n\n[LIVE_DATA]\n";
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
-  liveContext += `**Today's Date**: ${today}\n`;
+  liveContext += `Today: ${today}\n`;
 
   try {
-    // Fetch weather if we have location
     if (city) {
       const weatherRes = await fetch(`${supabaseUrl}/functions/v1/get-weather`, {
         method: "POST",
@@ -124,80 +121,38 @@ async function fetchLiveContext(city?: string, country?: string): Promise<string
       if (weatherRes.ok) {
         const weather = await weatherRes.json();
         if (weather.current) {
-          liveContext += `\n**Current Weather in ${city}**:\n`;
-          liveContext += `- Temperature: ${Math.round(weather.current.temp)}°F (feels like ${Math.round(weather.current.feels_like)}°F)\n`;
-          liveContext += `- Conditions: ${weather.current.weather?.[0]?.description || 'N/A'}\n`;
-          liveContext += `- Humidity: ${weather.current.humidity}%\n`;
+          liveContext += `Weather in ${city}: ${Math.round(weather.current.temp)}°F, ${weather.current.weather?.[0]?.description || 'N/A'}\n`;
         }
       }
     }
 
-    // Fetch latest news
     const newsRes = await fetch(`${supabaseUrl}/functions/v1/get-news`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ category: "general", pageSize: 5 }),
+      body: JSON.stringify({ category: "general", pageSize: 3 }),
     });
     if (newsRes.ok) {
       const news = await newsRes.json();
       if (news.articles?.length > 0) {
-        liveContext += `\n**Today's Top Headlines**:\n`;
-        news.articles.slice(0, 5).forEach((article: { title: string; source?: { name?: string } }, i: number) => {
-          liveContext += `${i + 1}. ${article.title} (${article.source?.name || 'News'})\n`;
-        });
+        liveContext += `Headlines: ${news.articles.slice(0, 3).map((a: { title: string }) => a.title).join(' | ')}\n`;
       }
     }
 
-    // Fetch daily quote
-    const quoteRes = await fetch(`${supabaseUrl}/functions/v1/daily-quote`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({}),
-    });
-    if (quoteRes.ok) {
-      const quote = await quoteRes.json();
-      if (quote.text) {
-        liveContext += `\n**Daily Inspiration**: "${quote.text}" — ${quote.author || 'Unknown'}\n`;
-      }
-    }
-
-    // Fetch upcoming events if we have location
     if (city) {
       try {
-        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
         const eventsRes = await fetch(`${supabaseUrl}/functions/v1/ticketmaster-events`, {
           method: "POST",
           headers,
-          body: JSON.stringify({ 
-            city, 
-            state: undefined,
-            interests: [],
-            radius: 100,
-            timezone: userTimezone
-          }),
+          body: JSON.stringify({ city, radius: 50 }),
         });
         if (eventsRes.ok) {
           const events = await eventsRes.json();
           if (events.events?.length > 0) {
-            liveContext += `\n**Upcoming Events Near ${city}**:\n`;
-            events.events.slice(0, 8).forEach((event: { 
-              name: string; 
-              date?: string; 
-              time?: string;
-              venue?: string;
-              priceRange?: string;
-              url?: string;
-            }, i: number) => {
-              const dateStr = event.date ? ` on ${event.date}` : '';
-              const timeStr = event.time ? ` at ${event.time}` : '';
-              const venueStr = event.venue ? ` @ ${event.venue}` : '';
-              const priceStr = event.priceRange ? ` (${event.priceRange})` : '';
-              liveContext += `${i + 1}. ${event.name}${dateStr}${timeStr}${venueStr}${priceStr}\n`;
-            });
+            liveContext += `Local events: ${events.events.slice(0, 3).map((e: { name: string }) => e.name).join(', ')}\n`;
           }
         }
-      } catch (eventError) {
-        console.error("Error fetching events:", eventError);
+      } catch (e) {
+        console.error("Events error:", e);
       }
     }
 
@@ -205,7 +160,103 @@ async function fetchLiveContext(city?: string, country?: string): Promise<string
     console.error("Error fetching live context:", error);
   }
 
+  liveContext += "[/LIVE_DATA]\n";
   return liveContext;
+}
+
+// Build detailed personality instructions
+function buildPersonalityPrompt(
+  aiName: string,
+  personality: string,
+  humorLevel: number,
+  formalityLevel: number
+): string {
+  // Detailed personality definitions
+  const personalityStyles: Record<string, string> = {
+    friendly: `You're warm, caring, and genuinely interested in the user. You:
+- Use their name when it feels natural
+- Show empathy and understanding ("I totally get that!", "That sounds exciting!")
+- Ask follow-up questions to show you care
+- Use casual, warm language with occasional exclamation marks
+- Share enthusiasm about their interests
+- Use phrases like "Hey!", "Oh nice!", "That's awesome!", "I'd love to help!"`,
+
+    professional: `You're polished, articulate, and business-minded. You:
+- Provide structured, well-organized responses
+- Use precise language and avoid slang
+- Present information clearly with bullet points when helpful
+- Maintain a respectful, consultative tone
+- Focus on actionable insights and efficiency
+- Use phrases like "I'd recommend...", "Based on the information...", "Consider the following..."`,
+
+    balanced: `You're adaptable and naturally conversational. You:
+- Match the user's energy and tone
+- Be friendly but not overly casual
+- Provide helpful information without being stiff
+- Use a mix of warmth and clarity
+- Adjust formality based on the topic
+- Use phrases like "Sure thing!", "Here's what I found...", "Good question!"`,
+
+    witty: `You're clever, quick-witted, and entertainingly smart. You:
+- Add playful observations and clever wordplay
+- Use light sarcasm that's never mean-spirited
+- Make unexpected connections that surprise and delight
+- Include pop culture references when relevant
+- Balance humor with actually being helpful
+- Use phrases like "Well, well, well...", "Plot twist:", "Fun fact alert!", "Here's the thing..."`
+  };
+
+  // 5-level humor scale
+  let humorStyle = "";
+  if (humorLevel <= 20) {
+    humorStyle = "Keep things straightforward and focused. Avoid jokes or playful language entirely. Be direct and informative.";
+  } else if (humorLevel <= 40) {
+    humorStyle = "Stay mostly serious but you can smile through your words occasionally. A light touch here and there is fine, but don't force it.";
+  } else if (humorLevel <= 60) {
+    humorStyle = "Mix in casual humor naturally. Throw in a witty observation or playful comment when the moment calls for it, but don't overdo it.";
+  } else if (humorLevel <= 80) {
+    humorStyle = "Be notably playful and fun! Use humor frequently - make jokes, add funny asides, and keep the vibe light and entertaining.";
+  } else {
+    humorStyle = "Maximum entertainment mode! Be genuinely funny, make jokes, add amusing commentary, use playful exaggeration. Make conversations memorable and fun!";
+  }
+
+  // 5-level formality scale
+  let formalityStyle = "";
+  if (formalityLevel <= 20) {
+    formalityStyle = "Ultra casual - talk like a close friend. Use contractions, casual expressions, maybe even slang. Keep it super relaxed and chill.";
+  } else if (formalityLevel <= 40) {
+    formalityStyle = "Relaxed and conversational. Use everyday language, contractions are fine, feel approachable and easy to talk to.";
+  } else if (formalityLevel <= 60) {
+    formalityStyle = "Balanced tone - conversational but clear. Not stiff, not slangy. Adapt based on what the user seems to prefer.";
+  } else if (formalityLevel <= 80) {
+    formalityStyle = "Polished and articulate. Use proper grammar, avoid slang, maintain professionalism while still being personable.";
+  } else {
+    formalityStyle = "Highly formal and refined. Proper language, complete sentences, professional demeanor. Think executive assistant or consultant.";
+  }
+
+  const selectedPersonality = personalityStyles[personality] || personalityStyles.balanced;
+
+  return `
+## YOUR IDENTITY: ${aiName}
+
+You are ${aiName}, a personal AI assistant. Your personality and communication style are CRUCIAL to every response you give.
+
+## YOUR PERSONALITY TYPE: ${personality.toUpperCase()}
+${selectedPersonality}
+
+## YOUR HUMOR LEVEL: ${humorLevel}%
+${humorStyle}
+
+## YOUR FORMALITY LEVEL: ${formalityLevel}%
+${formalityStyle}
+
+## CRITICAL PERSONALITY RULES:
+1. EVERY response must reflect your personality settings - this is non-negotiable
+2. Start responses in a way that matches your personality (friendly greeting, witty opener, professional acknowledgment, etc.)
+3. Maintain consistent tone throughout - don't randomly switch styles mid-response
+4. Your personality should shine through even in informational answers
+5. If you reference yourself, use your name "${aiName}" not "I'm an AI" or "As an assistant"
+`;
 }
 
 serve(async (req) => {
@@ -216,7 +267,6 @@ serve(async (req) => {
   try {
     const body = await req.json();
     
-    // Input validation
     if (!body.messages || !Array.isArray(body.messages)) {
       return new Response(
         JSON.stringify({ error: "Invalid messages format" }),
@@ -224,7 +274,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate message structure and sanitize
     const messages = body.messages.map((msg: { role?: string; content?: string }) => {
       if (!msg.role || !msg.content) {
         throw new Error("Invalid message structure");
@@ -232,7 +281,6 @@ serve(async (req) => {
       if (!['user', 'assistant', 'system'].includes(msg.role)) {
         throw new Error("Invalid message role");
       }
-      // Limit content length to prevent abuse
       const content = String(msg.content).slice(0, 10000);
       return { role: msg.role, content };
     });
@@ -250,26 +298,12 @@ serve(async (req) => {
     const formalityLevel = Math.min(100, Math.max(0, Number(body.formalityLevel) || 50));
     const userContext = body.userContext;
     
+    console.log(`AI Settings - Name: ${aiName}, Personality: ${aiPersonality}, Humor: ${humorLevel}, Formality: ${formalityLevel}`);
+    
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
-
-    // Build personality-based system prompt
-    const personalityTraits = {
-      friendly: "You are warm, approachable, and conversational. Use friendly language and show genuine interest.",
-      professional: "You are formal, precise, and business-like. Use proper grammar and structured responses.",
-      balanced: "You are a mix of casual and formal. Adapt your tone based on the conversation context.",
-      witty: "You are clever, playful, and occasionally use humor. Keep things light while being helpful.",
-    };
-
-    const humorDescription = humorLevel > 70 ? "Use humor and playful language often." 
-      : humorLevel > 40 ? "Occasionally add light humor when appropriate."
-      : "Keep responses serious and focused.";
-
-    const formalityDescription = formalityLevel > 70 ? "Use formal language and professional tone."
-      : formalityLevel > 40 ? "Use a balanced, conversational tone."
-      : "Use casual, friendly language.";
 
     // Build user context section
     let userContextSection = "";
@@ -277,88 +311,72 @@ serve(async (req) => {
       const { profile, preferences, tasks } = userContext;
       
       if (profile) {
-        const userName = profile.full_name || "this user";
-        userContextSection += `\n\n## About ${userName}:\n`;
-        if (profile.full_name) userContextSection += `- Name: ${profile.full_name}\n`;
+        const userName = profile.full_name || "the user";
+        userContextSection += `\n[USER_INFO]\n`;
+        if (profile.full_name) userContextSection += `Name: ${profile.full_name}\n`;
         if (profile.city || profile.country) {
-          userContextSection += `- Location: ${[profile.city, profile.country].filter(Boolean).join(", ")}\n`;
+          userContextSection += `Location: ${[profile.city, profile.country].filter(Boolean).join(", ")}\n`;
         }
-        if (profile.age_range) userContextSection += `- Age range: ${profile.age_range}\n`;
-        if (profile.household_type) userContextSection += `- Household: ${profile.household_type}\n`;
+        if (profile.age_range) userContextSection += `Age: ${profile.age_range}\n`;
+        if (profile.household_type) userContextSection += `Household: ${profile.household_type}\n`;
       }
       
       if (preferences) {
         if (preferences.dietary_preferences?.length > 0) {
-          userContextSection += `- Dietary preferences: ${preferences.dietary_preferences.join(", ")}\n`;
+          userContextSection += `Diet: ${preferences.dietary_preferences.join(", ")}\n`;
         }
         if (preferences.interests?.length > 0) {
-          userContextSection += `- Interests: ${preferences.interests.join(", ")}\n`;
-        }
-        if (preferences.temperature_unit) {
-          userContextSection += `- Prefers temperature in: ${preferences.temperature_unit}\n`;
+          userContextSection += `Interests: ${preferences.interests.join(", ")}\n`;
         }
       }
       
       if (tasks && tasks.length > 0) {
-        userContextSection += `\n## Active Tasks:\n`;
-        tasks.forEach((task: { title: string; completed: boolean; due_date?: string }) => {
-          const status = task.completed ? "✓" : "○";
-          const dueStr = task.due_date ? ` (due: ${task.due_date})` : "";
-          userContextSection += `- ${status} ${task.title}${dueStr}\n`;
-        });
+        const pendingTasks = tasks.filter((t: { completed: boolean }) => !t.completed);
+        if (pendingTasks.length > 0) {
+          userContextSection += `Pending tasks: ${pendingTasks.map((t: { title: string }) => t.title).join(", ")}\n`;
+        }
+      }
+      
+      if (userContextSection) {
+        userContextSection += `[/USER_INFO]\n`;
       }
     }
 
-    // Fetch live world context (weather, news, etc.)
+    // Fetch live context
     const userCity = userContext?.profile?.city;
     const userCountry = userContext?.profile?.country;
     const liveWorldContext = await fetchLiveContext(userCity, userCountry);
 
-    // Check if the latest user message needs web search
+    // Web search if needed
     let webSearchContext = "";
     const lastUserMessage = messages.filter((m: { role: string }) => m.role === "user").pop();
     if (lastUserMessage && needsWebSearch(lastUserMessage.content)) {
       webSearchContext = await searchWeb(lastUserMessage.content);
     }
 
-    const systemPrompt = `You are ${aiName || 'Pulse'}, a brilliant and versatile AI assistant. You are NOT limited to any specific domain - you can discuss ANYTHING the user wants to talk about.
+    // Build the personality-first system prompt
+    const personalityPrompt = buildPersonalityPrompt(aiName, aiPersonality, humorLevel, formalityLevel);
 
-${personalityTraits[aiPersonality as keyof typeof personalityTraits] || personalityTraits.balanced}
+    const systemPrompt = `${personalityPrompt}
 
-${humorDescription}
-${formalityDescription}
+## WHAT YOU CAN DO:
+You're a brilliant, versatile AI that can discuss ANYTHING: general knowledge, current events, creative tasks, technical topics, lifestyle advice, entertainment, professional guidance, education, and casual fun.
+
+## CONTEXT AVAILABLE TO YOU:
 ${userContextSection}
 ${liveWorldContext}
 ${webSearchContext}
 
-## YOUR CAPABILITIES - You can help with ANYTHING:
-- **General Knowledge**: History, science, philosophy, art, literature, culture, languages, math, geography, etc.
-- **Current Events**: News, politics, sports, entertainment, technology trends, world events
-- **Creative Tasks**: Writing stories, poems, songs, brainstorming ideas, role-playing, creative projects
-- **Technical Topics**: Programming, engineering, technology, AI, computers, software
-- **Life & Lifestyle**: Health, fitness, cooking, relationships, travel, hobbies, personal development
-- **Entertainment**: Movies, TV shows, music, books, games, celebrities, pop culture
-- **Professional**: Business, career advice, finance, economics, marketing, management
-- **Education**: Explaining concepts, tutoring, homework help, learning strategies
-- **Fun & Casual**: Jokes, trivia, games, hypothetical scenarios, debates, random questions
+## RESPONSE GUIDELINES:
+- Answer questions thoroughly using any web search results provided
+- Use the user's info and interests to personalize when relevant
+- Keep responses concise but complete (aim for 2-4 paragraphs unless more detail is needed)
+- Use markdown formatting when it helps readability
+- NEVER say you can't help with something - you're a general-purpose AI
+- If you don't have specific info, provide your best knowledgeable response
 
-## CRITICAL RULES:
-1. NEVER say you can't help with something - you are a general-purpose AI that can discuss ANY topic
-2. ALWAYS provide helpful, complete answers - never say "hang tight" or "let me check" without following up
-3. If you have web search results, USE THEM to answer thoroughly
-4. Use your extensive knowledge to provide insightful, accurate responses
-5. Be conversational, engaging, and genuinely interested in whatever the user wants to discuss
-6. Don't limit yourself to "app-related" topics - the user can ask you ANYTHING
-7. When sharing facts from web searches, present them naturally
-8. Vary your language and be creative in your responses
-
-You have access to:
-- Vast knowledge on virtually any subject
-- Real-time web search for current information
-- User's local weather, news, and events
-- User's profile, preferences, and tasks (use when relevant)
-
-Be the user's go-to companion for ANY question or conversation. Keep responses helpful and engaging. Use markdown formatting when it improves readability.`;
+## REMEMBER:
+Your personality settings (${aiPersonality}, humor ${humorLevel}%, formality ${formalityLevel}%) must come through in EVERY response. Be ${aiName}, not a generic assistant!`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -373,6 +391,7 @@ Be the user's go-to companion for ANY question or conversation. Keep responses h
           ...messages,
         ],
         stream: true,
+        temperature: 0.8, // Slightly higher for more personality variation
       }),
     });
 
