@@ -61,7 +61,70 @@ serve(async (req) => {
       });
     }
 
-    // Check for database-based trial (set on signup)
+    // Check Stripe FIRST for active subscription (this takes priority over database trial)
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+
+    if (customers.data.length > 0) {
+      const customerId = customers.data[0].id;
+      logStep("Found Stripe customer", { customerId });
+
+      // Check for active or trialing subscriptions in Stripe
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 10,
+      });
+
+      const activeSubscription = subscriptions.data.find(
+        (sub: { status: string }) => sub.status === "active" || sub.status === "trialing"
+      );
+
+      if (activeSubscription) {
+        const isStripeTrialing = activeSubscription.status === "trialing";
+        const trialEnd = activeSubscription.trial_end 
+          ? new Date(activeSubscription.trial_end * 1000).toISOString()
+          : null;
+        const subscriptionEnd = new Date(activeSubscription.current_period_end * 1000).toISOString();
+
+        logStep("Active Stripe subscription found", { 
+          subscriptionId: activeSubscription.id, 
+          status: activeSubscription.status,
+          isStripeTrialing,
+        });
+
+        // Update subscription record with Stripe data
+        await supabaseClient
+          .from("user_subscriptions")
+          .upsert({
+            user_id: user.id,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: activeSubscription.id,
+            status: activeSubscription.status,
+            trial_ends_at: trialEnd,
+            subscription_ends_at: subscriptionEnd,
+          }, { onConflict: "user_id" });
+
+        return new Response(JSON.stringify({
+          subscribed: true,
+          is_grandfathered: false,
+          status: activeSubscription.status,
+          is_trialing: isStripeTrialing,
+          trial_ends_at: trialEnd,
+          subscription_ends_at: subscriptionEnd,
+          plan: "Premium",
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      logStep("No active Stripe subscription found for customer");
+    } else {
+      logStep("No Stripe customer found");
+    }
+
+    // Fall back to database-based trial (set on signup) if no Stripe subscription
     if (subscriptionData?.trial_ends_at && !subscriptionData?.stripe_subscription_id) {
       const trialEndsAt = new Date(subscriptionData.trial_ends_at);
       const now = new Date();
@@ -87,92 +150,14 @@ serve(async (req) => {
       }
     }
 
-    // Check Stripe for active subscription
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-
-    if (customers.data.length === 0) {
-      logStep("No Stripe customer found");
-      
-      // Update subscription record to inactive (trial expired or never had one)
-      await supabaseClient
-        .from("user_subscriptions")
-        .upsert({
-          user_id: user.id,
-          status: "inactive",
-        }, { onConflict: "user_id" });
-
-      return new Response(JSON.stringify({ 
-        subscribed: false,
-        is_grandfathered: false,
-        status: "inactive",
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
-
-    // Check for active or trialing subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "all",
-      limit: 10,
-    });
-
-    const activeSubscription = subscriptions.data.find(
-      (sub: { status: string }) => sub.status === "active" || sub.status === "trialing"
-    );
-
-    if (activeSubscription) {
-      const isTrialing = activeSubscription.status === "trialing";
-      const trialEnd = activeSubscription.trial_end 
-        ? new Date(activeSubscription.trial_end * 1000).toISOString()
-        : null;
-      const subscriptionEnd = new Date(activeSubscription.current_period_end * 1000).toISOString();
-
-      logStep("Active subscription found", { 
-        subscriptionId: activeSubscription.id, 
-        status: activeSubscription.status,
-        isTrialing,
-      });
-
-      // Update subscription record
-      await supabaseClient
-        .from("user_subscriptions")
-        .upsert({
-          user_id: user.id,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: activeSubscription.id,
-          status: activeSubscription.status,
-          trial_ends_at: trialEnd,
-          subscription_ends_at: subscriptionEnd,
-        }, { onConflict: "user_id" });
-
-      return new Response(JSON.stringify({
-        subscribed: true,
-        is_grandfathered: false,
-        status: activeSubscription.status,
-        is_trialing: isTrialing,
-        trial_ends_at: trialEnd,
-        subscription_ends_at: subscriptionEnd,
-        plan: "Premium",
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
+    // No active subscription found
     logStep("No active subscription found");
     
-    // Update subscription record
+    // Update subscription record to inactive
     await supabaseClient
       .from("user_subscriptions")
       .upsert({
         user_id: user.id,
-        stripe_customer_id: customerId,
         status: "inactive",
       }, { onConflict: "user_id" });
 
