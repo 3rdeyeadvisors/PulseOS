@@ -9,6 +9,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Check if it's currently 8am (8:00-8:59) in the user's timezone
+function isEightAM(timezone: string | null): boolean {
+  try {
+    const tz = timezone || "America/New_York"; // Default to EST if no timezone set
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour: "numeric",
+      hour12: false,
+    });
+    const hour = parseInt(formatter.format(now), 10);
+    return hour === 8;
+  } catch (error) {
+    console.error(`Invalid timezone: ${timezone}, defaulting to EST check`);
+    // Fallback: check EST
+    const now = new Date();
+    const estFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      hour12: false,
+    });
+    const hour = parseInt(estFormatter.format(now), 10);
+    return hour === 8;
+  }
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -65,8 +91,23 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     let emailsSent = 0;
+    let skippedTimezone = 0;
 
     for (const [userId, tasks] of Object.entries(tasksByUser)) {
+      // Get user's profile including timezone
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email, full_name, timezone")
+        .eq("user_id", userId)
+        .single();
+
+      // Check if it's 8am in the user's timezone
+      if (!isEightAM(profile?.timezone)) {
+        console.log(`Not 8am for user ${userId} (timezone: ${profile?.timezone || 'default EST'}), skipping`);
+        skippedTimezone++;
+        continue;
+      }
+
       // Check if we already sent an overdue reminder today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -84,13 +125,7 @@ serve(async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Get user's email and preferences
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email, full_name")
-        .eq("user_id", userId)
-        .single();
-
+      // Get email preferences
       const { data: emailPrefs } = await supabase
         .from("email_preferences")
         .select("task_reminders")
@@ -227,10 +262,10 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`Overdue task reminder complete. Sent ${emailsSent} emails.`);
+    console.log(`Overdue task reminder complete. Sent ${emailsSent} emails, skipped ${skippedTimezone} (not 8am in their timezone).`);
 
     return new Response(
-      JSON.stringify({ success: true, sent: emailsSent }),
+      JSON.stringify({ success: true, sent: emailsSent, skippedTimezone }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
