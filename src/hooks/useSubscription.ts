@@ -211,7 +211,7 @@ export function useSubscription() {
   const isActive = subscription?.subscribed ?? false;
   const isGrandfathered = subscription?.is_grandfathered ?? false;
   const isTrialing = subscription?.is_trialing ?? false;
-  const hasStripeSubscription = !!subscription?.subscription_ends_at && !subscription?.is_native;
+  const hasStripeSubscription = subscription?.has_stripe_subscription ?? (!!subscription?.subscription_ends_at && !subscription?.is_native);
   const isNative = isNativePlatform();
 
   return {
