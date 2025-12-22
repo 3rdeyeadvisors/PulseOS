@@ -53,17 +53,18 @@ serve(async (req) => {
       throw usersError;
     }
 
-    // Get email preferences for all users
+    // Get email preferences for all users - check leaderboard_reminders specifically
     const { data: emailPrefs, error: prefsError } = await supabase
       .from('email_preferences')
-      .select('user_id, daily_digest');
+      .select('user_id, leaderboard_reminders');
 
     if (prefsError) {
       console.error('Error fetching email preferences:', prefsError);
       throw prefsError;
     }
 
-    const emailPrefsMap = new Map(emailPrefs?.map(p => [p.user_id, p.daily_digest]) || []);
+    // Map user_id to whether they have leaderboard_reminders enabled (default false)
+    const emailPrefsMap = new Map(emailPrefs?.map(p => [p.user_id, p.leaderboard_reminders === true]) || []);
 
     // Get all weekly scores
     const { data: weeklyScores, error: scoresError } = await supabase
@@ -105,9 +106,9 @@ serve(async (req) => {
 
     // Check each user
     for (const user of users || []) {
-      // Skip if user has no email or has disabled daily digest
-      if (!user.email || emailPrefsMap.get(user.user_id) === false) {
-        console.log(`Skipping user ${user.user_id}: no email or digest disabled`);
+      // Skip if user has no email or has NOT explicitly enabled leaderboard reminders
+      if (!user.email || emailPrefsMap.get(user.user_id) !== true) {
+        console.log(`Skipping user ${user.user_id}: no email or leaderboard reminders disabled`);
         continue;
       }
 
@@ -225,7 +226,7 @@ serve(async (req) => {
           <tr>
             <td style="padding: 25px 40px; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
               <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">
-                You're receiving this because you have daily digest emails enabled.<br>
+                You're receiving this because you have leaderboard reminders enabled.<br>
                 <a href="https://pulseos.tech/app/settings" style="color: #6366f1; text-decoration: underline;">Manage email preferences</a>
               </p>
             </td>

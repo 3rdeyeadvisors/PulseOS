@@ -185,6 +185,7 @@ export type Database = {
           daily_digest: boolean
           event_reminders: boolean
           id: string
+          leaderboard_reminders: boolean
           marketing_emails: boolean
           task_reminders: boolean
           updated_at: string
@@ -196,6 +197,7 @@ export type Database = {
           daily_digest?: boolean
           event_reminders?: boolean
           id?: string
+          leaderboard_reminders?: boolean
           marketing_emails?: boolean
           task_reminders?: boolean
           updated_at?: string
@@ -207,6 +209,7 @@ export type Database = {
           daily_digest?: boolean
           event_reminders?: boolean
           id?: string
+          leaderboard_reminders?: boolean
           marketing_emails?: boolean
           task_reminders?: boolean
           updated_at?: string
