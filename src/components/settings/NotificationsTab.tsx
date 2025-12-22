@@ -16,6 +16,7 @@ interface EmailPreferences {
   event_reminders: boolean;
   task_reminders: boolean;
   marketing_emails: boolean;
+  leaderboard_reminders: boolean;
 }
 
 export function NotificationsTab() {
@@ -30,6 +31,7 @@ export function NotificationsTab() {
     event_reminders: true,
     task_reminders: true,
     marketing_emails: false,
+    leaderboard_reminders: false,
   });
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export function NotificationsTab() {
         event_reminders: data.event_reminders,
         task_reminders: data.task_reminders,
         marketing_emails: data.marketing_emails,
+        leaderboard_reminders: (data as any).leaderboard_reminders ?? false,
       });
     }
     setLoading(false);
@@ -240,6 +243,22 @@ export function NotificationsTab() {
               id="marketing"
               checked={preferences.marketing_emails}
               onCheckedChange={(checked) => updatePreference('marketing_emails', checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="leaderboard">Leaderboard Reminders</Label>
+              <p className="text-sm text-muted-foreground">
+                Get notified when friends are ahead on the weekly leaderboard
+              </p>
+            </div>
+            <Switch
+              id="leaderboard"
+              checked={preferences.leaderboard_reminders}
+              onCheckedChange={(checked) => updatePreference('leaderboard_reminders', checked)}
             />
           </div>
         </CardContent>
