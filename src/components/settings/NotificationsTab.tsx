@@ -170,22 +170,6 @@ export function NotificationsTab() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="welcome">Welcome Email</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive a welcome email when you sign up
-              </p>
-            </div>
-            <Switch
-              id="welcome"
-              checked={preferences.welcome_email}
-              onCheckedChange={(checked) => updatePreference('welcome_email', checked)}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
               <Label htmlFor="digest">Daily Digest</Label>
               <p className="text-sm text-muted-foreground">
                 Get a daily summary of weather, tasks, and recommendations
