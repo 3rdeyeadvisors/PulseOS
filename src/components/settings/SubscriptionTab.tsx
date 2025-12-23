@@ -78,10 +78,10 @@ export function SubscriptionTab() {
               {isGrandfathered 
                 ? 'Thank you for being an early supporter!' 
                 : isTrialing 
-                ? '14-day free trial' 
+                ? 'Enjoying your free trial' 
                 : isActive 
                 ? 'Full access to all features' 
-                : 'Upgrade to unlock all features'}
+                : 'Subscribe to unlock all features'}
             </CardDescription>
           </div>
         </CardHeader>
@@ -127,19 +127,27 @@ export function SubscriptionTab() {
             {/* Actions - only show for non-grandfathered users */}
             {!isGrandfathered && (
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                {/* Show subscribe/upgrade button for non-active or trialing without Stripe */}
-                {(!isActive || (isTrialing && !hasStripeSubscription)) && (
+                {/* Show subscribe button only for non-active users (trial expired or never had trial) */}
+                {!isActive && !isTrialing && (
                   <Button onClick={handleStartCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
                       <CreditCard className="h-4 w-4 mr-2" />
                     )}
-                    {isNative 
-                      ? 'Subscribe Now' 
-                      : isTrialing 
-                      ? 'Add Payment Method' 
-                      : 'Start Free Trial'}
+                    Subscribe Now
+                  </Button>
+                )}
+
+                {/* For trialing users, show optional "Subscribe Now" to convert early */}
+                {isTrialing && !hasStripeSubscription && (
+                  <Button variant="outline" onClick={handleStartCheckout} disabled={checkoutLoading}>
+                    {checkoutLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <CreditCard className="h-4 w-4 mr-2" />
+                    )}
+                    Subscribe Now
                   </Button>
                 )}
                 
@@ -153,13 +161,6 @@ export function SubscriptionTab() {
                     )}
                     Manage Subscription
                   </Button>
-                )}
-
-                {/* Show cancel/manage option for trialing users with Stripe subscription */}
-                {isTrialing && hasStripeSubscription && !subscription?.is_native && (
-                  <p className="text-xs text-muted-foreground text-center w-full mt-2">
-                    Cancel anytime via "Manage Subscription" above
-                  </p>
                 )}
 
                 {/* Restore purchases button for native platforms */}
@@ -198,14 +199,6 @@ export function SubscriptionTab() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {!isNative && (
-              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
-                <span className="text-sm font-medium text-primary">
-                  Start with a 14-day free trial — no credit card required until trial ends
-                </span>
-              </div>
-            )}
-
             <div className="grid gap-3">
               {features.map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
@@ -223,7 +216,7 @@ export function SubscriptionTab() {
               ) : (
                 <Crown className="h-4 w-4 mr-2" />
               )}
-              {isNative ? 'Subscribe Now' : isTrialing ? 'Add Payment Method' : 'Start 14-Day Free Trial'}
+              Subscribe Now
             </Button>
 
             {/* Restore purchases for native */}
