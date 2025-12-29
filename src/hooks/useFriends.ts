@@ -83,22 +83,38 @@ export function useFriends() {
   const fetchPendingRequests = useCallback(async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('friend_requests')
-      .select(`
-        id,
-        sender_id,
-        receiver_id,
-        status,
-        created_at,
-        sender:profiles!friend_requests_sender_id_fkey(username, full_name, avatar_url, city, verified)
-      `)
-      .eq('receiver_id', user.id)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+    // Fetch pending requests and current friends in parallel
+    const [requestsResult, friendsResult] = await Promise.all([
+      supabase
+        .from('friend_requests')
+        .select(`
+          id,
+          sender_id,
+          receiver_id,
+          status,
+          created_at,
+          sender:profiles!friend_requests_sender_id_fkey(username, full_name, avatar_url, city, verified)
+        `)
+        .eq('receiver_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('friendships')
+        .select('friend_id')
+        .eq('user_id', user.id)
+    ]);
 
-    setPendingRequests((data || []) as unknown as FriendRequest[]);
-    setPendingCount(data?.length || 0);
+    const existingFriendIds = new Set(
+      (friendsResult.data || []).map(f => f.friend_id)
+    );
+
+    // Filter out requests from users who are already friends
+    const filteredRequests = (requestsResult.data || []).filter(
+      req => !existingFriendIds.has(req.sender_id)
+    );
+
+    setPendingRequests(filteredRequests as unknown as FriendRequest[]);
+    setPendingCount(filteredRequests.length);
   }, [user]);
 
   const fetchSentRequests = useCallback(async () => {
