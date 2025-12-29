@@ -704,6 +704,15 @@ export type Database = {
         Args: { _friend_id: string; _user_id: string }
         Returns: undefined
       }
+      get_friend_request_sender_profile: {
+        Args: { sender_user_id: string }
+        Returns: {
+          avatar_url: string
+          user_id: string
+          username: string
+          verified: boolean
+        }[]
+      }
       get_friends_leaderboard: {
         Args: { _user_id: string; _week_start: string }
         Returns: {

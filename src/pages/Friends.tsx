@@ -36,7 +36,6 @@ export default function Friends() {
     if (!requestsSearch.trim()) return pendingRequests;
     const query = requestsSearch.toLowerCase();
     return pendingRequests.filter((request) =>
-      request.sender?.full_name?.toLowerCase().includes(query) ||
       request.sender?.username?.toLowerCase().includes(query)
     );
   }, [pendingRequests, requestsSearch]);

@@ -13,9 +13,7 @@ interface FriendRequestCardProps {
     created_at: string;
     sender?: {
       username: string | null;
-      full_name: string | null;
       avatar_url: string | null;
-      city: string | null;
       verified: boolean | null;
     };
   };
@@ -49,9 +47,7 @@ function FriendRequestCardComponent({ request }: FriendRequestCardProps) {
   }, [declineFriendRequest, request.id]);
 
   const getInitials = () => {
-    const name = request.sender?.full_name;
     const username = request.sender?.username;
-    if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     if (username) return username.slice(0, 2).toUpperCase();
     return '?';
   };
@@ -68,17 +64,12 @@ function FriendRequestCardComponent({ request }: FriendRequestCardProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="font-medium truncate max-w-[140px]">
-            {request.sender?.full_name || request.sender?.username || 'Unknown User'}
+            {request.sender?.username ? `@${request.sender.username}` : 'Unknown User'}
           </p>
           {request.sender?.verified && (
             <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
           )}
         </div>
-        {request.sender?.username && (
-          <p className="text-sm text-muted-foreground truncate max-w-[140px]">
-            @{request.sender.username}
-          </p>
-        )}
         <p className="text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
         </p>

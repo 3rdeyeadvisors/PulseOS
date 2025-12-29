@@ -10,9 +10,7 @@ interface FriendRequest {
   created_at: string;
   sender?: {
     username: string | null;
-    full_name: string | null;
     avatar_url: string | null;
-    city: string | null;
     verified: boolean | null;
   };
   receiver?: {
@@ -87,14 +85,7 @@ export function useFriends() {
     const [requestsResult, friendsResult] = await Promise.all([
       supabase
         .from('friend_requests')
-        .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status,
-          created_at,
-          sender:profiles!friend_requests_sender_id_fkey(username, full_name, avatar_url, city, verified)
-        `)
+        .select('id, sender_id, receiver_id, status, created_at')
         .eq('receiver_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false }),
@@ -113,8 +104,25 @@ export function useFriends() {
       req => !existingFriendIds.has(req.sender_id)
     );
 
-    setPendingRequests(filteredRequests as unknown as FriendRequest[]);
-    setPendingCount(filteredRequests.length);
+    // Fetch sender profiles using the secure RPC function for each request
+    const enrichedRequests = await Promise.all(
+      filteredRequests.map(async (request) => {
+        const { data: senderProfile } = await supabase
+          .rpc('get_friend_request_sender_profile', { sender_user_id: request.sender_id });
+        
+        return {
+          ...request,
+          sender: senderProfile && senderProfile.length > 0 ? {
+            username: senderProfile[0].username,
+            avatar_url: senderProfile[0].avatar_url,
+            verified: senderProfile[0].verified,
+          } : null
+        };
+      })
+    );
+
+    setPendingRequests(enrichedRequests as unknown as FriendRequest[]);
+    setPendingCount(enrichedRequests.length);
   }, [user]);
 
   const fetchSentRequests = useCallback(async () => {
@@ -224,9 +232,9 @@ export function useFriends() {
         friend: {
           user_id: senderId,
           username: request.sender.username,
-          full_name: request.sender.full_name,
+          full_name: null, // Not available from friend request (privacy)
           avatar_url: request.sender.avatar_url,
-          city: request.sender.city,
+          city: null, // Not available from friend request (privacy)
           verified: request.sender.verified,
         },
       };
