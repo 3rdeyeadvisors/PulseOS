@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.cleanup-inactive-accounts]
 verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
