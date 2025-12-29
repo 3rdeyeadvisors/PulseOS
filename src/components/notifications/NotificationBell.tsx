@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, Trash2, X, ChevronRight } from 'lucide-react';
+import { Bell, Check, Trash2, X, ChevronRight, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, subDays } from 'date-fns';
 
 interface Notification {
   id: string;
@@ -47,9 +47,15 @@ export function NotificationBell() {
       case 'weather_alert':
         return '/app/today';
       case 'new_recommendation':
-        return '/app/today';
+        return '/app/out-and-about';
       case 'system':
         // Check data for specific navigation
+        if (data?.type === 'task_invite' || data?.taskId) {
+          return '/app/today'; // Task invite notification
+        }
+        if (data?.type === 'activity_invite' || data?.activityId) {
+          return '/app/friends'; // Activity invite notification
+        }
         if (data?.senderId || data?.senderUsername) {
           return '/app/friends'; // Friend request notification
         }
@@ -124,12 +130,21 @@ export function NotificationBell() {
   const fetchNotifications = async () => {
     if (!user) return;
 
+    // First, cleanup old notifications (older than 30 days)
+    const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+    await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
+      .lt('created_at', thirtyDaysAgo);
+
+    // Fetch recent notifications
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(50);
 
     if (error) {
       console.error('Error fetching notifications:', error);
@@ -138,6 +153,20 @@ export function NotificationBell() {
 
     setNotifications(data || []);
     setUnreadCount(data?.filter((n) => !n.read).length || 0);
+  };
+
+  const clearReadNotifications = async () => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('read', true);
+
+    if (!error) {
+      setNotifications((prev) => prev.filter((n) => !n.read));
+    }
   };
 
   const markAsRead = async (id: string) => {
@@ -247,9 +276,22 @@ export function NotificationBell() {
                   size="sm"
                   className="h-7 text-xs"
                   onClick={markAllAsRead}
+                  title="Mark all as read"
                 >
                   <Check className="h-3 w-3 mr-1" />
-                  Mark all read
+                  Read
+                </Button>
+              )}
+              {notifications.some(n => n.read) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={clearReadNotifications}
+                  title="Clear read notifications"
+                >
+                  <CheckCheck className="h-3 w-3 mr-1" />
+                  Clear
                 </Button>
               )}
               <Button
@@ -257,6 +299,7 @@ export function NotificationBell() {
                 size="sm"
                 className="h-7 text-xs text-destructive hover:text-destructive"
                 onClick={clearAll}
+                title="Delete all notifications"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
