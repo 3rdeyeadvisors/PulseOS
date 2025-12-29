@@ -145,7 +145,7 @@ function LeaderboardComponent() {
             </div>
 
             {/* Scrollable leaderboard list */}
-            <div className="max-h-[200px] overflow-y-auto">
+            <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
               <div className="space-y-2">
                 {filteredLeaderboard.length === 0 && searchQuery ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
