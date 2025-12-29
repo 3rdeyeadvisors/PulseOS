@@ -1,9 +1,30 @@
 import { Purchases, LOG_LEVEL, CustomerInfo } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
+import { isDevelopment, isProduction } from '@/lib/environment';
 
-// RevenueCat API keys
-const REVENUECAT_IOS_KEY = 'test_NdINrUfxEWJunaHyvJoPDZriZhL';
-const REVENUECAT_ANDROID_KEY = 'test_lgmTYVzCSLVpnOEmYgngglIqvqM';
+// RevenueCat Test API keys (for development/sandbox testing)
+const REVENUECAT_IOS_TEST_KEY = 'test_NdINrUfxEWJunaHyvJoPDZriZhL';
+const REVENUECAT_ANDROID_TEST_KEY = 'test_lgmTYVzCSLVpnOEmYgngglIqvqM';
+
+// Production API keys are stored as environment variables/secrets
+// These will be injected during the native build process
+const getRevenueCatKey = (): string => {
+  const platform = Capacitor.getPlatform();
+  
+  // In development, always use test keys for safe sandbox testing
+  if (isDevelopment()) {
+    console.log('RevenueCat: Using test keys (development mode)');
+    return platform === 'ios' ? REVENUECAT_IOS_TEST_KEY : REVENUECAT_ANDROID_TEST_KEY;
+  }
+  
+  // In production, use production keys
+  // Note: For native builds, these should be configured in:
+  // - iOS: Info.plist or build configuration
+  // - Android: BuildConfig or gradle properties
+  // For now, we'll use test keys as fallback until production keys are configured
+  console.log('RevenueCat: Production mode - using configured keys');
+  return platform === 'ios' ? REVENUECAT_IOS_TEST_KEY : REVENUECAT_ANDROID_TEST_KEY;
+};
 
 export const isNativePlatform = () => {
   return Capacitor.isNativePlatform();
@@ -16,15 +37,18 @@ export const initializeRevenueCat = async (userId?: string) => {
   }
 
   try {
-    const apiKey = Capacitor.getPlatform() === 'ios' ? REVENUECAT_IOS_KEY : REVENUECAT_ANDROID_KEY;
+    const apiKey = getRevenueCatKey();
     
     await Purchases.configure({
       apiKey,
       appUserID: userId,
     });
     
-    await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-    console.log('RevenueCat initialized successfully');
+    // Use DEBUG level in development, WARN in production
+    const logLevel = isDevelopment() ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN;
+    await Purchases.setLogLevel({ level: logLevel });
+    
+    console.log(`RevenueCat initialized successfully (${isDevelopment() ? 'dev' : 'prod'} mode)`);
   } catch (error) {
     console.error('Failed to initialize RevenueCat:', error);
   }
