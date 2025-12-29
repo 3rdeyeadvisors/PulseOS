@@ -21,7 +21,7 @@
     --secondary-foreground: 210 40% 98%;
     
     --muted: 222 47% 14%;
-    --muted-foreground: 215 20% 55%;
+    --muted-foreground: 215 20% 65%;
     
     --accent: 280 100% 70%;
     --accent-foreground: 210 40% 98%;
@@ -101,7 +101,7 @@ html.theme-rose {
   --secondary: 350 20% 15%;
   --secondary-foreground: 350 20% 98%;
   --muted: 350 20% 15%;
-  --muted-foreground: 350 15% 55%;
+  --muted-foreground: 350 15% 65%;
   --accent: 320 90% 65%;
   --accent-foreground: 350 20% 98%;
   --destructive: 0 84% 60%;
@@ -132,7 +132,7 @@ html.theme-gold {
   --secondary: 35 30% 15%;
   --secondary-foreground: 35 20% 98%;
   --muted: 35 30% 15%;
-  --muted-foreground: 35 15% 55%;
+  --muted-foreground: 35 15% 65%;
   --accent: 25 95% 53%;
   --accent-foreground: 35 20% 98%;
   --destructive: 0 84% 60%;
@@ -163,7 +163,7 @@ html.theme-violet {
   --secondary: 270 40% 15%;
   --secondary-foreground: 270 20% 98%;
   --muted: 270 40% 15%;
-  --muted-foreground: 270 15% 55%;
+  --muted-foreground: 270 15% 65%;
   --accent: 300 90% 60%;
   --accent-foreground: 270 20% 98%;
   --destructive: 0 84% 60%;
@@ -194,7 +194,7 @@ html.theme-emerald {
   --secondary: 160 40% 14%;
   --secondary-foreground: 160 20% 98%;
   --muted: 160 40% 14%;
-  --muted-foreground: 160 15% 50%;
+  --muted-foreground: 160 15% 60%;
   --accent: 180 90% 45%;
   --accent-foreground: 160 20% 98%;
   --destructive: 0 84% 60%;
@@ -225,7 +225,7 @@ html.theme-sunset {
   --secondary: 15 40% 15%;
   --secondary-foreground: 15 20% 98%;
   --muted: 15 40% 15%;
-  --muted-foreground: 15 15% 55%;
+  --muted-foreground: 15 15% 65%;
   --accent: 35 95% 55%;
   --accent-foreground: 15 20% 98%;
   --destructive: 0 84% 60%;
@@ -256,7 +256,7 @@ html.theme-adaptive {
   --secondary: 220 20% 18%;
   --secondary-foreground: 220 15% 95%;
   --muted: 220 20% 18%;
-  --muted-foreground: 220 12% 55%;
+  --muted-foreground: 220 12% 65%;
   --accent: 200 80% 50%;
   --accent-foreground: 220 15% 95%;
   --destructive: 0 84% 60%;

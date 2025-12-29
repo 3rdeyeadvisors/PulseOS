@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.tech.pulseos.app",
+        "paths": [
+          "/app/*",
+          "/reset-password",
+          "/reset-password/*",
+          "/task/invite/*",
+          "/activity/invite/*",
+          "/friend/*",
+          "/auth",
+          "/auth/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.tech.pulseos.app"
+    ]
+  }
+}

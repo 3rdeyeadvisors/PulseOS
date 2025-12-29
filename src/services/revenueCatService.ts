@@ -1,29 +1,30 @@
 import { Purchases, LOG_LEVEL, CustomerInfo } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
-import { isDevelopment, isProduction } from '@/lib/environment';
+import { isProduction, APP_CONFIG } from '@/lib/config';
 
-// RevenueCat Test API keys (for development/sandbox testing)
-const REVENUECAT_IOS_TEST_KEY = 'test_NdINrUfxEWJunaHyvJoPDZriZhL';
-const REVENUECAT_ANDROID_TEST_KEY = 'test_lgmTYVzCSLVpnOEmYgngglIqvqM';
-
-// Production API keys are stored as environment variables/secrets
-// These will be injected during the native build process
+// Get the appropriate RevenueCat API key based on environment and platform
 const getRevenueCatKey = (): string => {
   const platform = Capacitor.getPlatform();
   
-  // In development, always use test keys for safe sandbox testing
-  if (isDevelopment()) {
-    console.log('RevenueCat: Using test keys (development mode)');
-    return platform === 'ios' ? REVENUECAT_IOS_TEST_KEY : REVENUECAT_ANDROID_TEST_KEY;
+  if (platform === 'ios') {
+    const key = isProduction 
+      ? APP_CONFIG.revenueCat.ios.production 
+      : APP_CONFIG.revenueCat.ios.test;
+    console.log(`RevenueCat: Using ${isProduction ? 'production' : 'test'} iOS key`);
+    return key;
   }
   
-  // In production, use production keys
-  // Note: For native builds, these should be configured in:
-  // - iOS: Info.plist or build configuration
-  // - Android: BuildConfig or gradle properties
-  // For now, we'll use test keys as fallback until production keys are configured
-  console.log('RevenueCat: Production mode - using configured keys');
-  return platform === 'ios' ? REVENUECAT_IOS_TEST_KEY : REVENUECAT_ANDROID_TEST_KEY;
+  if (platform === 'android') {
+    const key = isProduction 
+      ? APP_CONFIG.revenueCat.android.production 
+      : APP_CONFIG.revenueCat.android.test;
+    console.log(`RevenueCat: Using ${isProduction ? 'production' : 'test'} Android key`);
+    return key;
+  }
+  
+  // Web fallback
+  console.log('RevenueCat: Web platform detected, returning empty key');
+  return '';
 };
 
 export const isNativePlatform = () => {
@@ -45,10 +46,10 @@ export const initializeRevenueCat = async (userId?: string) => {
     });
     
     // Use DEBUG level in development, WARN in production
-    const logLevel = isDevelopment() ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN;
+    const logLevel = isProduction ? LOG_LEVEL.WARN : LOG_LEVEL.DEBUG;
     await Purchases.setLogLevel({ level: logLevel });
     
-    console.log(`RevenueCat initialized successfully (${isDevelopment() ? 'dev' : 'prod'} mode)`);
+    console.log(`RevenueCat initialized successfully (${isProduction ? 'prod' : 'dev'} mode)`);
   } catch (error) {
     console.error('Failed to initialize RevenueCat:', error);
   }
