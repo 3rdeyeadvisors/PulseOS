@@ -191,11 +191,31 @@ export function useFriends() {
   const acceptFriendRequest = async (requestId: string, senderId: string) => {
     if (!user) return { error: 'Not authenticated' };
 
-    console.log('[Friends] Accepting friend request:', { requestId, senderId, userId: user.id });
-
+    // Find the request to get sender info for optimistic update
+    const request = pendingRequests.find(r => r.id === requestId);
+    
     // Optimistically remove from pending requests immediately
     setPendingRequests(prev => prev.filter(r => r.id !== requestId));
     setPendingCount(prev => Math.max(0, prev - 1));
+
+    // Optimistically add the new friend to the friends list
+    if (request?.sender) {
+      const optimisticFriend: Friendship = {
+        id: `temp-${Date.now()}`,
+        user_id: user.id,
+        friend_id: senderId,
+        created_at: new Date().toISOString(),
+        friend: {
+          user_id: senderId,
+          username: request.sender.username,
+          full_name: request.sender.full_name,
+          avatar_url: request.sender.avatar_url,
+          city: request.sender.city,
+          verified: request.sender.verified,
+        },
+      };
+      setFriends(prev => [...prev, optimisticFriend]);
+    }
 
     // Update request status
     const { error: updateError } = await supabase
@@ -205,12 +225,11 @@ export function useFriends() {
 
     if (updateError) {
       console.error('[Friends] Failed to update request status:', updateError);
-      // Revert optimistic update on error
-      await fetchPendingRequests();
+      // Revert optimistic updates on error
+      fetchPendingRequests();
+      fetchFriends();
       return { error: updateError.message };
     }
-
-    console.log('[Friends] Request status updated, creating friendship...');
 
     // Create friendship using database function (handles both directions)
     const { error: friendshipError } = await supabase
@@ -222,34 +241,18 @@ export function useFriends() {
     if (friendshipError) {
       console.error('[Friends] Failed to create friendship:', friendshipError);
       // Revert the request status if friendship creation fails
-      await supabase
+      supabase
         .from('friend_requests')
         .update({ status: 'pending' })
         .eq('id', requestId);
-      await fetchPendingRequests();
+      fetchPendingRequests();
+      fetchFriends();
       return { error: `Failed to create friendship: ${friendshipError.message}` };
     }
 
-    // Verify the friendship was actually created
-    const { data: verifyData, error: verifyError } = await supabase
-      .from('friendships')
-      .select('id')
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${senderId}),and(user_id.eq.${senderId},friend_id.eq.${user.id})`)
-      .limit(1);
-
-    if (verifyError || !verifyData || verifyData.length === 0) {
-      console.error('[Friends] Friendship verification failed:', verifyError || 'No records found');
-      // Revert the request status
-      await supabase
-        .from('friend_requests')
-        .update({ status: 'pending' })
-        .eq('id', requestId);
-      await fetchPendingRequests();
-      return { error: 'Friendship was not created. Please try again.' };
-    }
-
-    console.log('[Friends] Friendship created and verified successfully');
-    await fetchFriends();
+    // Refresh friends list in background to get proper IDs (non-blocking)
+    fetchFriends();
+    
     return { error: null };
   };
 
