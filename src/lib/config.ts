@@ -23,18 +23,15 @@ export const APP_CONFIG = {
   urlScheme: 'pulseos',
   
   // RevenueCat API Keys
+  // TODO: Replace with your actual RevenueCat API keys from the dashboard
   revenueCat: {
     ios: {
-      // Production key - replace with actual key before App Store submission
-      production: 'appl_PRODUCTION_KEY_HERE',
-      // Test/sandbox key for development
-      test: 'appl_test_key_placeholder',
+      production: 'appl_PRODUCTION_KEY_HERE', // TODO: Add iOS production key
+      test: 'appl_test_key_placeholder', // TODO: Add iOS sandbox key
     },
     android: {
-      // Production key - replace with actual key before Play Store submission
-      production: 'goog_PRODUCTION_KEY_HERE',
-      // Test/sandbox key for development
-      test: 'goog_test_key_placeholder',
+      production: 'goog_PRODUCTION_KEY_HERE', // TODO: Add Android production key
+      test: 'goog_test_key_placeholder', // TODO: Add Android sandbox key
     },
   },
   
@@ -46,7 +43,8 @@ export const APP_CONFIG = {
     biometricAuth: isNative,
   },
   
-  // App Store / Play Store links (update before submission)
+  // App Store / Play Store links
+  // TODO: Update these links after your app is published to the respective stores
   storeLinks: {
     ios: 'https://apps.apple.com/app/pulseos/id000000000',
     android: 'https://play.google.com/store/apps/details?id=tech.pulseos.app',
