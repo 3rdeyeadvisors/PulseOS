@@ -3,5 +3,5 @@
     <string name="app_name">PulseOS</string>
     <string name="title_activity_main">PulseOS</string>
     <string name="package_name">tech.pulseos.app</string>
-    <string name="custom_url_scheme">tech.pulseos.app</string>
+    <string name="custom_url_scheme">pulseos</string>
 </resources>

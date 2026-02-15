@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'automatic',
     preferredContentMode: 'mobile',
-    scheme: 'PulseOS',
+    scheme: 'pulseos',
     backgroundColor: '#0a0a0b'
   },
   
