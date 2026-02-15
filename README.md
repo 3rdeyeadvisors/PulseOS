@@ -64,6 +64,39 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
+## Mobile App Submission (App Store & Play Store)
+
+This project is configured for iOS and Android using Capacitor.
+
+### Prerequisites
+
+1.  **RevenueCat**: Update `src/lib/config.ts` with your actual API keys.
+2.  **App Identifiers**: The app is currently set to `tech.pulseos.app`.
+3.  **Assets**: Icons and splash screens are generated in `assets/`.
+
+### Deployment Steps
+
+#### 1. Build the Web Project
+```sh
+npm run build
+```
+
+#### 2. Sync with Native Platforms
+```sh
+npx cap sync
+```
+
+#### 3. iOS (App Store)
+- Open the project in Xcode: `npx cap open ios`
+- Set your development team.
+- Ensure `PrivacyInfo.xcprivacy` is included in the target.
+- Archive and upload to App Store Connect.
+
+#### 4. Android (Play Store)
+- Open the project in Android Studio: `npx cap open android`
+- Generate a signed bundle (AAB): `Build > Generate Signed Bundle / APK`.
+- Upload the AAB to the Google Play Console.
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!
