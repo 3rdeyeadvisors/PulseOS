@@ -25,16 +25,12 @@ export const APP_CONFIG = {
   // RevenueCat API Keys
   revenueCat: {
     ios: {
-      // Production key - replace with actual key before App Store submission
-      production: 'appl_PRODUCTION_KEY_HERE',
-      // Test/sandbox key for development
-      test: 'appl_test_key_placeholder',
+      production: import.meta.env.VITE_REVENUECAT_IOS_PROD_KEY || 'appl_PRODUCTION_KEY_HERE',
+      test: import.meta.env.VITE_REVENUECAT_IOS_TEST_KEY || 'appl_test_key_placeholder',
     },
     android: {
-      // Production key - replace with actual key before Play Store submission
-      production: 'goog_PRODUCTION_KEY_HERE',
-      // Test/sandbox key for development
-      test: 'goog_test_key_placeholder',
+      production: import.meta.env.VITE_REVENUECAT_ANDROID_PROD_KEY || 'goog_PRODUCTION_KEY_HERE',
+      test: import.meta.env.VITE_REVENUECAT_ANDROID_TEST_KEY || 'goog_test_key_placeholder',
     },
   },
   
@@ -48,8 +44,8 @@ export const APP_CONFIG = {
   
   // App Store / Play Store links (update before submission)
   storeLinks: {
-    ios: 'https://apps.apple.com/app/pulseos/id000000000',
-    android: 'https://play.google.com/store/apps/details?id=tech.pulseos.app',
+    ios: import.meta.env.VITE_STORE_LINK_IOS || 'https://apps.apple.com/app/pulseos/id000000000',
+    android: import.meta.env.VITE_STORE_LINK_ANDROID || 'https://play.google.com/store/apps/details?id=tech.pulseos.app',
   },
 } as const;
 

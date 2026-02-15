@@ -221,7 +221,7 @@ export default function Privacy() {
               </li>
               <li><strong>Contact Form:</strong>{' '}
                 <Link to="/contact" className="text-primary hover:underline">
-                  pulseos.app/contact
+                  pulseos.tech/contact
                 </Link>
               </li>
             </ul>
