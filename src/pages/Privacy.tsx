@@ -54,10 +54,11 @@ export default function Privacy() {
             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
               <li><strong>City and State:</strong> Used to provide localized weather forecasts, news, restaurant recommendations, and local events</li>
               <li><strong>Zip Code:</strong> Used for more accurate local recommendations (stored securely, never shared publicly)</li>
+              <li><strong>Precise Location (GPS):</strong> Optionally used with your permission to provide highly accurate nearby services, such as finding the closest gas stations.</li>
               <li><strong>Approximate Location:</strong> Derived from your provided city for service personalization</li>
             </ul>
             <p className="text-muted-foreground mt-2 text-sm bg-muted/30 p-3 rounded-lg">
-              <strong>Note:</strong> We do not use GPS or precise device location. All location data is manually provided by you and can be updated or deleted at any time in Settings.
+              <strong>Note:</strong> While we can use your device's GPS for certain features if you grant permission, providing this data is always optional. You can rely on manually entered location data (City/State/Zip) instead.
             </p>
             
             <h3 className="text-lg font-medium mb-2 mt-4 text-foreground">Profile & Preferences</h3>
@@ -252,16 +253,16 @@ export default function Privacy() {
                 <h4 className="font-medium text-foreground mb-2">Location Data</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Coarse Location (city level)</li>
-                  <li>• User-provided, not GPS</li>
+                  <li>• Precise Location (Optional GPS)</li>
                 </ul>
               </div>
               <div className="p-4 rounded-lg bg-muted/30">
                 <h4 className="font-medium text-foreground mb-2">Data Not Collected</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Precise Location (GPS)</li>
                   <li>• Health & Fitness</li>
                   <li>• Financial Info</li>
                   <li>• Browsing History</li>
+                  <li>• Sensitive Info</li>
                 </ul>
               </div>
             </div>

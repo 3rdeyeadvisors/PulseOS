@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID.tech.pulseos.app",
+        "appID": "7S557876X4.tech.pulseos.app",
         "paths": [
           "/app/*",
           "/reset-password",
@@ -19,7 +19,7 @@
   },
   "webcredentials": {
     "apps": [
-      "TEAM_ID.tech.pulseos.app"
+      "7S557876X4.tech.pulseos.app"
     ]
   }
 }
