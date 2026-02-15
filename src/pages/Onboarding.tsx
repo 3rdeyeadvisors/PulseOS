@@ -145,22 +145,24 @@ export default function Onboarding() {
       // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          user_id: user.id,
           full_name: fullName,
           city,
           country,
           household_type: householdType,
           age_range: ageRange,
           onboarding_completed: true,
-        })
-        .eq('user_id', user.id);
+          updated_at: new Date().toISOString(),
+        });
 
       if (profileError) throw profileError;
 
       // Update preferences
       const { error: prefsError } = await supabase
         .from('preferences')
-        .update({
+        .upsert({
+          user_id: user.id,
           dietary_preferences: dietaryPreferences,
           interests,
           theme: selectedTheme,
@@ -168,8 +170,8 @@ export default function Onboarding() {
           ai_personality: aiPersonality,
           ai_humor_level: aiHumorLevel,
           ai_formality_level: aiFormalityLevel,
-        })
-        .eq('user_id', user.id);
+          updated_at: new Date().toISOString(),
+        });
 
       if (prefsError) throw prefsError;
 

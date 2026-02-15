@@ -2,6 +2,7 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Prediction {
   description: string;
@@ -136,7 +137,7 @@ export const LocationAutocomplete = React.forwardRef<HTMLInputElement, LocationA
             value={inputValue}
             onChange={handleInputChange}
             onFocus={handleFocus}
-            className={className}
+            className={cn("min-h-[44px]", className)}
             {...props}
           />
           {isLoading && (
@@ -147,16 +148,16 @@ export const LocationAutocomplete = React.forwardRef<HTMLInputElement, LocationA
         </div>
         
         {isOpen && predictions.length > 0 && (
-          <ul className="absolute z-50 w-full mt-1 max-h-60 overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md">
+          <ul className="absolute z-[100] w-full mt-1 max-h-60 overflow-auto overscroll-contain rounded-md border bg-popover text-popover-foreground shadow-xl">
             {predictions.map((prediction) => (
               <li
                 key={prediction.placeId}
                 onClick={() => handleSelect(prediction)}
-                className="cursor-pointer px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="cursor-pointer px-3 py-3 hover:bg-accent hover:text-accent-foreground transition-colors min-h-[44px] flex flex-col justify-center"
               >
-                <div className="font-medium">{prediction.mainText}</div>
+                <div className="font-medium leading-tight">{prediction.mainText}</div>
                 {prediction.secondaryText && (
-                  <div className="text-sm text-muted-foreground">{prediction.secondaryText}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{prediction.secondaryText}</div>
                 )}
               </li>
             ))}

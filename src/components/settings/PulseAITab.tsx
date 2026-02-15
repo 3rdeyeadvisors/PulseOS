@@ -34,7 +34,7 @@ export function PulseAITab() {
         .from('preferences')
         .select('ai_name, ai_personality, ai_humor_level, ai_formality_level')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setAiName(data.ai_name || 'Pulse');
@@ -54,13 +54,14 @@ export function PulseAITab() {
 
     const { error } = await supabase
       .from('preferences')
-      .update({
+      .upsert({
+        user_id: user.id,
         ai_name: aiName,
         ai_personality: aiPersonality,
         ai_humor_level: humorLevel,
         ai_formality_level: formalityLevel,
-      })
-      .eq('user_id', user.id);
+        updated_at: new Date().toISOString(),
+      });
 
     if (error) {
       toast.error('Failed to save AI settings');

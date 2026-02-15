@@ -93,15 +93,16 @@ export function LifestyleTab() {
 
     const { error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        user_id: user.id,
         city,
         state,
         zip_code: zipCode,
         country,
         household_type: householdType,
         age_range: ageRange,
-      })
-      .eq('user_id', user.id);
+        updated_at: new Date().toISOString(),
+      });
 
     if (error) {
       toast.error('Failed to save lifestyle settings');

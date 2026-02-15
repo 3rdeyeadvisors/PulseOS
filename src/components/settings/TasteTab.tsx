@@ -48,7 +48,7 @@ export function TasteTab() {
         .from('preferences')
         .select('dietary_preferences, interests')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         // Normalize to lowercase for consistent comparison with option values
@@ -89,11 +89,12 @@ export function TasteTab() {
 
     const { error } = await supabase
       .from('preferences')
-      .update({
+      .upsert({
+        user_id: user.id,
         dietary_preferences: dietaryPreferences,
         interests,
-      })
-      .eq('user_id', user.id);
+        updated_at: new Date().toISOString(),
+      });
 
     if (error) {
       toast.error('Failed to save taste preferences');
