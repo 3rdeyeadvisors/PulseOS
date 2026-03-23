@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "android-chrome-192x192.png", "android-chrome-512x512.png"],
       manifest: {
         name: "PulseOS - Your Personal Life Dashboard",

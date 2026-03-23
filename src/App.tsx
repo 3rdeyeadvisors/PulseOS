@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { useDeepLinks } from "@/hooks/useDeepLinks";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { UpdatePrompt } from '@/components/UpdatePrompt';
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 
@@ -97,6 +98,7 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <UpdatePrompt />
               <BrowserRouter>
                 <NativeFeatureInitializer />
                 <Suspense fallback={<PageLoader />}>
