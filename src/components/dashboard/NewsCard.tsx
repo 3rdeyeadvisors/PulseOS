@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Newspaper, ExternalLink, RefreshCw } from 'lucide-react';
@@ -35,7 +35,7 @@ export function NewsCard() {
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(false);
 
-  const fetchNews = async (isRefresh = false) => {
+  const fetchNews = useCallback(async (isRefresh = false) => {
     if (!user) return;
 
     if (isRefresh) setRefreshing(true);
@@ -133,7 +133,7 @@ export function NewsCard() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user && !hasFetched.current) {
@@ -153,7 +153,7 @@ export function NewsCard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user]);
+  }, [user, fetchNews]);
 
   const formatTime = (dateStr: string) => {
     try {

@@ -97,7 +97,7 @@ export function TasksCard() {
       ];
 
       // Fetch all accepted invites for these tasks to get participants
-      let participantsMap: Record<string, Participant[]> = {};
+      const participantsMap: Record<string, Participant[]> = {};
       
       if (allTaskIds.length > 0) {
         const { data: allInvites } = await supabase

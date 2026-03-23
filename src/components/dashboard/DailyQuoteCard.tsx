@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Quote, RefreshCw } from 'lucide-react';
@@ -17,7 +17,7 @@ export function DailyQuoteCard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchQuote = async (isRefresh = false) => {
+  const fetchQuote = useCallback(async (isRefresh = false) => {
     if (!user) return;
 
     if (isRefresh) setRefreshing(true);
@@ -58,11 +58,11 @@ export function DailyQuoteCard() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchQuote();
-  }, [user]);
+  }, [fetchQuote]);
 
   if (loading) {
     return (

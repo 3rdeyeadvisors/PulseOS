@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check, Trash2, X, ChevronRight, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -82,6 +82,34 @@ export function NotificationBell() {
     }
   };
 
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+
+    // First, cleanup old notifications (older than 30 days)
+    const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+    await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
+      .lt('created_at', thirtyDaysAgo);
+
+    // Fetch recent notifications
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Error fetching notifications:', error);
+      return;
+    }
+
+    setNotifications(data || []);
+    setUnreadCount(data?.filter((n) => !n.read).length || 0);
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -125,35 +153,7 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
-
-  const fetchNotifications = async () => {
-    if (!user) return;
-
-    // First, cleanup old notifications (older than 30 days)
-    const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
-    await supabase
-      .from('notifications')
-      .delete()
-      .eq('user_id', user.id)
-      .lt('created_at', thirtyDaysAgo);
-
-    // Fetch recent notifications
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (error) {
-      console.error('Error fetching notifications:', error);
-      return;
-    }
-
-    setNotifications(data || []);
-    setUnreadCount(data?.filter((n) => !n.read).length || 0);
-  };
+  }, [user, fetchNotifications]);
 
   const clearReadNotifications = async () => {
     if (!user) return;

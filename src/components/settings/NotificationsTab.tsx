@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -34,11 +34,7 @@ export function NotificationsTab() {
     leaderboard_reminders: false,
   });
 
-  useEffect(() => {
-    fetchPreferences();
-  }, [user]);
-
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -60,7 +56,11 @@ export function NotificationsTab() {
       });
     }
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchPreferences();
+  }, [fetchPreferences]);
 
   const updatePreference = async (key: keyof EmailPreferences, value: boolean) => {
     if (!user) return;
