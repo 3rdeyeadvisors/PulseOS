@@ -3,6 +3,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfWeek, endOfWeek, format } from 'date-fns';
 
+interface LeaderboardRow {
+  user_id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  total_score: number;
+  rank: number;
+}
+
 interface LeaderboardEntry {
   user_id: string;
   username: string | null;
@@ -58,7 +67,7 @@ export function useLeaderboard() {
       setLeaderboard([]);
     } else if (leaderboardData && leaderboardData.length > 0) {
       // Fetch verified status and roles for all users
-      const userIds = leaderboardData.map((entry: any) => entry.user_id);
+      const userIds = leaderboardData.map((entry: LeaderboardRow) => entry.user_id);
       
       const [profilesResult, rolesResult] = await Promise.all([
         supabase
@@ -75,7 +84,7 @@ export function useLeaderboard() {
       const verifiedMap = new Map(profilesResult.data?.map(p => [p.user_id, p.verified]) || []);
       const founderSet = new Set(rolesResult.data?.map(r => r.user_id) || []);
 
-      const entries = leaderboardData.map((entry: any) => ({
+      const entries = leaderboardData.map((entry: LeaderboardRow) => ({
         ...entry,
         verified: verifiedMap.get(entry.user_id) || false,
         isFounder: founderSet.has(entry.user_id),

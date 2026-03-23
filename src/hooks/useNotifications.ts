@@ -1,6 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 type NotificationType = 'welcome' | 'daily_digest' | 'event_reminder' | 'task_reminder' | 'weather_alert' | 'new_recommendation' | 'system';
 
 export function useNotifications() {
@@ -10,7 +16,7 @@ export function useNotifications() {
     type: NotificationType,
     title: string,
     message: string,
-    data?: Record<string, any>
+    data?: Record<string, string | number | boolean | null | undefined>
   ) => {
     if (!user) return { error: 'Not authenticated' };
 
@@ -48,9 +54,9 @@ export function useNotifications() {
 
       if (error) throw error;
       return { data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending welcome email:', error);
-      return { error: error.message };
+      return { error: getErrorMessage(error) };
     }
   };
 
@@ -81,9 +87,9 @@ export function useNotifications() {
 
       if (error) throw error;
       return { data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending notification email:', error);
-      return { error: error.message };
+      return { error: getErrorMessage(error) };
     }
   };
 
@@ -108,9 +114,9 @@ export function useNotifications() {
 
       if (error) throw error;
       return { data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending task reminder:', error);
-      return { error: error.message };
+      return { error: getErrorMessage(error) };
     }
   };
 
