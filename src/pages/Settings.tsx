@@ -44,6 +44,13 @@ export default function Settings() {
       searchParams.delete('canceled');
       setSearchParams(searchParams);
     }
+
+    const portalReturn = searchParams.get('portal_return');
+    if (portalReturn === 'true') {
+      toast.info('Subscription updated. Your plan status will refresh shortly.');
+      searchParams.delete('portal_return');
+      setSearchParams(searchParams);
+    }
   }, [searchParams, setSearchParams]);
 
   // Sync tab state with URL
