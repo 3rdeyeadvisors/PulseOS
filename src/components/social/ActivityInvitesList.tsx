@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useActivityInvites } from '@/hooks/useActivityInvites';
+import { useActivityInvites, ActivityInvite } from '@/hooks/useActivityInvites';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -33,6 +33,12 @@ import {
   ExternalLink,
   Star
 } from 'lucide-react';
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
 
 export function ActivityInvitesList() {
   const { user } = useAuth();
@@ -102,27 +108,27 @@ export function ActivityInvitesList() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const getPartnerInfo = (invite: any) => {
+  const getPartnerInfo = (invite: ActivityInvite) => {
     if (invite.sender_id === user?.id) {
       return invite.receiver;
     }
     return invite.sender;
   };
 
-  const getActivityUrl = (invite: any) => {
+  const getActivityUrl = (invite: ActivityInvite) => {
     const data = invite.activity_data;
     if (!data) return null;
-    return data.url || data.link || data.ticketUrl || null;
+    return (data['url'] as string) || (data['link'] as string) || (data['ticketUrl'] as string) || null;
   };
 
-  const getActivityDetails = (invite: any) => {
+  const getActivityDetails = (invite: ActivityInvite) => {
     const data = invite.activity_data;
     if (!data) return null;
     return {
-      image: data.image || data.imageUrl || null,
-      location: data.location || data.venue || data.address || null,
-      rating: data.rating || null,
-      price: data.price || data.priceRange || null,
+      image: (data['image'] as string) || (data['imageUrl'] as string) || null,
+      location: (data['location'] as string) || (data['venue'] as string) || (data['address'] as string) || null,
+      rating: (data['rating'] as string) || null,
+      price: (data['price'] as string) || (data['priceRange'] as string) || null,
     };
   };
 

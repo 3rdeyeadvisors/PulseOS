@@ -6,6 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -40,8 +46,8 @@ export function usePushNotifications() {
       } else {
         console.log('Push token registered successfully');
       }
-    } catch (err) {
-      console.error('Failed to register push token:', err);
+    } catch (err: unknown) {
+      console.error('Failed to register push token:', getErrorMessage(err));
     }
   }, [user]);
 
@@ -58,28 +64,28 @@ export function usePushNotifications() {
       if (error) {
         console.error('Error removing push token:', error);
       }
-    } catch (err) {
-      console.error('Failed to remove push token:', err);
+    } catch (err: unknown) {
+      console.error('Failed to remove push token:', getErrorMessage(err));
     }
   }, [user]);
 
   const handleNotificationAction = useCallback((notification: PushNotificationSchema) => {
-    const data = notification.data as Record<string, any> | undefined;
+    const data = notification.data as Record<string, unknown> | undefined;
     
     if (!data) return;
 
     // Route based on notification data
-    if (data.route) {
-      navigate(data.route);
-    } else if (data.type === 'task_invite' || data.taskId) {
+    if (data['route']) {
+      navigate(data['route'] as string);
+    } else if (data['type'] === 'task_invite' || data['taskId']) {
       navigate('/app/today');
-    } else if (data.type === 'activity_invite' || data.activityId) {
+    } else if (data['type'] === 'activity_invite' || data['activityId']) {
       navigate('/app/friends');
-    } else if (data.type === 'friend_request' || data.senderId) {
+    } else if (data['type'] === 'friend_request' || data['senderId']) {
       navigate('/app/friends');
-    } else if (data.type === 'daily_digest') {
+    } else if (data['type'] === 'daily_digest') {
       navigate('/app/today');
-    } else if (data.type === 'event_reminder') {
+    } else if (data['type'] === 'event_reminder') {
       navigate('/app/out-and-about');
     }
   }, [navigate]);
@@ -105,8 +111,8 @@ export function usePushNotifications() {
 
       setPermissionStatus('granted');
       return true;
-    } catch (err) {
-      console.error('Error requesting push permissions:', err);
+    } catch (err: unknown) {
+      console.error('Error requesting push permissions:', getErrorMessage(err));
       return false;
     }
   }, [isNative]);
@@ -148,8 +154,8 @@ export function usePushNotifications() {
         handleNotificationAction(action.notification);
       });
 
-    } catch (err) {
-      console.error('Error initializing push notifications:', err);
+    } catch (err: unknown) {
+      console.error('Error initializing push notifications:', getErrorMessage(err));
     }
   }, [isNative, user, requestPermissions, registerToken, handleNotificationAction]);
 
