@@ -79,7 +79,7 @@ serve(async (req) => {
       .from("user_subscriptions")
       .select("trial_ends_at, status")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     // Calculate remaining trial days if user is in trial
     let trialEndTimestamp: number | undefined;

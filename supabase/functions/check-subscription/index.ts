@@ -45,7 +45,7 @@ serve(async (req) => {
       .from("user_subscriptions")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     // Check if user is grandfathered
     if (subscriptionData?.is_grandfathered) {
@@ -126,7 +126,7 @@ serve(async (req) => {
     }
 
     // Fall back to database-based trial (set on signup) if no Stripe subscription
-    if (subscriptionData?.trial_ends_at && !subscriptionData?.stripe_subscription_id) {
+    if (subscriptionData && subscriptionData.trial_ends_at && !subscriptionData.stripe_subscription_id) {
       const trialEndsAt = new Date(subscriptionData.trial_ends_at);
       const now = new Date();
       
