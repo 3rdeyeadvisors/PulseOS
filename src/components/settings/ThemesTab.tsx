@@ -9,7 +9,7 @@ import { Loader2, Save, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const themeColors: Record<ThemeName, { bg: string; primary: string; accent: string }> = {
-  night: { bg: 'bg-[hsl(222,47%,6%)]', primary: 'bg-[hsl(217,91%,60%)]', accent: 'bg-[hsl(280,100%,70%)]' },
+  night: { bg: 'bg-[hsl(15,8%,6%)]', primary: 'bg-[hsl(4,78%,58%)]', accent: 'bg-[hsl(35,92%,52%)]' },
   minimal: { bg: 'bg-[hsl(0,0%,100%)]', primary: 'bg-[hsl(222,47%,11%)]', accent: 'bg-[hsl(220,14%,92%)]' },
   rose: { bg: 'bg-[hsl(350,20%,6%)]', primary: 'bg-[hsl(350,89%,60%)]', accent: 'bg-[hsl(320,90%,65%)]' },
   gold: { bg: 'bg-[hsl(35,30%,6%)]', primary: 'bg-[hsl(45,93%,47%)]', accent: 'bg-[hsl(25,95%,53%)]' },

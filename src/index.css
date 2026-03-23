@@ -4,46 +4,34 @@
 
 @layer base {
   :root {
-    /* Night Theme (Default) - Deep blues with electric accents */
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 6%;
-    
-    --secondary: 222 47% 14%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 222 47% 14%;
-    --muted-foreground: 215 20% 65%;
-    
-    --accent: 280 100% 70%;
-    --accent-foreground: 210 40% 98%;
-    
+    --background: 15 8% 6%;
+    --foreground: 40 95% 98%;
+    --card: 15 8% 9%;
+    --card-foreground: 40 95% 98%;
+    --popover: 15 8% 9%;
+    --popover-foreground: 40 95% 98%;
+    --primary: 4 78% 58%;
+    --primary-foreground: 40 95% 98%;
+    --secondary: 15 10% 15%;
+    --secondary-foreground: 40 95% 98%;
+    --muted: 15 10% 15%;
+    --muted-foreground: 20 12% 52%;
+    --accent: 35 92% 52%;
+    --accent-foreground: 15 8% 6%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 217 91% 60%;
-    
+    --destructive-foreground: 40 95% 98%;
+    --border: 15 8% 22%;
+    --input: 15 8% 22%;
+    --ring: 4 78% 58%;
     --radius: 0.75rem;
-    
-    /* Sidebar */
-    --sidebar-background: 222 47% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 47% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 15%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 15 8% 5%;
+    --sidebar-foreground: 40 95% 98%;
+    --sidebar-primary: 4 78% 58%;
+    --sidebar-primary-foreground: 40 95% 98%;
+    --sidebar-accent: 15 10% 12%;
+    --sidebar-accent-foreground: 40 95% 98%;
+    --sidebar-border: 15 8% 18%;
+    --sidebar-ring: 4 78% 58%;
   }
 
   * {
