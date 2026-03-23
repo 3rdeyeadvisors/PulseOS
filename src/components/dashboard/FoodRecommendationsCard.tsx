@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Utensils, Coffee, Sun, Moon, RefreshCw, MapPin, X, Navigation } from 'lucide-react';
@@ -42,7 +42,7 @@ export function FoodRecommendationsCard() {
   const [selectedRec, setSelectedRec] = useState<FoodRecommendation | null>(null);
   const [userCity, setUserCity] = useState<string>('');
 
-  const fetchRecommendations = async (isRefresh = false) => {
+  const fetchRecommendations = useCallback(async (isRefresh = false) => {
     if (!user || !session) return;
 
     if (isRefresh) setRefreshing(true);
@@ -94,7 +94,7 @@ export function FoodRecommendationsCard() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user, session]);
 
   useEffect(() => {
     fetchRecommendations();
@@ -111,7 +111,7 @@ export function FoodRecommendationsCard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user, session]);
+  }, [user, session, fetchRecommendations]);
 
   const openInMaps = (name: string) => {
     const query = encodeURIComponent(`${name}${userCity ? `, ${userCity}` : ''}`);
