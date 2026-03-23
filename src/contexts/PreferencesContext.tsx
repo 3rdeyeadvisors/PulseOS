@@ -35,6 +35,9 @@ const defaultPreferences: Preferences = {
 interface PreferencesContextType {
   preferences: Preferences;
   loading: boolean;
+  avatarUrl: string | null;
+  fullName: string | null;
+  aiName: string;
   updatePreferences: (updates: Partial<Preferences>) => Promise<void>;
   refreshPreferences: () => Promise<void>;
 }
@@ -45,6 +48,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null); // null = loading
+  const [aiName, setAiName] = useState<string>('Pulse');
 
   const fetchPreferences = useCallback(async () => {
     if (!user) {
@@ -86,6 +92,43 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchPreferences();
   }, [fetchPreferences]);
+
+  // Fetch profile and AI name when user changes
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!user) {
+        setAvatarUrl(null);
+        setFullName(null);
+        setAiName('Pulse');
+        return;
+      }
+
+      // Fetch profile and preferences in parallel
+      const [{ data: profile }, { data: prefs }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('avatar_url, full_name')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('preferences')
+          .select('ai_name')
+          .eq('user_id', user.id)
+          .maybeSingle()
+      ]);
+
+      if (profile) {
+        setAvatarUrl(profile.avatar_url);
+        setFullName(profile.full_name || '');
+      } else {
+        setFullName(''); // No profile found, set to empty
+      }
+      if (prefs?.ai_name) {
+        setAiName(prefs.ai_name);
+      }
+    }
+    fetchUserData();
+  }, [user]);
 
   // Real-time subscription
   useEffect(() => {
@@ -150,7 +193,17 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <PreferencesContext.Provider value={{ preferences, loading, updatePreferences, refreshPreferences }}>
+    <PreferencesContext.Provider
+      value={{
+        preferences,
+        loading,
+        avatarUrl,
+        fullName,
+        aiName,
+        updatePreferences,
+        refreshPreferences
+      }}
+    >
       {children}
     </PreferencesContext.Provider>
   );
