@@ -23,6 +23,12 @@ import {
 import { toast } from 'sonner';
 import { Loader2, Save, Upload, User, AtSign, Globe, Eye, Check, X, BadgeCheck, Trash2, AlertTriangle } from 'lucide-react';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 export function ProfileTab() {
   const { user, deleteAccount } = useAuth();
   const navigate = useNavigate();
@@ -156,8 +162,8 @@ export function ProfileTab() {
 
       setAvatarUrl(avatarUrlWithCacheBust);
       toast.success('Avatar updated');
-    } catch (error) {
-      console.error('Avatar upload error:', error);
+    } catch (error: unknown) {
+      console.error('Avatar upload error:', getErrorMessage(error));
       toast.error('Failed to upload avatar');
     } finally {
       setUploading(false);
@@ -182,7 +188,7 @@ export function ProfileTab() {
 
     setSaving(true);
 
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       full_name: fullName,
       interests_public: interestsPublic,
       profile_public: profilePublic,

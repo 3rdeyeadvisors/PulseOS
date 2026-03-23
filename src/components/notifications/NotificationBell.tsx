@@ -14,13 +14,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow, subDays } from 'date-fns';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 interface Notification {
   id: string;
   type: 'welcome' | 'daily_digest' | 'event_reminder' | 'task_reminder' | 'weather_alert' | 'new_recommendation' | 'system';
   title: string;
   message: string;
   read: boolean;
-  data: any;
+  data: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -35,6 +41,8 @@ export function NotificationBell() {
   const getNotificationRoute = (notification: Notification): string | null => {
     const { type, data } = notification;
     
+    if (!data) return null;
+
     switch (type) {
       case 'welcome':
         return '/app/today';
@@ -50,17 +58,17 @@ export function NotificationBell() {
         return '/app/out-and-about';
       case 'system':
         // Check data for specific navigation
-        if (data?.type === 'task_invite' || data?.taskId) {
+        if (data['type'] === 'task_invite' || data['taskId']) {
           return '/app/today'; // Task invite notification
         }
-        if (data?.type === 'activity_invite' || data?.activityId) {
+        if (data['type'] === 'activity_invite' || data['activityId']) {
           return '/app/friends'; // Activity invite notification
         }
-        if (data?.senderId || data?.senderUsername) {
+        if (data['senderId'] || data['senderUsername']) {
           return '/app/friends'; // Friend request notification
         }
-        if (data?.route) {
-          return data.route; // Custom route in data
+        if (data['route']) {
+          return data['route'] as string; // Custom route in data
         }
         return null;
       default:
@@ -106,7 +114,7 @@ export function NotificationBell() {
       return;
     }
 
-    setNotifications(data || []);
+    setNotifications(data as unknown as Notification[]);
     setUnreadCount(data?.filter((n) => !n.read).length || 0);
   }, [user]);
 
@@ -142,7 +150,7 @@ export function NotificationBell() {
             fetchNotifications();
           } else if (payload.eventType === 'DELETE') {
             setNotifications((prev) =>
-              prev.filter((n) => n.id !== payload.old.id)
+              prev.filter((n) => n.id !== (payload.old as Notification).id)
             );
             fetchNotifications();
           }

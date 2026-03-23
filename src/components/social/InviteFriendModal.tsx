@@ -20,12 +20,18 @@ import { Loader2, Send, Users, Calendar, Clock, Search, Check, X } from 'lucide-
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 interface InviteFriendModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activityType: string;
   activityName: string;
-  activityData?: any;
+  activityData?: Record<string, unknown>;
 }
 
 export function InviteFriendModal({
@@ -33,7 +39,7 @@ export function InviteFriendModal({
   onOpenChange,
   activityType,
   activityName,
-  activityData,
+  activityData = {},
 }: InviteFriendModalProps) {
   const { user } = useAuth();
   const { friends, loading: friendsLoading } = useFriends();

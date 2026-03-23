@@ -2,6 +2,12 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 export interface Preferences {
   ai_name: string | null;
   ai_personality: string | null;
@@ -55,7 +61,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching preferences:', error);
+        console.error('Error fetching preferences:', error.message);
       } else if (data) {
         setPreferences({
           ai_name: data.ai_name ?? defaultPreferences.ai_name,
@@ -69,8 +75,8 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
           interests: data.interests ?? defaultPreferences.interests,
         });
       }
-    } catch (error) {
-      console.error('Error fetching preferences:', error);
+    } catch (error: unknown) {
+      console.error('Error fetching preferences:', getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -98,7 +104,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         (payload) => {
           console.log('Preferences changed:', payload);
           if (payload.new && typeof payload.new === 'object') {
-            const newData = payload.new as any;
+            const newData = payload.new as Preferences;
             setPreferences({
               ai_name: newData.ai_name ?? defaultPreferences.ai_name,
               ai_personality: newData.ai_personality ?? defaultPreferences.ai_personality,
@@ -132,7 +138,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error updating preferences:', error);
+      console.error('Error updating preferences:', error.message);
       // Revert on error
       fetchPreferences();
     }

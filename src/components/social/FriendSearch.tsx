@@ -12,6 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UsernameSetupModal } from './UsernameSetupModal';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 interface SearchResult {
   user_id: string;
   username: string | null;
@@ -184,8 +190,8 @@ export function FriendSearch({
 
       toast.success('Invite sent successfully!');
       setInviteEmail('');
-    } catch (error: any) {
-      console.error('Error sending invite:', error);
+    } catch (error: unknown) {
+      console.error('Error sending invite:', getErrorMessage(error));
       toast.error('Failed to send invite. Please try again.');
     }
 

@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 interface FriendRequest {
   id: string;
   sender_id: string;
@@ -69,7 +75,7 @@ export function useFriends() {
 
     // Deduplicate by friend_id to prevent showing same friend twice
     const seen = new Set<string>();
-    const uniqueFriendships = (friendships || []).filter((f: any) => {
+    const uniqueFriendships = (friendships || []).filter((f: { friend_id: string }) => {
       if (seen.has(f.friend_id)) return false;
       seen.add(f.friend_id);
       return true;
@@ -204,8 +210,8 @@ export function useFriends() {
           data: { senderId: user.id, senderUsername: senderProfile?.username },
         },
       });
-    } catch (notifyError) {
-      console.error('Failed to send friend request notifications:', notifyError);
+    } catch (notifyError: unknown) {
+      console.error('Failed to send friend request notifications:', getErrorMessage(notifyError));
     }
 
     await fetchSentRequests();

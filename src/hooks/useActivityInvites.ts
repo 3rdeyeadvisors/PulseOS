@@ -2,13 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-interface ActivityInvite {
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
+export interface ActivityInvite {
   id: string;
   sender_id: string;
   receiver_id: string;
   activity_type: string;
   activity_name: string;
-  activity_data: any;
+  activity_data: Record<string, unknown>;
   proposed_time: string;
   message: string | null;
   status: 'pending' | 'accepted' | 'declined' | 'countered';
@@ -90,7 +96,7 @@ export function useActivityInvites() {
     receiverId: string,
     activityType: string,
     activityName: string,
-    activityData: any,
+    activityData: Record<string, unknown>,
     proposedTime: Date,
     message?: string
   ) => {
@@ -103,7 +109,7 @@ export function useActivityInvites() {
         receiver_id: receiverId,
         activity_type: activityType,
         activity_name: activityName,
-        activity_data: activityData,
+        activity_data: activityData as any,
         proposed_time: proposedTime.toISOString(),
         message: message || null,
       });
@@ -143,8 +149,8 @@ export function useActivityInvites() {
           data: { senderId: user.id, activityType, activityName },
         },
       });
-    } catch (notifyError) {
-      console.error('Failed to send activity invite notifications:', notifyError);
+    } catch (notifyError: unknown) {
+      console.error('Failed to send activity invite notifications:', getErrorMessage(notifyError));
     }
 
     await fetchSentInvites();
@@ -200,8 +206,8 @@ export function useActivityInvites() {
             proposedTime: invite.proposed_time,
           },
         });
-      } catch (notifyError) {
-        console.error('Failed to send acceptance notification:', notifyError);
+      } catch (notifyError: unknown) {
+        console.error('Failed to send acceptance notification:', getErrorMessage(notifyError));
       }
     }
 

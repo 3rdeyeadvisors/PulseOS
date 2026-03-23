@@ -10,6 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 interface EmailPreferences {
   welcome_email: boolean;
   daily_digest: boolean;
@@ -46,13 +52,14 @@ export function NotificationsTab() {
     if (error) {
       console.error('Error fetching email preferences:', error);
     } else if (data) {
+      const prefs = data as unknown as EmailPreferences;
       setPreferences({
-        welcome_email: data.welcome_email,
-        daily_digest: data.daily_digest,
-        event_reminders: data.event_reminders,
-        task_reminders: data.task_reminders,
-        marketing_emails: data.marketing_emails,
-        leaderboard_reminders: (data as any).leaderboard_reminders ?? false,
+        welcome_email: prefs.welcome_email,
+        daily_digest: prefs.daily_digest,
+        event_reminders: prefs.event_reminders,
+        task_reminders: prefs.task_reminders,
+        marketing_emails: prefs.marketing_emails,
+        leaderboard_reminders: prefs.leaderboard_reminders ?? false,
       });
     }
     setLoading(false);
