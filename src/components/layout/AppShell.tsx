@@ -1,8 +1,8 @@
-import { ReactNode, useEffect, useState, useCallback } from 'react';
+import { ReactNode, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { supabase } from '@/integrations/supabase/client';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FloatingAIButton } from '@/components/FloatingAIButton';
@@ -40,47 +40,14 @@ const navItems = [
 export function AppShell({ children }: AppShellProps) {
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
+  const { avatarUrl, fullName, aiName } = usePreferences();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null); // null = loading
-  const [aiName, setAiName] = useState<string>('Pulse');
-  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  const profileLoaded = fullName !== null;
   
   // Hide floating AI button on the chat page to avoid overlap with chat input
   const isOnChatPage = location.pathname === '/app/chat';
-
-  useEffect(() => {
-    async function fetchUserData() {
-      if (!user) return;
-      
-      // Fetch profile and preferences in parallel
-      const [{ data: profile }, { data: prefs }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('avatar_url, full_name')
-          .eq('user_id', user.id)
-          .single(),
-        supabase
-          .from('preferences')
-          .select('ai_name')
-          .eq('user_id', user.id)
-          .maybeSingle()
-      ]);
-      
-      if (profile) {
-        setAvatarUrl(profile.avatar_url);
-        setFullName(profile.full_name || '');
-      } else {
-        setFullName(''); // No profile found, set to empty
-      }
-      if (prefs?.ai_name) {
-        setAiName(prefs.ai_name);
-      }
-      setProfileLoaded(true);
-    }
-    fetchUserData();
-  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
