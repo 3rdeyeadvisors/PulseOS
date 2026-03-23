@@ -77,8 +77,7 @@ export function ModulesTab() {
 
     const { error } = await supabase
       .from('preferences')
-      .update({ enabled_modules: enabledModules })
-      .eq('user_id', user.id);
+      .upsert({ user_id: user.id, enabled_modules: enabledModules }, { onConflict: 'user_id' });
 
     if (error) {
       toast.error('Failed to save module settings');
