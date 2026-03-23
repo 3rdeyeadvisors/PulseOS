@@ -10,6 +10,12 @@ import {
   getOfferings 
 } from '@/services/revenueCatService';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+}
+
 export interface SubscriptionStatus {
   subscribed: boolean;
   is_grandfathered: boolean;
@@ -28,7 +34,7 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [offerings, setOfferings] = useState<any>(null);
+  const [offerings, setOfferings] = useState<unknown>(null);
 
   const checkSubscription = useCallback(async () => {
     if (!user) {
@@ -126,9 +132,9 @@ export function useSubscription() {
           toast.success('Subscription successful!');
           await checkSubscription();
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error with native purchase:', err);
-        toast.error(err.message || 'Failed to complete purchase');
+        toast.error(getErrorMessage(err));
       } finally {
         setCheckoutLoading(false);
       }
