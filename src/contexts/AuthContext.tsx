@@ -66,22 +66,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Send welcome notifications on signup (SIGNED_IN event after signup)
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Check if this is a new user by looking at created_at
-          const createdAt = new Date(session.user.created_at);
-          const now = new Date();
-          const isNewUser = (now.getTime() - createdAt.getTime()) < 60000; // Within last minute
-
-          if (isNewUser) {
-            setTimeout(() => {
-              sendWelcomeNotifications(
-                session.user.id,
-                session.user.email || '',
-                session.user.user_metadata?.full_name
-              );
-            }, 0);
-          }
+        // @ts-ignore: Supabase types might not include SIGNED_UP yet, but it's fired on registration
+        if ((event as string) === 'SIGNED_UP' && session?.user) {
+          setTimeout(() => {
+            sendWelcomeNotifications(
+              session.user.id,
+              session.user.email || '',
+              session.user.user_metadata?.full_name
+            );
+          }, 0);
         }
       }
     );
