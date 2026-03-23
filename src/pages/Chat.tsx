@@ -50,6 +50,8 @@ interface Message {
 }
 
 export default function Chat() {
+  const msgIdCounter = useRef(0);
+  const nextId = useCallback(() => `msg-${++msgIdCounter.current}`, []);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
@@ -76,15 +78,17 @@ export default function Chat() {
   };
 
   // Sync saved messages to local state with IDs
+  const historyLoadedRef = useRef(false);
   useEffect(() => {
-    if (!loadingHistory) {
-      setMessages(savedMessages.map((m, i) => ({
-        id: `msg-${i}-${Date.now()}`,
+    if (!loadingHistory && !historyLoadedRef.current) {
+      historyLoadedRef.current = true;
+      setMessages(savedMessages.map((m) => ({
+        id: nextId(),
         role: m.role,
         content: m.content,
       })));
     }
-  }, [savedMessages, loadingHistory]);
+  }, [loadingHistory, savedMessages, nextId]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -124,20 +128,6 @@ export default function Chat() {
     fetchUserData();
   }, [user, preferences]);
 
-  // Handle initial message from navigation state
-  const [initialMessageSent, setInitialMessageSent] = useState(false);
-  useEffect(() => {
-    if (initialMessage && !initialMessageSent && userContext && !loadingHistory) {
-      setInitialMessageSent(true);
-      window.history.replaceState({}, document.title);
-      sendMessage(initialMessage);
-    }
-  }, [initialMessage, initialMessageSent, userContext, loadingHistory]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   // Batched update function for streaming
   const scheduleUpdate = useCallback(() => {
     if (updateScheduledRef.current) return;
@@ -158,11 +148,11 @@ export default function Chat() {
     });
   }, []);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    const userMessageId = `user-${Date.now()}`;
-    const assistantMessageId = `assistant-${Date.now()}`;
+    const userMessageId = nextId();
+    const assistantMessageId = nextId();
     
     const userMessage: Message = { id: userMessageId, role: 'user', content };
     
@@ -285,7 +275,21 @@ export default function Chat() {
       setIsLoading(false);
       currentAssistantIdRef.current = null;
     }
-  };
+  }, [messages, isLoading, userContext, aiSettings, saveMessage, scheduleUpdate, nextId]);
+
+  // Handle initial message from navigation state
+  const [initialMessageSent, setInitialMessageSent] = useState(false);
+  useEffect(() => {
+    if (initialMessage && !initialMessageSent && userContext && !loadingHistory) {
+      setInitialMessageSent(true);
+      window.history.replaceState({}, document.title);
+      sendMessage(initialMessage);
+    }
+  }, [initialMessage, initialMessageSent, userContext, loadingHistory, sendMessage]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleClearChat = async () => {
     await clearMessages();
