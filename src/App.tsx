@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense, Component, ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
@@ -63,7 +63,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-6 text-center gap-4">
-          <p className="text-5xl"> </p>
+          <AlertTriangle className="h-12 w-12 text-destructive" />
           <h1 className="text-xl font-semibold">Something went wrong</h1>
           <p className="text-muted-foreground text-sm max-w-sm">
             {this.state.error?.message ?? "An unexpected error occurred."}
