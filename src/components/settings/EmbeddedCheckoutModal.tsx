@@ -14,7 +14,7 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Initialize Stripe with publishable key
-const stripePromise = loadStripe('pk_live_51SfNXgLxeGPiI62je3NxRYPBNDdAPyTMH6YM9m6BnKsHV0wqYDdTPjKPpSVOJKGUqzxXhDwMqfMDTbXF1r5nxSkL00T6XSi6uM');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '');
 
 interface EmbeddedCheckoutModalProps {
   open: boolean;
