@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { GreetingCard } from '@/components/dashboard/GreetingCard';
 import { WeatherCard } from '@/components/dashboard/WeatherCard';
@@ -22,35 +22,13 @@ const ALL_MODULES = ['greeting', 'action-score', 'streak', 'weather', 'gas', 'ta
 export default function Today() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [enabledModules, setEnabledModules] = useState<string[]>(ALL_MODULES);
-  const [modulesLoading, setModulesLoading] = useState(true);
+  const { preferences, loading: modulesLoading } = usePreferences();
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    async function fetchEnabledModules() {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('preferences')
-        .select('enabled_modules')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data?.enabled_modules) {
-        setEnabledModules(data.enabled_modules);
-      }
-      setModulesLoading(false);
-    }
-
-    if (user) {
-      fetchEnabledModules();
-    }
-  }, [user]);
 
   if (loading || modulesLoading) {
     return (
@@ -64,7 +42,7 @@ export default function Today() {
     return null;
   }
 
-  const isEnabled = (moduleId: string) => enabledModules.includes(moduleId);
+  const isEnabled = (moduleId: string) => (preferences.enabled_modules ?? ALL_MODULES).includes(moduleId);
 
   return (
     <AppShell>
