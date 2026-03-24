@@ -101,6 +101,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       if (!user) {
         setAvatarUrl(null);
         setFullName(null);
+        setCity(null);
         setAiName('Pulse');
         return;
       }
@@ -122,10 +123,10 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       if (profile) {
         setAvatarUrl(profile.avatar_url);
         setFullName(profile.full_name || '');
-        setCity(profile.city || '');
+        setCity(profile.city || null);
       } else {
         setFullName(''); // No profile found, set to empty
-        setCity('');
+        setCity(null);
       }
       if (prefs?.ai_name) {
         setAiName(prefs.ai_name);
