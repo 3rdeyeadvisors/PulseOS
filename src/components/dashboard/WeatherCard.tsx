@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -17,40 +16,19 @@ interface WeatherData {
 type TempUnit = 'fahrenheit' | 'celsius';
 
 export function WeatherCard() {
-  const { user, session } = useAuth();
+  const { preferences, city: profileCity, updatePreferences } = usePreferences();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tempUnit, setTempUnit] = useState<TempUnit>('fahrenheit');
+
+  const tempUnit: TempUnit = (preferences.temperature_unit as TempUnit) ?? 'fahrenheit';
 
   useEffect(() => {
     let isMounted = true;
 
     async function fetchWeatherAndPrefs() {
-      if (!user || !session) return;
-
       try {
-        // Get user's city and temp unit preference
-        const [{ data: profile }, { data: prefs }] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('city')
-            .eq('user_id', user.id)
-            .maybeSingle(),
-          supabase
-            .from('preferences')
-            .select('temperature_unit')
-            .eq('user_id', user.id)
-            .maybeSingle(),
-        ]);
-
-        if (!isMounted) return;
-
-        if (prefs?.temperature_unit) {
-          setTempUnit(prefs.temperature_unit as TempUnit);
-        }
-
-        const userCity = profile?.city || 'New York';
+        const userCity = profileCity || 'New York';
 
         // Fetch real weather data
         const response = await fetch(
@@ -100,18 +78,11 @@ export function WeatherCard() {
       isMounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user, session]);
+  }, [profileCity]);
 
   const toggleUnit = async () => {
     const newUnit: TempUnit = tempUnit === 'fahrenheit' ? 'celsius' : 'fahrenheit';
-    setTempUnit(newUnit);
-
-    if (user) {
-      await supabase
-        .from('preferences')
-        .update({ temperature_unit: newUnit })
-        .eq('user_id', user.id);
-    }
+    await updatePreferences({ temperature_unit: newUnit });
   };
 
   const convertTemp = (tempF: number): number => {

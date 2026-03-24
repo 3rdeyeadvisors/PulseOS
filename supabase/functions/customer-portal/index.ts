@@ -63,7 +63,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://pulse-life.app";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/settings?tab=subscription`,
+      return_url: `${origin}/settings?tab=subscription&portal_return=true`,
     });
 
     logStep("Customer portal session created", { sessionId: portalSession.id });
