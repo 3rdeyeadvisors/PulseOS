@@ -44,8 +44,8 @@ export default function Friends() {
     if (!sentSearch.trim()) return sentRequests;
     const query = sentSearch.toLowerCase();
     return sentRequests.filter((request) =>
-      (request as FriendRequest).receiver?.full_name?.toLowerCase().includes(query) ||
-      (request as FriendRequest).receiver?.username?.toLowerCase().includes(query)
+      request.receiver?.full_name?.toLowerCase().includes(query) ||
+      request.receiver?.username?.toLowerCase().includes(query)
     );
   }, [sentRequests, sentSearch]);
 
@@ -333,11 +333,11 @@ export default function Friends() {
                                 </div>
                                 <div>
                                   <p className="font-medium">
-                                    {(request as FriendRequest).receiver?.full_name || (request as FriendRequest).receiver?.username || 'Unknown User'}
+                                    {request.receiver?.full_name || request.receiver?.username || 'Unknown User'}
                                   </p>
-                                  {(request as FriendRequest).receiver?.username && (
+                                  {request.receiver?.username && (
                                     <p className="text-sm text-muted-foreground">
-                                      @{(request as FriendRequest).receiver.username}
+                                      @{request.receiver.username}
                                     </p>
                                   )}
                                 </div>

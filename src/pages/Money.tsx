@@ -103,7 +103,7 @@ export default function Money() {
               lng = geoData.longitude;
             }
           } catch {
-            // intentional fallback
+            // intentional: city geocode fallback, ignore errors
           }
         }
 
