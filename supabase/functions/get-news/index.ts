@@ -5,6 +5,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface NewsArticle {
+  title?: string;
+  url?: string;
+  content?: string;
+  publishedAt?: string;
+  source?: { name?: string };
+}
+
 // Sources with known strong political bias (left or right leaning)
 const BIASED_SOURCES = [
   // Left-leaning partisan sources
@@ -184,7 +192,7 @@ serve(async (req) => {
 
     // Filter and validate articles
     const articles = (data.articles || [])
-      .filter((article: any) => {
+      .filter((article: NewsArticle) => {
         // Must have a URL that starts with http
         if (!article.url || !article.url.startsWith('http')) {
           console.log(`FILTERED (no valid URL): ${article.title}`);
@@ -225,7 +233,7 @@ serve(async (req) => {
         return true;
       })
       // Sort to prioritize neutral sources
-      .sort((a: any, b: any) => {
+      .sort((a: NewsArticle, b: NewsArticle) => {
         const aIsNeutral = isNeutralSource(a.source?.name || '');
         const bIsNeutral = isNeutralSource(b.source?.name || '');
         if (aIsNeutral && !bIsNeutral) return -1;
@@ -234,7 +242,7 @@ serve(async (req) => {
       })
       // Limit to 5 articles
       .slice(0, 5)
-      .map((article: any) => ({
+      .map((article: NewsArticle) => ({
         title: article.title,
         source: article.source?.name || "Unknown",
         url: article.url,
