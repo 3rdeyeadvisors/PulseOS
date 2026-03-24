@@ -158,16 +158,16 @@ serve(async (req: Request): Promise<Response> => {
 
         sentCount++;
         console.log(`Sent inactive reminder to ${user.email}`);
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
         console.error(`Failed to send to ${user.email}:`, emailError);
-        errors.push(`${user.email}: ${emailError.message}`);
+        errors.push(`${user.email}: ${emailError instanceof Error ? emailError.message : String(emailError)}`);
         
         await supabase.from('email_logs').insert({
           user_id: user.user_id,
           email_type: 'inactive_reminder',
           subject: `We miss you, ${firstName}! 👋`,
           status: 'failed',
-          error_message: emailError.message,
+          error_message: emailError instanceof Error ? emailError.message : String(emailError),
         });
       }
     }
@@ -181,10 +181,10 @@ serve(async (req: Request): Promise<Response> => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in inactive-user-reminder:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

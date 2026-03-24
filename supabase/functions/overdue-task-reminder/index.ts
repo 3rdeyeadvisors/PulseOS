@@ -21,7 +21,7 @@ function isEightAM(timezone: string | null): boolean {
     });
     const hour = parseInt(formatter.format(now), 10);
     return hour === 8;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Invalid timezone: ${timezone}, defaulting to EST check`);
     // Fallback: check EST
     const now = new Date();
@@ -69,7 +69,7 @@ function getTodayStartInTimezone(timezone: string | null): string {
     // Adjust to UTC
     const utcMidnight = new Date(midnightLocal.getTime() - offsetHours * 60 * 60 * 1000);
     return utcMidnight.toISOString();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error calculating today start for timezone ${tz}:`, error);
     // Fallback to server's today
     const today = new Date();
@@ -291,7 +291,7 @@ serve(async (req: Request): Promise<Response> => {
 
         emailsSent++;
         console.log(`Overdue task reminder sent to user ${userId}`);
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
         console.error(`Error sending email to user ${userId}:`, emailError);
         
         await supabase.from("email_logs").insert({
@@ -299,7 +299,7 @@ serve(async (req: Request): Promise<Response> => {
           email_type: "overdue_task_reminder",
           subject: `You have ${taskCount} incomplete task${taskCount > 1 ? 's' : ''} waiting`,
           status: "failed",
-          error_message: emailError.message,
+          error_message: emailError instanceof Error ? emailError.message : String(emailError),
         });
       }
     }
@@ -310,10 +310,10 @@ serve(async (req: Request): Promise<Response> => {
       JSON.stringify({ success: true, sent: emailsSent, skippedTimezone }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in overdue-task-reminder:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }

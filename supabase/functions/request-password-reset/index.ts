@@ -185,7 +185,7 @@ serve(async (req: Request): Promise<Response> => {
       JSON.stringify({ success: true, message: "Password reset email sent!" }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in request-password-reset function:", error);
     return new Response(
       JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent." }),

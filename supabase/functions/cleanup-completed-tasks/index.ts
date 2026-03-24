@@ -35,7 +35,7 @@ function getStartOfDayInTimezone(timezone: string): Date {
     const offset = utcDate.getTime() - tzDate.getTime();
     
     return new Date(midnightLocal.getTime() + offset);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Invalid timezone ${timezone}, falling back to UTC:`, error);
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
@@ -54,7 +54,7 @@ function isJustAfterMidnight(timezone: string): boolean {
     });
     const hour = parseInt(formatter.format(now));
     return hour === 0; // Only run during the midnight hour (0:00 - 0:59)
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error checking time for timezone ${timezone}:`, error);
     return false;
   }
@@ -143,10 +143,10 @@ serve(async (req) => {
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in cleanup-completed-tasks function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
