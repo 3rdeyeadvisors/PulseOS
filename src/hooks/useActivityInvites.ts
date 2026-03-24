@@ -109,7 +109,7 @@ export function useActivityInvites() {
         receiver_id: receiverId,
         activity_type: activityType,
         activity_name: activityName,
-        activity_data: activityData as any,
+        activity_data: activityData as Record<string, unknown>,
         proposed_time: proposedTime.toISOString(),
         message: message || null,
       });

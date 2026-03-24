@@ -88,8 +88,8 @@ export const purchasePackage = async (packageId: string, offeringId: string = 'd
 
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
     return customerInfo;
-  } catch (error: any) {
-    if (error.userCancelled) {
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'userCancelled' in error && (error as { userCancelled: boolean }).userCancelled) {
       console.log('User cancelled purchase');
       return null;
     }
