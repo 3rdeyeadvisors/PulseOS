@@ -40,6 +40,24 @@ interface TicketmasterEvent {
   [key: string]: unknown;
 }
 
+interface FormattedEvent {
+  id: string;
+  title: string;
+  type: string;
+  genre: string;
+  subGenre: string;
+  date: string;
+  rawDate: string;
+  time: string;
+  location: string;
+  address: string;
+  price: string;
+  url?: string;
+  image?: string;
+  matchReason: string;
+  isInterestMatch: boolean;
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -81,7 +99,7 @@ serve(async (req: Request): Promise<Response> => {
     const stateCode = state ? getStateCode(state) : '';
     
     // Fetch events from each segment in parallel
-    const fetchPromises = segments.map(async (segment) => {
+    const fetchPromises = segments.map(async (segment): Promise<TicketmasterEvent[]> => {
       const params = new URLSearchParams({
         apikey: API_KEY,
         city: city,
@@ -110,7 +128,7 @@ serve(async (req: Request): Promise<Response> => {
         const segmentEvents = data._embedded?.events || [];
         console.log(`${segment.name} events received:`, segmentEvents.length);
         return segmentEvents;
-      } catch (err) {
+      } catch (err: unknown) {
         console.error(`Error fetching ${segment.name}:`, err);
         return [];
       }
@@ -160,26 +178,8 @@ serve(async (req: Request): Promise<Response> => {
     })));
 
     // Filter and format the events
-    interface FormattedEvent {
-      id: string;
-      title: string;
-      type: string;
-      genre: string;
-      subGenre: string;
-      date: string;
-      rawDate: string;
-      time: string;
-      location: string;
-      address: string;
-      price: string;
-      url?: string;
-      image?: string;
-      matchReason: string;
-      isInterestMatch: boolean;
-    }
-
-    const formattedEvents = events
-      .filter((event: TicketmasterEvent) => {
+    const formattedEvents: FormattedEvent[] = events
+      .filter((event) => {
         const eventName = (event.name || "").toLowerCase();
         const eventDate = event.dates?.start?.localDate;
         const eventTime = event.dates?.start?.localTime; // HH:mm:ss format
@@ -229,7 +229,7 @@ serve(async (req: Request): Promise<Response> => {
         console.log(`KEPT: ${event.name}`);
         return true;
       })
-      .map((event: TicketmasterEvent) => {
+      .map((event) => {
       const venue = event._embedded?.venues?.[0];
       const startDate = event.dates?.start;
       
@@ -346,7 +346,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Group events by normalized name to deduplicate recurring events
     const eventGroups = new Map<string, FormattedEvent[]>();
-    formattedEvents.forEach((event: FormattedEvent) => {
+    formattedEvents.forEach((event) => {
       // Normalize the event name for grouping (remove dates, times, venue specifics)
       const normalizedName = event.title
         .toLowerCase()
@@ -373,7 +373,7 @@ serve(async (req: Request): Promise<Response> => {
       }>;
     }
 
-    const deduplicatedEvents = Array.from(eventGroups.values()).map(group => {
+    const deduplicatedEvents = Array.from(eventGroups.values()).map((group) => {
       // Sort group by date
       group.sort((a, b) => a.rawDate.localeCompare(b.rawDate));
       const soonestEvent = group[0];
