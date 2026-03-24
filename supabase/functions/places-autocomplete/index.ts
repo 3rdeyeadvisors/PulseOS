@@ -5,6 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface PlaceSuggestion {
+  placePrediction?: {
+    text?: { text?: string };
+    placeId?: string;
+    structuredFormat?: {
+      mainText?: { text?: string };
+      secondaryText?: { text?: string };
+    };
+  };
+}
+
 interface AutocompleteRequest {
   input: string;
   types?: string;
@@ -123,7 +134,7 @@ serve(async (req) => {
     const data = await response.json();
     console.log("Places API response:", JSON.stringify(data).substring(0, 500));
 
-    const predictions = (data.suggestions || []).map((s: any) => {
+    const predictions = (data.suggestions || []).map((s: PlaceSuggestion) => {
       const place = s.placePrediction;
       return {
         description: place?.text?.text || "",

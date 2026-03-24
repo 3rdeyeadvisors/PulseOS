@@ -5,6 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface HereStation {
+  id?: string;
+  brand?: string;
+  name?: string;
+  address?: {
+    label?: string;
+    street?: string;
+    houseNumber?: string;
+    city?: string;
+  };
+  distance?: number;
+}
+
 interface GasPriceRequest {
   lat: number;
   lng: number;
@@ -168,7 +181,7 @@ serve(async (req) => {
       'Texaco': 0.05,
     };
 
-    const stations = stationsData.slice(0, 15).map((station: any, index: number) => {
+    const stations = stationsData.slice(0, 15).map((station: HereStation, index: number) => {
       const brand = station.brand || station.name || 'Gas Station';
       
       // Find price modifier for this brand
@@ -207,7 +220,7 @@ serve(async (req) => {
     });
 
     // Sort by price (cheapest first)
-    stations.sort((a: any, b: any) => a.price - b.price);
+    stations.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
 
     return new Response(
       JSON.stringify({ 

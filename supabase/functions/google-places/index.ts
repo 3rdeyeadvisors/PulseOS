@@ -5,6 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface GooglePlace {
+  id?: string;
+  displayName?: { text?: string };
+  location?: { latitude?: number; longitude?: number };
+  types?: string[];
+  primaryType?: string;
+  rating?: number;
+  priceLevel?: string;
+  formattedAddress?: string;
+  regularOpeningHours?: { openNow?: boolean };
+  photos?: Array<{ name?: string }>;
+}
+
 interface PlaceRequest {
   type: "food" | "activities";
   latitude: number;
@@ -125,7 +138,7 @@ serve(async (req) => {
     }
 
     // Calculate distances and format response
-    const formattedPlaces = places.map((place: any) => {
+    const formattedPlaces = places.map((place: GooglePlace) => {
       const placeLat = place.location?.latitude;
       const placeLng = place.location?.longitude;
       let distance = "N/A";
@@ -228,7 +241,7 @@ serve(async (req) => {
     });
 
     // Sort places: interest matches first, then by rating
-    formattedPlaces.sort((a: any, b: any) => {
+    formattedPlaces.sort((a, b) => {
       if (a.isInterestMatch && !b.isInterestMatch) return -1;
       if (!a.isInterestMatch && b.isInterestMatch) return 1;
       return (b.rating || 0) - (a.rating || 0);
