@@ -47,6 +47,7 @@ export default function Onboarding() {
   // Form data
   const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
+  const [stateProvince, setStateProvince] = useState('');
   const [country, setCountry] = useState('');
   const [householdType, setHouseholdType] = useState('');
   const [ageRange, setAgeRange] = useState('');
@@ -82,6 +83,7 @@ export default function Onboarding() {
         }
         setFullName(profile.full_name || '');
         setCity(profile.city || '');
+        if (profile.state) setStateProvince(profile.state);
         setCountry(profile.country || '');
         setHouseholdType(profile.household_type || '');
         setAgeRange(profile.age_range || '');
@@ -149,6 +151,7 @@ export default function Onboarding() {
           user_id: user.id,
           full_name: fullName,
           city,
+          state: stateProvince,
           country,
           household_type: householdType,
           age_range: ageRange,
@@ -252,18 +255,32 @@ export default function Onboarding() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="country" className="flex items-center gap-2">
+                  <Label htmlFor="state" className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 opacity-0" />
-                    Country
+                    State / Province
                   </Label>
                   <LocationAutocomplete
-                    id="country"
-                    placeholder="e.g. United States"
-                    value={country}
-                    onValueChange={setCountry}
-                    locationType="country"
+                    id="state"
+                    placeholder="e.g. North Carolina"
+                    value={stateProvince}
+                    onValueChange={setStateProvince}
+                    locationType="region"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="country" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 opacity-0" />
+                  Country
+                </Label>
+                <LocationAutocomplete
+                  id="country"
+                  placeholder="e.g. United States"
+                  value={country}
+                  onValueChange={setCountry}
+                  locationType="country"
+                />
               </div>
               
               <div className="space-y-2">
