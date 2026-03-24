@@ -251,9 +251,9 @@ serve(async (req) => {
             status: 'sent',
           });
 
-        } catch (emailError: any) {
+        } catch (emailError: unknown) {
           console.error(`Failed to send email to ${user.email}:`, emailError);
-          errors.push(`${user.email}: ${emailError.message}`);
+          errors.push(`${user.email}: ${emailError instanceof Error ? emailError.message : String(emailError)}`);
           
           // Log the failed email
           await supabase.from('email_logs').insert({
@@ -261,7 +261,7 @@ serve(async (req) => {
             email_type: 'leaderboard_reminder',
             subject: `Leaderboard reminder`,
             status: 'failed',
-            error_message: emailError.message,
+            error_message: emailError instanceof Error ? emailError.message : String(emailError),
           });
         }
       }
@@ -281,10 +281,10 @@ serve(async (req) => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in leaderboard-reminder function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
