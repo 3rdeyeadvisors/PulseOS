@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -36,7 +36,7 @@ export function useTaskInvites() {
   const [sentInvites, setSentInvites] = useState<TaskInvite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchReceivedInvites = async () => {
+  const fetchReceivedInvites = useCallback(async () => {
     if (!user) return;
 
     // First fetch task invites
@@ -73,9 +73,9 @@ export function useTaskInvites() {
     }));
 
     setReceivedInvites(enriched as unknown as TaskInvite[]);
-  };
+  }, [user]);
 
-  const fetchSentInvites = async () => {
+  const fetchSentInvites = useCallback(async () => {
     if (!user) return;
 
     // First fetch task invites
@@ -111,7 +111,7 @@ export function useTaskInvites() {
     }));
 
     setSentInvites(enriched as unknown as TaskInvite[]);
-  };
+  }, [user]);
 
   const sendTaskInvite = async (
     taskId: string,
@@ -171,9 +171,9 @@ export function useTaskInvites() {
 
       await fetchSentInvites();
       return { data: invite };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending task invite:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -248,7 +248,7 @@ export function useTaskInvites() {
         setLoading(false)
       );
     }
-  }, [user]);
+  }, [user, fetchReceivedInvites, fetchSentInvites]);
 
   return {
     receivedInvites,

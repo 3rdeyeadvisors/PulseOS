@@ -131,7 +131,7 @@ serve(async (req: Request): Promise<Response> => {
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in verify-reset-token function:", error);
     return new Response(
       JSON.stringify({ success: false, error: "An error occurred. Please try again." }),

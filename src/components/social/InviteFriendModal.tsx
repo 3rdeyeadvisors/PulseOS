@@ -31,7 +31,7 @@ interface InviteFriendModalProps {
   onOpenChange: (open: boolean) => void;
   activityType: string;
   activityName: string;
-  activityData?: Record<string, unknown>;
+  activityData?: Record<string, unknown> | null;
 }
 
 export function InviteFriendModal({

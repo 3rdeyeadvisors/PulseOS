@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,7 +8,7 @@ export function useUsername() {
   const [needsUsername, setNeedsUsername] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkUsername = async () => {
+  const checkUsername = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
@@ -27,11 +27,11 @@ export function useUsername() {
       setNeedsUsername(!data.username);
     }
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     checkUsername();
-  }, [user]);
+  }, [user, checkUsername]);
 
   const refreshUsername = () => {
     setLoading(true);

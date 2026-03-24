@@ -10,12 +10,15 @@ export interface Place {
   distance: string;
   matchReason: string;
   address: string;
+  [key: string]: unknown;
 }
 
 export interface Event {
   id: string;
   title: string;
   type: string;
+  genre?: string;
+  subGenre?: string;
   date: string;
   time: string;
   location: string;
@@ -26,6 +29,15 @@ export interface Event {
   matchReason?: string;
   isInterestMatch?: boolean;
   rawDate?: string;
+  additionalDates?: number;
+  allDates?: Array<{
+    date: string;
+    time: string;
+    rawDate: string;
+    url?: string;
+    price?: string;
+  }>;
+  [key: string]: unknown;
 }
 
 interface LocationInfo {
@@ -35,7 +47,7 @@ interface LocationInfo {
 }
 
 // Cache for geocoded coordinates
-let geocodeCache: { [key: string]: { latitude: number; longitude: number } } = {};
+const geocodeCache: { [key: string]: { latitude: number; longitude: number } } = {};
 
 async function getCoordinates(location: LocationInfo): Promise<{ latitude: number; longitude: number }> {
   const cacheKey = `${location.city}-${location.state || ''}-${location.zipCode || ''}`;
@@ -134,7 +146,7 @@ export async function getEvents(location: LocationInfo, interests: string[]): Pr
     const events: Event[] = data?.events || [];
     
     // Sort: interest matches first, then by date
-    events.sort((a: any, b: any) => {
+    events.sort((a: Event, b: Event) => {
       if (a.isInterestMatch && !b.isInterestMatch) return -1;
       if (!a.isInterestMatch && b.isInterestMatch) return 1;
       return (a.rawDate || '9999-99-99').localeCompare(b.rawDate || '9999-99-99');
