@@ -37,6 +37,7 @@ interface PreferencesContextType {
   loading: boolean;
   avatarUrl: string | null;
   fullName: string | null;
+  city: string | null;
   aiName: string;
   updatePreferences: (updates: Partial<Preferences>) => Promise<void>;
   refreshPreferences: () => Promise<void>;
@@ -50,6 +51,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null); // null = loading
+  const [city, setCity] = useState<string | null>(null);
   const [aiName, setAiName] = useState<string>('Pulse');
 
   const fetchPreferences = useCallback(async () => {
@@ -107,7 +109,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       const [{ data: profile }, { data: prefs }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('avatar_url, full_name')
+          .select('avatar_url, full_name, city')
           .eq('user_id', user.id)
           .single(),
         supabase
@@ -120,8 +122,10 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       if (profile) {
         setAvatarUrl(profile.avatar_url);
         setFullName(profile.full_name || '');
+        setCity(profile.city || '');
       } else {
         setFullName(''); // No profile found, set to empty
+        setCity('');
       }
       if (prefs?.ai_name) {
         setAiName(prefs.ai_name);
@@ -199,6 +203,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         loading,
         avatarUrl,
         fullName,
+        city,
         aiName,
         updatePreferences,
         refreshPreferences

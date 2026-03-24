@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { InviteFriendModal } from '@/components/social/InviteFriendModal';
 import { Loader2, Utensils, MapPin, Calendar, Star, Navigation, UserPlus, RefreshCw } from 'lucide-react';
@@ -58,6 +58,7 @@ const eventMatchesCategory = (event: any, category: string): boolean => {
 export default function OutAndAbout() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { preferences, city: profileCity } = usePreferences();
   const [foodPlaces, setFoodPlaces] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -84,29 +85,23 @@ export default function OutAndAbout() {
     let isMounted = true;
     
     async function fetchData() {
-      if (!user) return;
+      if (!user || profileCity === null) return;
 
       setDataLoading(true);
       try {
-        // Always fetch fresh preferences data
-        const [{ data: profile }, { data: prefs }] = await Promise.all([
-          supabase.from('profiles').select('city, state, zip_code').eq('user_id', user.id).maybeSingle(),
-          supabase.from('preferences').select('dietary_preferences, interests').eq('user_id', user.id).maybeSingle(),
-        ]);
-
         if (!isMounted) return;
 
         const location = {
-          city: profile?.city || 'New York',
-          state: profile?.state || '',
-          zipCode: profile?.zip_code || '',
+          city: profileCity || 'New York',
+          state: undefined,
+          zipCode: undefined,
         };
         
         // Filter out "none" and empty values from dietary preferences
-        const rawDiet = (prefs?.dietary_preferences as string[]) || [];
+        const rawDiet = (preferences.dietary_preferences as string[]) || [];
         const diet = rawDiet.filter(d => d && d.toLowerCase() !== 'none');
         
-        const interests = (prefs?.interests as string[]) || [];
+        const interests = (preferences.interests as string[]) || [];
 
         console.log('Fetching with preferences - Diet:', diet, 'Interests:', interests);
 
@@ -143,23 +138,19 @@ export default function OutAndAbout() {
       isMounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user]);
+  }, [user, profileCity, preferences]);
 
   // Manual refresh for events
   const refreshEvents = async () => {
-    if (!user) return;
+    if (!user || profileCity === null) return;
     setEventsRefreshing(true);
     try {
-      const [{ data: profile }, { data: prefs }] = await Promise.all([
-        supabase.from('profiles').select('city, state, zip_code').eq('user_id', user.id).maybeSingle(),
-        supabase.from('preferences').select('interests').eq('user_id', user.id).maybeSingle(),
-      ]);
       const location = {
-        city: profile?.city || 'New York',
-        state: profile?.state || '',
-        zipCode: profile?.zip_code || '',
+        city: profileCity || 'New York',
+        state: undefined,
+        zipCode: undefined,
       };
-      const interests = (prefs?.interests as string[]) || [];
+      const interests = (preferences.interests as string[]) || [];
       const evts = await getEvents(location, interests);
       setEvents(evts);
       console.log('Refreshed events:', evts.map((e: any) => ({ title: e.title, type: e.type, genre: e.genre })));

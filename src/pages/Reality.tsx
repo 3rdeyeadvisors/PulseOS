@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { Loader2, Newspaper, ExternalLink, Globe, MapPin, TrendingUp, Cpu, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,13 +28,14 @@ interface NewsItem {
 export default function Reality() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { preferences, city: profileCity } = usePreferences();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [dataLoading, setDataLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [newsEnabled, setNewsEnabled] = useState(true);
-  const [userProfile, setUserProfile] = useState<{ city?: string; country?: string; state?: string } | null>(null);
-  const [userInterests, setUserInterests] = useState<string[]>([]);
+
+  const newsEnabled = (preferences.enabled_modules ?? []).includes('news');
+  const userInterests = (preferences.interests as string[]) ?? [];
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,46 +43,8 @@ export default function Reality() {
     }
   }, [user, loading, navigate]);
 
-  // Fetch user preferences and profile once
-  useEffect(() => {
-    async function fetchUserData() {
-      if (!user) return;
-
-      const [{ data: prefs }, { data: profile }] = await Promise.all([
-        supabase
-          .from('preferences')
-          .select('interests, enabled_modules')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-        supabase
-          .from('profiles')
-          .select('city, country, state')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-      ]);
-
-      const modules = (prefs?.enabled_modules as string[]) || [];
-      if (!modules.includes('news')) {
-        setNewsEnabled(false);
-        setDataLoading(false);
-        return;
-      }
-
-      setUserInterests((prefs?.interests as string[]) || []);
-      
-      const city = profile?.city || '';
-      const country = profile?.country || 'United States';
-      const isUSA = country.toLowerCase().includes('united states') || country.toLowerCase() === 'usa';
-      const state = profile?.state || (isUSA ? US_CITY_STATE_MAP[city] : undefined);
-      
-      setUserProfile({ city, country, state });
-    }
-
-    fetchUserData();
-  }, [user]);
-
   const fetchNews = useCallback(async (category: string, isRefresh = false) => {
-    if (!user || !userProfile) return;
+    if (!user || profileCity === null) return;
 
     if (isRefresh) setRefreshing(true);
     else setDataLoading(true);
@@ -95,12 +58,12 @@ export default function Reality() {
       if (category === 'all') {
         // Use user's interests
         interests = userInterests.slice(0, 3);
-        city = userProfile.city || '';
-        state = userProfile.state || '';
+        city = profileCity ?? '';
+        state = US_CITY_STATE_MAP[profileCity ?? ''] ?? '';
       } else if (category === 'local') {
         // Focus on local news
-        city = userProfile.city || '';
-        state = userProfile.state || '';
+        city = profileCity ?? '';
+        state = US_CITY_STATE_MAP[profileCity ?? ''] ?? '';
         interests = []; // No additional interests for local
       } else if (categoryConfig?.keywords.length) {
         // Use category-specific keywords
@@ -117,7 +80,7 @@ export default function Reality() {
           },
           body: JSON.stringify({
             interests,
-            country: userProfile.country || 'United States',
+            country: 'United States',
             city,
             state,
           }),
@@ -134,14 +97,14 @@ export default function Reality() {
       setDataLoading(false);
       setRefreshing(false);
     }
-  }, [user, userProfile, userInterests]);
+  }, [user, profileCity, userInterests]);
 
   // Fetch news when category changes or user profile loads
   useEffect(() => {
-    if (userProfile && newsEnabled) {
+    if (profileCity !== null && newsEnabled) {
       fetchNews(activeCategory);
     }
-  }, [activeCategory, userProfile, newsEnabled, fetchNews]);
+  }, [activeCategory, profileCity, newsEnabled, fetchNews]);
 
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId !== activeCategory) {
