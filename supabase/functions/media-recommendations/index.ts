@@ -11,6 +11,19 @@ interface MediaRequest {
   refresh?: boolean;
 }
 
+interface MediaResult {
+  title: string;
+  artist: string;
+  genre: string;
+  reason: string;
+  spotifyUrl?: string | null;
+  previewUrl?: string | null;
+  albumArt?: string | null;
+  posterUrl?: string | null;
+  tmdbUrl?: string | null;
+  overview?: string | null;
+}
+
 // Get Spotify access token using Client Credentials flow
 async function getSpotifyToken(): Promise<string | null> {
   const clientId = Deno.env.get("SPOTIFY_CLIENT_ID");
@@ -56,7 +69,7 @@ async function getSpotifyToken(): Promise<string | null> {
 }
 
 // Get a song from Spotify using Search API (more reliable than recommendations)
-async function getSpotifySong(interests: string[], token: string): Promise<any> {
+async function getSpotifySong(interests: string[], token: string): Promise<MediaResult | null> {
   // Map interests to search-friendly terms
   const searchTermMap: Record<string, string[]> = {
     "pop": ["pop hits 2024", "top 40", "pop music"],
@@ -138,9 +151,9 @@ async function getSpotifySong(interests: string[], token: string): Promise<any> 
     // Pick a random track from results
     const track = data.tracks.items[Math.floor(Math.random() * data.tracks.items.length)];
     
-    const result = {
+    const result: MediaResult = {
       title: track.name,
-      artist: track.artists.map((a: any) => a.name).join(", "),
+      artist: track.artists.map((a: { name: string }) => a.name).join(", "),
       genre: query.split(" ")[0].charAt(0).toUpperCase() + query.split(" ")[0].slice(1),
       reason: `${track.popularity}% popularity on Spotify`,
       spotifyUrl: track.external_urls?.spotify || null,
@@ -158,7 +171,7 @@ async function getSpotifySong(interests: string[], token: string): Promise<any> 
 }
 
 // Get podcast from Spotify using Search API
-async function getSpotifyPodcast(interests: string[], token: string): Promise<any> {
+async function getSpotifyPodcast(interests: string[], token: string): Promise<MediaResult | null> {
   const searchTermMap: Record<string, string[]> = {
     "tech": ["tech podcasts", "technology news", "startup podcasts"],
     "fitness": ["fitness podcasts", "health wellness", "workout motivation"],
@@ -230,7 +243,7 @@ async function getSpotifyPodcast(interests: string[], token: string): Promise<an
 }
 
 // Get movie from TMDb API with better variety
-async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any> {
+async function getTMDbMovie(interests: string[], refresh: boolean): Promise<MediaResult | null> {
   const apiKey = Deno.env.get("TMDB_API_KEY");
   if (!apiKey) {
     console.log("TMDb API key not configured");
@@ -346,7 +359,7 @@ async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any>
     const genreData = await genreResponse.json();
     const genreNames = genreData.genres || [];
     const movieGenre = movie.genre_ids?.[0] 
-      ? genreNames.find((g: any) => g.id === movie.genre_ids[0])?.name || "Movie"
+      ? genreNames.find((g: { id: number; name: string }) => g.id === movie.genre_ids[0])?.name || "Movie"
       : "Movie";
 
     return {
@@ -365,7 +378,7 @@ async function getTMDbMovie(interests: string[], refresh: boolean): Promise<any>
 }
 
 // Fallback to AI for any type
-async function getAIRecommendation(type: string, interests: string[], refresh: boolean): Promise<any> {
+async function getAIRecommendation(type: string, interests: string[], refresh: boolean): Promise<MediaResult | null> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) return null;
 
@@ -401,7 +414,9 @@ async function getAIRecommendation(type: string, interests: string[], refresh: b
   try {
     const jsonMatch = content.match(/\{[\s\S]*?\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-  } catch {}
+  } catch {
+    // intentional: JSON parse fallback, ignore errors
+  }
   
   return null;
 }
@@ -451,7 +466,7 @@ serve(async (req) => {
 
     // Final fallback
     if (!result) {
-      const fallbacks: Record<string, any> = {
+      const fallbacks: Record<string, MediaResult> = {
         song: { title: "Blinding Lights", artist: "The Weeknd", genre: "Synth-pop", reason: "Upbeat energy for your day" },
         podcast: { title: "The Daily", artist: "NYT", genre: "News", reason: "Quick 20-minute briefing" },
         movie: { title: "Dune: Part Two", artist: "Denis Villeneuve", genre: "Sci-Fi", reason: "Epic visual experience" },

@@ -34,6 +34,7 @@ function isValidEmail(email: string): boolean {
 // Sanitize input - remove control characters and excessive whitespace
 function sanitizeInput(input: string): string {
   return input
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars
     .trim();
 }
