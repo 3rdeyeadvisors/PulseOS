@@ -98,8 +98,9 @@ export default function ResetPassword() {
 
       setIsComplete(true);
       toast.success('Password updated successfully!');
-    } catch (error: any) {
-      console.error('Password reset error:', error);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'An error occurred';
+      console.error('Password reset error:', msg);
       toast.error('An error occurred. Please try again.');
     }
     

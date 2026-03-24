@@ -59,9 +59,9 @@ export default function OutAndAbout() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { preferences, city: profileCity } = usePreferences();
-  const [foodPlaces, setFoodPlaces] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [foodPlaces, setFoodPlaces] = useState<Place[]>([]);
+  const [activities, setActivities] = useState<Place[]>([]);
+  const [events, setEvents] = useState<PlaceEvent[]>([]);
   const [eventCategory, setEventCategory] = useState('all');
   const [dataLoading, setDataLoading] = useState(true);
   const [eventsRefreshing, setEventsRefreshing] = useState(false);
@@ -69,7 +69,7 @@ export default function OutAndAbout() {
     open: boolean;
     type: string;
     name: string;
-    data: any;
+    data: Place | PlaceEvent | null;
   }>({ open: false, type: '', name: '', data: null });
 
   const filteredEvents = events.filter(e => eventMatchesCategory(e, eventCategory));
@@ -151,7 +151,7 @@ export default function OutAndAbout() {
         zipCode: undefined,
       };
       const interests = (preferences.interests as string[]) || [];
-      const evts = await getEvents(location, interests);
+      const evts: PlaceEvent[] = await getEvents(location, interests);
       setEvents(evts);
       console.log('Refreshed events:', evts.map((e: PlaceEvent) => ({ title: e.title, type: e.type, genre: e.genre })));
     } catch (err) {
@@ -289,7 +289,7 @@ export default function OutAndAbout() {
                 size="sm"
                 variant="outline"
                 className="h-7 gap-1 text-xs"
-                onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: { ...event, selectedDate: currentDate } as any })}
+                onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: { ...event, selectedDate: currentDate } as PlaceEvent })}
               >
                 <UserPlus className="h-3 w-3" />
                 Invite
