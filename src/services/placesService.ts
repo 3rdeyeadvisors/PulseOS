@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface Place {
+export interface Place {
   id: string;
   name: string;
   type: string;
@@ -12,7 +12,7 @@ interface Place {
   address: string;
 }
 
-interface Event {
+export interface Event {
   id: string;
   title: string;
   type: string;

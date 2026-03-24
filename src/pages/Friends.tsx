@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck, Search, Lock, Crown } from 'lucide-react';
+import { Loader2, Users, UserPlus, Send, Inbox, Trophy, Globe, CalendarCheck, Search, Lock, Crown, Check } from 'lucide-react';
 
 export default function Friends() {
   const navigate = useNavigate();
@@ -83,6 +83,21 @@ export default function Friends() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2 text-left mt-2">
+                {[
+                  'Add and connect with friends',
+                  'Weekly activity leaderboards',
+                  'Send and receive activity invites',
+                  'See friend progress and streaks',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-2.5 w-2.5 text-primary" />
+                    </div>
+                    {feature}
+                  </div>
+                ))}
+              </div>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span>Build your social network and plan activities together</span>
