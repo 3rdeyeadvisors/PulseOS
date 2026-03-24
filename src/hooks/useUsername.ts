@@ -31,7 +31,7 @@ export function useUsername() {
 
   useEffect(() => {
     checkUsername();
-  }, [user, checkUsername]);
+  }, [checkUsername]);
 
   const refreshUsername = () => {
     setLoading(true);
