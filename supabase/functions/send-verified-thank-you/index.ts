@@ -237,7 +237,7 @@ serve(async (req: Request): Promise<Response> => {
         });
 
         results.push({ email: user.email, status: "sent" });
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
         console.error(`Failed to send email to ${user.email}:`, emailError);
         
         // Log the failure
@@ -246,10 +246,10 @@ serve(async (req: Request): Promise<Response> => {
           email_type: "verified_thank_you",
           subject: "You're Verified! Grandfathered for Life",
           status: "failed",
-          error_message: emailError.message,
+          error_message: emailError instanceof Error ? emailError.message : String(emailError),
         });
 
-        results.push({ email: user.email, status: "failed", error: emailError.message });
+        results.push({ email: user.email, status: "failed", error: emailError instanceof Error ? emailError.message : String(emailError) });
       }
     }
 
@@ -269,10 +269,10 @@ serve(async (req: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-verified-thank-you function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

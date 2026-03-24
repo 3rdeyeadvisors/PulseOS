@@ -7,18 +7,25 @@ import { Loader2, Fuel, TrendingDown, TrendingUp, Lightbulb, DollarSign, Info } 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { getGasPrices } from '@/services/gasService';
-import { getCostInsightsWithBudget } from '@/services/costOfLivingService';
+import { getGasPrices, type GasStation } from '@/services/gasService';
+import { getCostInsightsWithBudget, type CostInsight, type BudgetSuggestion } from '@/services/costOfLivingService';
+
+interface UserProfile {
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  household_type?: string | null;
+}
 
 export default function Money() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [gasStations, setGasStations] = useState<any[]>([]);
-  const [costInsights, setCostInsights] = useState<any[]>([]);
-  const [budgetTips, setBudgetTips] = useState<any[]>([]);
+  const [gasStations, setGasStations] = useState<GasStation[]>([]);
+  const [costInsights, setCostInsights] = useState<CostInsight[]>([]);
+  const [budgetTips, setBudgetTips] = useState<BudgetSuggestion[]>([]);
   const [gasLoading, setGasLoading] = useState(true);
   const [costLoading, setCostLoading] = useState(true);
-  const [selectedInsight, setSelectedInsight] = useState<any | null>(null);
+  const [selectedInsight, setSelectedInsight] = useState<CostInsight | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,7 +47,7 @@ export default function Money() {
     };
 
     // Start cost insights fetch immediately with profile data (doesn't need coords)
-    const fetchCostData = async (profile: any) => {
+    const fetchCostData = async (profile: UserProfile | null) => {
       try {
         const city = profile?.city || 'New York';
         const state = profile?.state;
@@ -56,7 +63,7 @@ export default function Money() {
     };
 
     // Fetch gas prices with location (needs coords)
-    const fetchGasData = async (profile: any) => {
+    const fetchGasData = async (profile: UserProfile | null) => {
       try {
         const city = profile?.city || 'New York';
         const state = profile?.state;
@@ -95,7 +102,9 @@ export default function Money() {
               lat = geoData.latitude;
               lng = geoData.longitude;
             }
-          } catch {}
+          } catch {
+            // intentional fallback
+          }
         }
 
         // Default fallback

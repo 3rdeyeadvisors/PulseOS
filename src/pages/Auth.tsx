@@ -151,7 +151,7 @@ export default function Auth() {
       
       setResetSent(true);
       toast.success('Password reset email sent! Check your inbox.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Password reset error:', error);
       // Still show success to not reveal if email exists
       setResetSent(true);

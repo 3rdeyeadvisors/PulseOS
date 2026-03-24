@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getFoodPlaces, getThingsToDo, getEvents } from '@/services/placesService';
+import { getFoodPlaces, getThingsToDo, getEvents, type Place, type Event as PlaceEvent } from '@/services/placesService';
 
 // Helper function to open location in maps
 const openInMaps = (address: string, name: string) => {
@@ -32,7 +32,7 @@ const EVENT_CATEGORIES = [
 ];
 
 // Helper to check if event matches category
-const eventMatchesCategory = (event: any, category: string): boolean => {
+const eventMatchesCategory = (event: PlaceEvent, category: string): boolean => {
   if (category === 'all') return true;
   
   const type = (event.type || '').toLowerCase();
@@ -58,9 +58,9 @@ const eventMatchesCategory = (event: any, category: string): boolean => {
 export default function OutAndAbout() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [foodPlaces, setFoodPlaces] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [foodPlaces, setFoodPlaces] = useState<Place[]>([]);
+  const [activities, setActivities] = useState<Place[]>([]);
+  const [events, setEvents] = useState<PlaceEvent[]>([]);
   const [eventCategory, setEventCategory] = useState('all');
   const [dataLoading, setDataLoading] = useState(true);
   const [eventsRefreshing, setEventsRefreshing] = useState(false);
@@ -162,7 +162,7 @@ export default function OutAndAbout() {
       const interests = (prefs?.interests as string[]) || [];
       const evts = await getEvents(location, interests);
       setEvents(evts);
-      console.log('Refreshed events:', evts.map((e: any) => ({ title: e.title, type: e.type, genre: e.genre })));
+      console.log('Refreshed events:', evts.map((e: PlaceEvent) => ({ title: e.title, type: e.type, genre: e.genre })));
     } catch (err) {
       console.error('Error refreshing events:', err);
     } finally {
@@ -180,7 +180,7 @@ export default function OutAndAbout() {
 
   if (!user) return null;
 
-  const PlaceCard = ({ place, type }: { place: any; type: string }) => (
+  const PlaceCard = ({ place, type }: { place: Place; type: string }) => (
     <div className="w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all">
       <div className="flex items-start justify-between">
         <button
@@ -224,7 +224,7 @@ export default function OutAndAbout() {
     </div>
   );
 
-  const EventCard = ({ event }: { event: any }) => {
+  const EventCard = ({ event }: { event: PlaceEvent }) => {
     const [selectedDateIndex, setSelectedDateIndex] = useState(0);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const currentDate = event.allDates?.[selectedDateIndex] || event;
@@ -250,7 +250,7 @@ export default function OutAndAbout() {
                 <PopoverContent className="w-52 p-2" align="start">
                   <p className="text-xs font-medium mb-2">Select a date:</p>
                   <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {event.allDates?.map((d: any, i: number) => (
+                    {event.allDates?.map((d, i) => (
                       <button
                         key={i}
                         onClick={() => handleDateSelect(i)}
@@ -298,7 +298,7 @@ export default function OutAndAbout() {
                 size="sm"
                 variant="outline"
                 className="h-7 gap-1 text-xs"
-                onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: { ...event, selectedDate: currentDate } })}
+                onClick={() => setInviteModal({ open: true, type: 'event', name: event.title, data: { ...event, selectedDate: currentDate } as any })}
               >
                 <UserPlus className="h-3 w-3" />
                 Invite
@@ -341,7 +341,7 @@ export default function OutAndAbout() {
             {dataLoading ? (
               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full" />)
             ) : (
-              foodPlaces.map((place) => <PlaceCard key={place.id} place={place} type="restaurant" />)
+              foodPlaces.map((place: Place) => <PlaceCard key={place.id} place={place} type="restaurant" />)
             )}
           </TabsContent>
 
@@ -349,7 +349,7 @@ export default function OutAndAbout() {
             {dataLoading ? (
               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full" />)
             ) : (
-              activities.map((place) => <PlaceCard key={place.id} place={place} type="activity" />)
+              activities.map((place: Place) => <PlaceCard key={place.id} place={place} type="activity" />)
             )}
           </TabsContent>
 
@@ -391,7 +391,7 @@ export default function OutAndAbout() {
                 <p className="text-sm mt-2">Try a different category or ask your AI assistant</p>
               </div>
             ) : (
-              filteredEvents.map((event) => <EventCard key={event.id} event={event} />)
+              filteredEvents.map((event: PlaceEvent) => <EventCard key={event.id} event={event} />)
             )}
           </TabsContent>
         </Tabs>

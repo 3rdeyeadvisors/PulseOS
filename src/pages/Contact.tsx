@@ -46,7 +46,9 @@ export default function Contact() {
 
       setSubmitted(true);
       toast.success('Message sent successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Contact form error:', msg);
       toast.error('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);

@@ -11,7 +11,7 @@ import { CommunityDiscovery } from '@/components/social/CommunityDiscovery';
 import { ActivityInvitesList } from '@/components/social/ActivityInvitesList';
 import { UsernameSetupModal } from '@/components/social/UsernameSetupModal';
 import { useUsername } from '@/hooks/useUsername';
-import { useFriends } from '@/hooks/useFriends';
+import { useFriends, type FriendRequest } from '@/hooks/useFriends';
 import { useActivityInvites } from '@/hooks/useActivityInvites';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +44,8 @@ export default function Friends() {
     if (!sentSearch.trim()) return sentRequests;
     const query = sentSearch.toLowerCase();
     return sentRequests.filter((request) =>
-      (request as any).receiver?.full_name?.toLowerCase().includes(query) ||
-      (request as any).receiver?.username?.toLowerCase().includes(query)
+      (request as FriendRequest).receiver?.full_name?.toLowerCase().includes(query) ||
+      (request as FriendRequest).receiver?.username?.toLowerCase().includes(query)
     );
   }, [sentRequests, sentSearch]);
 
@@ -318,11 +318,11 @@ export default function Friends() {
                                 </div>
                                 <div>
                                   <p className="font-medium">
-                                    {(request as any).receiver?.full_name || (request as any).receiver?.username || 'Unknown User'}
+                                    {(request as FriendRequest).receiver?.full_name || (request as FriendRequest).receiver?.username || 'Unknown User'}
                                   </p>
-                                  {(request as any).receiver?.username && (
+                                  {(request as FriendRequest).receiver?.username && (
                                     <p className="text-sm text-muted-foreground">
-                                      @{(request as any).receiver.username}
+                                      @{(request as FriendRequest).receiver.username}
                                     </p>
                                   )}
                                 </div>

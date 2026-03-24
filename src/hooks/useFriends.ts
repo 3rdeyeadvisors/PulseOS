@@ -8,7 +8,7 @@ function getErrorMessage(error: unknown): string {
   return 'An unexpected error occurred';
 }
 
-interface FriendRequest {
+export interface FriendRequest {
   id: string;
   sender_id: string;
   receiver_id: string;

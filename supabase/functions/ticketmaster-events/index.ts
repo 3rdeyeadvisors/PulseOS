@@ -13,7 +13,34 @@ interface EventsRequest {
   timezone?: string;
 }
 
-serve(async (req) => {
+interface TicketmasterEvent {
+  id: string;
+  name: string;
+  url?: string;
+  dates?: { start?: { localDate?: string; localTime?: string } };
+  _embedded?: {
+    venues?: Array<{
+      name?: string;
+      address?: { line1?: string };
+      city?: { name?: string };
+      state?: { stateCode?: string }
+    }>;
+  };
+  images?: Array<{ url?: string; ratio?: string }>;
+  classifications?: Array<{
+    segment?: { name?: string };
+    genre?: { name?: string };
+    subGenre?: { name?: string }
+  }>;
+  priceRanges?: Array<{ min?: number; max?: number; type?: string }>;
+  products?: Array<{ price?: number }>;
+  outlets?: Array<{ url?: string }>;
+  _links?: { purchase?: { href?: string } };
+  _resolvedUrl?: string;
+  [key: string]: unknown;
+}
+
+serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -93,9 +120,9 @@ serve(async (req) => {
     
     // Combine and deduplicate by event ID
     const seenIds = new Set<string>();
-    const events: any[] = [];
+    const events: TicketmasterEvent[] = [];
     for (const segmentEvents of allSegmentResults) {
-      for (const event of segmentEvents) {
+      for (const event of segmentEvents as TicketmasterEvent[]) {
         if (!seenIds.has(event.id)) {
           seenIds.add(event.id);
           events.push(event);
@@ -124,7 +151,7 @@ serve(async (req) => {
     console.log(`Current time in ${timezone}: ${userNow.toISOString()}, ${currentHours}:${currentMinutes}`);
 
     // Log all events before filtering for debugging
-    console.log("All events from Ticketmaster BEFORE filtering:", events.map((e: any) => ({
+    console.log("All events from Ticketmaster BEFORE filtering:", events.map((e: TicketmasterEvent) => ({
       name: e.name?.substring(0, 40),
       type: e.classifications?.[0]?.segment?.name,
       genre: e.classifications?.[0]?.genre?.name,
@@ -133,8 +160,26 @@ serve(async (req) => {
     })));
 
     // Filter and format the events
+    interface FormattedEvent {
+      id: string;
+      title: string;
+      type: string;
+      genre: string;
+      subGenre: string;
+      date: string;
+      rawDate: string;
+      time: string;
+      location: string;
+      address: string;
+      price: string;
+      url?: string;
+      image?: string;
+      matchReason: string;
+      isInterestMatch: boolean;
+    }
+
     const formattedEvents = events
-      .filter((event: any) => {
+      .filter((event: TicketmasterEvent) => {
         const eventName = (event.name || "").toLowerCase();
         const eventDate = event.dates?.start?.localDate;
         const eventTime = event.dates?.start?.localTime; // HH:mm:ss format
@@ -168,7 +213,7 @@ serve(async (req) => {
 
         // Get the best available URL for this event
         const ticketUrl = 
-          (event.url && event.url.startsWith('http') ? event.url : null) ||
+          (typeof event.url === 'string' && event.url.startsWith('http') ? event.url : null) ||
           (event.outlets?.[0]?.url && event.outlets[0].url.startsWith('http') ? event.outlets[0].url : null) ||
           (event._links?.purchase?.href && event._links.purchase.href.startsWith('http') ? event._links.purchase.href : null) ||
           (event.id ? `https://www.ticketmaster.com/event/${event.id}` : null);
@@ -184,7 +229,7 @@ serve(async (req) => {
         console.log(`KEPT: ${event.name}`);
         return true;
       })
-      .map((event: any) => {
+      .map((event: TicketmasterEvent) => {
       const venue = event._embedded?.venues?.[0];
       const startDate = event.dates?.start;
       
@@ -209,7 +254,7 @@ serve(async (req) => {
       
       if (priceRanges && priceRanges.length > 0) {
         // Find the best price range (prefer type "standard" if available)
-        const standardPrice = priceRanges.find((p: any) => p.type === 'standard') || priceRanges[0];
+        const standardPrice = priceRanges.find((p) => p.type === 'standard') || priceRanges[0];
         const min = standardPrice.min;
         const max = standardPrice.max;
         if (min && max) {
@@ -293,15 +338,15 @@ serve(async (req) => {
         address: venue ? `${venue.name}, ${venue.city?.name || city}, ${venue.state?.stateCode || state || ''}` : city,
         price: priceStr,
         url: ticketUrl,
-        image: event.images?.find((img: any) => img.ratio === "16_9")?.url || event.images?.[0]?.url,
+        image: event.images?.find((img) => img.ratio === "16_9")?.url || event.images?.[0]?.url,
         matchReason,
         isInterestMatch
       };
     });
 
     // Group events by normalized name to deduplicate recurring events
-    const eventGroups = new Map<string, any[]>();
-    formattedEvents.forEach((event: any) => {
+    const eventGroups = new Map<string, FormattedEvent[]>();
+    formattedEvents.forEach((event: FormattedEvent) => {
       // Normalize the event name for grouping (remove dates, times, venue specifics)
       const normalizedName = event.title
         .toLowerCase()
@@ -317,6 +362,17 @@ serve(async (req) => {
     });
 
     // For each group, keep the soonest event and add info about additional dates
+    interface DeduplicatedEvent extends FormattedEvent {
+      additionalDates: number;
+      allDates: Array<{
+        date: string;
+        time: string;
+        rawDate: string;
+        url?: string;
+        price?: string;
+      }>;
+    }
+
     const deduplicatedEvents = Array.from(eventGroups.values()).map(group => {
       // Sort group by date
       group.sort((a, b) => a.rawDate.localeCompare(b.rawDate));
@@ -333,11 +389,11 @@ serve(async (req) => {
           url: e.url,
           price: e.price
         }))
-      };
+      } as DeduplicatedEvent;
     });
 
     // Sort events: interest matches first, then by date (closest first)
-    deduplicatedEvents.sort((a: any, b: any) => {
+    deduplicatedEvents.sort((a: DeduplicatedEvent, b: DeduplicatedEvent) => {
       if (a.isInterestMatch && !b.isInterestMatch) return -1;
       if (!a.isInterestMatch && b.isInterestMatch) return 1;
       // Sort by date ascending (closest dates first)
@@ -345,7 +401,7 @@ serve(async (req) => {
     });
 
     // Log all event categories for debugging
-    console.log("Event categories returned:", deduplicatedEvents.map((e: any) => ({
+    console.log("Event categories returned:", deduplicatedEvents.map((e) => ({
       title: e.title.substring(0, 30),
       type: e.type,
       genre: e.genre,
