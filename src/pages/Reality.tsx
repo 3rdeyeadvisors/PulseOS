@@ -35,7 +35,6 @@ export default function Reality() {
   const [refreshing, setRefreshing] = useState(false);
 
   const newsEnabled = (preferences.enabled_modules ?? []).includes('news');
-  const userInterests = (preferences.interests as string[]) ?? [];
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,6 +53,7 @@ export default function Reality() {
       let interests: string[] = [];
       let city = '';
       let state = '';
+      const userInterests = (preferences.interests as string[]) ?? [];
 
       if (category === 'all') {
         // Use user's interests
@@ -97,7 +97,7 @@ export default function Reality() {
       setDataLoading(false);
       setRefreshing(false);
     }
-  }, [user, profileCity, userInterests]);
+  }, [user, profileCity, preferences.interests]);
 
   // Fetch news when category changes or user profile loads
   useEffect(() => {

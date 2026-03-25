@@ -66,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // @ts-ignore: Supabase types might not include SIGNED_UP yet, but it's fired on registration
         if ((event as string) === 'SIGNED_UP' && session?.user) {
           setTimeout(() => {
             sendWelcomeNotifications(

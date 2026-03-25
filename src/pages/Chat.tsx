@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -70,12 +70,17 @@ export default function Chat() {
   const currentAssistantIdRef = useRef<string | null>(null);
 
   // Derive AI settings from synced preferences
-  const aiSettings = {
+  const aiSettings = useMemo(() => ({
     aiName: preferences.ai_name || 'Pulse',
     aiPersonality: preferences.ai_personality || 'balanced',
     humorLevel: preferences.ai_humor_level ?? 50,
     formalityLevel: preferences.ai_formality_level ?? 50,
-  };
+  }), [
+    preferences.ai_name,
+    preferences.ai_personality,
+    preferences.ai_humor_level,
+    preferences.ai_formality_level
+  ]);
 
   // Sync saved messages to local state with IDs
   const historyLoadedRef = useRef(false);
