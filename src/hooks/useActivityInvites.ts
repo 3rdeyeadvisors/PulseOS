@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -109,7 +110,7 @@ export function useActivityInvites() {
         receiver_id: receiverId,
         activity_type: activityType,
         activity_name: activityName,
-        activity_data: activityData as Record<string, unknown>,
+        activity_data: activityData as unknown as Json,
         proposed_time: proposedTime.toISOString(),
         message: message || null,
       });

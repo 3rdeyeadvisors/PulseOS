@@ -23,8 +23,19 @@ interface AutocompleteRequest {
   placeId?: string;
 }
 
+interface AddressComponent {
+  longText: string;
+  shortText: string;
+  types: string[];
+}
+
+interface PlaceData {
+  addressComponents?: AddressComponent[];
+  displayName?: { text: string };
+}
+
 // Extract address components from Places API (New) response
-function extractAddressComponents(place: any) {
+function extractAddressComponents(place: PlaceData) {
   const components: Record<string, string> = {};
   
   if (place.addressComponents) {
