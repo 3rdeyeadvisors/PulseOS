@@ -36,9 +36,13 @@ export default function Auth() {
 
   // Redirect if already logged in
   useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+
+    setIsRedirecting(true);
+
     const checkOnboarding = async () => {
-      if (user && !loading) {
-        setIsRedirecting(true);
+      try {
         const { data: profile } = await supabase
           .from('profiles')
           .select('onboarding_completed')
@@ -50,6 +54,9 @@ export default function Auth() {
         } else {
           navigate('/onboarding', { replace: true });
         }
+      } catch (error) {
+        // Profile doesn't exist yet (brand new user) — go to onboarding
+        navigate('/onboarding', { replace: true });
       }
     };
     
