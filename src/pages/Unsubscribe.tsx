@@ -69,7 +69,7 @@ export default function Unsubscribe() {
 
         {status === "success" && (
           <>
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <CheckCircle className="h-16 w-16 text-emerald-500 dark:text-emerald-400 mx-auto" />
             <h1 className="text-2xl font-bold text-foreground">Unsubscribed</h1>
             <p className="text-muted-foreground">
               You've been successfully unsubscribed from PulseOS emails.
