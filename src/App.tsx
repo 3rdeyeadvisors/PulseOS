@@ -27,6 +27,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -118,6 +119,7 @@ const App = () => (
                     <Route path="/app/chat" element={<Chat />} />
                     <Route path="/app/friends" element={<Friends />} />
                     <Route path="/app/settings" element={<Settings />} />
+                    <Route path="/unsubscribe" element={<Unsubscribe />} />
                     <Route path="/admin" element={<Admin />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
