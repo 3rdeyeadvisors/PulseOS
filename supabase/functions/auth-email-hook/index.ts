@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "pulseos3eaproject"
+const SITE_NAME = "PulseOS"
 const SENDER_DOMAIN = "notify.pulseos.tech"
 const ROOT_DOMAIN = "pulseos.tech"
 const FROM_DOMAIN = "notify.pulseos.tech" // Domain shown in From address (may be root or sender subdomain)
