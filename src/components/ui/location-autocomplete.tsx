@@ -39,7 +39,7 @@ export const LocationAutocomplete = React.forwardRef<HTMLInputElement, LocationA
     const [isLoading, setIsLoading] = React.useState(false);
     const [inputValue, setInputValue] = React.useState(value);
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const debounceRef = React.useRef<NodeJS.Timeout>();
+    const debounceRef = React.useRef<ReturnType<typeof setTimeout>>();
 
     React.useEffect(() => {
       setInputValue(value);
