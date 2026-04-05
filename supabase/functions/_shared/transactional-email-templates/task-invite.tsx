@@ -28,8 +28,8 @@ const TaskInviteEmail = ({ receiverName, senderName, taskTitle, message }: Props
 )
 
 export const template = {
-  component: TaskInviteEmail,
-  subject: (data: Record<string, any>) => `✅ ${data.senderName || 'Someone'} invited you to compete on a task!`,
+  component: TaskInviteEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => `✅ ${data.senderName || 'Someone'} invited you to compete on a task!`,
   displayName: 'Task invite',
   previewData: { receiverName: 'Jane', senderName: 'John', taskTitle: 'Run 5k', message: 'Let\'s do this!' },
 } satisfies TemplateEntry

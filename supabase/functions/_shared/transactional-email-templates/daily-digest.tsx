@@ -27,7 +27,7 @@ const DailyDigestEmail = ({ name, score, tasksCompleted, tasksTotal, scoreMessag
   </Html>
 )
 
-export const template = { component: DailyDigestEmail, subject: (data: Record<string, any>) => `📊 Your Daily Pulse - Score: ${data.score || 0}/100`, displayName: 'Daily digest', previewData: { name: 'Jane', score: 75, tasksCompleted: 3, tasksTotal: 5, scoreMessage: 'Good progress!' } } satisfies TemplateEntry
+export const template = { component: DailyDigestEmail as React.ComponentType<Record<string, unknown>>, subject: (data: Record<string, unknown>) => `📊 Your Daily Pulse - Score: ${data.score || 0}/100`, displayName: 'Daily digest', previewData: { name: 'Jane', score: 75, tasksCompleted: 3, tasksTotal: 5, scoreMessage: 'Good progress!' } } satisfies TemplateEntry
 
 const main = { backgroundColor: '#f1f5f9', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: '40px 20px' }
 const container = { backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden' as const, maxWidth: '600px', margin: '0 auto' }

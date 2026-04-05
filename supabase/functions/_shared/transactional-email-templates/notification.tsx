@@ -23,8 +23,8 @@ const NotificationEmail = ({ title, content, ctaText, ctaUrl }: Props) => (
 )
 
 export const template = {
-  component: NotificationEmail,
-  subject: (data: Record<string, any>) => data.emailSubject || data.title || 'Notification from PulseOS',
+  component: NotificationEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => (data.emailSubject as string) || (data.title as string) || 'Notification from PulseOS',
   displayName: 'General notification',
   previewData: { title: 'Task Completed', content: 'Your task has been completed successfully.' },
 } satisfies TemplateEntry

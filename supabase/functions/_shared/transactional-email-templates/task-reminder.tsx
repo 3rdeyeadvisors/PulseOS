@@ -23,7 +23,7 @@ const TaskReminderEmail = ({ name, taskTitle, dueDate }: Props) => (
   </Html>
 )
 
-export const template = { component: TaskReminderEmail, subject: (data: Record<string, any>) => `Task Reminder: ${data.taskTitle || 'Your task'}`, displayName: 'Task reminder', previewData: { name: 'Jane', taskTitle: 'Review weekly report', dueDate: 'Jan 15, 2026' } } satisfies TemplateEntry
+export const template = { component: TaskReminderEmail as React.ComponentType<Record<string, unknown>>, subject: (data: Record<string, unknown>) => `Task Reminder: ${data.taskTitle || 'Your task'}`, displayName: 'Task reminder', previewData: { name: 'Jane', taskTitle: 'Review weekly report', dueDate: 'Jan 15, 2026' } } satisfies TemplateEntry
 
 const main = { backgroundColor: '#f1f5f9', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: '40px 20px' }
 const container = { backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden' as const, maxWidth: '600px', margin: '0 auto' }

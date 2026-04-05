@@ -23,8 +23,8 @@ const ContactFormNotificationEmail = ({ name, email, subject, message }: Props) 
 )
 
 export const template = {
-  component: ContactFormNotificationEmail,
-  subject: (data: Record<string, any>) => `[Contact Form] ${data.subject || 'New submission'}`,
+  component: ContactFormNotificationEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => `[Contact Form] ${data.subject || 'New submission'}`,
   displayName: 'Contact form notification (to support)',
   to: 'support@pulseos.tech',
   previewData: { name: 'Jane Doe', email: 'jane@example.com', subject: 'Question about PulseOS', message: 'I love the app!' },
