@@ -26,8 +26,8 @@ const AppInviteEmail = ({ inviterName }: Props) => (
 )
 
 export const template = {
-  component: AppInviteEmail,
-  subject: (data: Record<string, any>) => `${data.inviterName || 'A friend'} invited you to join PulseOS! 🚀`,
+  component: AppInviteEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => `${data.inviterName || 'A friend'} invited you to join PulseOS! 🚀`,
   displayName: 'App invite',
   previewData: { inviterName: 'John' },
 } satisfies TemplateEntry

@@ -27,8 +27,8 @@ const FriendRequestEmail = ({ receiverName, senderName, senderUsername }: Props)
 }
 
 export const template = {
-  component: FriendRequestEmail,
-  subject: (data: Record<string, any>) => `${data.senderName || 'Someone'} wants to be your friend on PulseOS! 👋`,
+  component: FriendRequestEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => `${data.senderName || 'Someone'} wants to be your friend on PulseOS! 👋`,
   displayName: 'Friend request',
   previewData: { receiverName: 'Jane', senderName: 'John', senderUsername: 'john123' },
 } satisfies TemplateEntry

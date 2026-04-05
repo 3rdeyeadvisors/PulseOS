@@ -28,8 +28,8 @@ const InviteAcceptedEmail = ({ senderName, accepterName, activityName, proposedT
 )
 
 export const template = {
-  component: InviteAcceptedEmail,
-  subject: (data: Record<string, any>) => `🎉 ${data.accepterName || 'Someone'} accepted your invite to ${data.activityName || 'an activity'}!`,
+  component: InviteAcceptedEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => `🎉 ${data.accepterName || 'Someone'} accepted your invite to ${data.activityName || 'an activity'}!`,
   displayName: 'Invite accepted',
   previewData: { senderName: 'John', accepterName: 'Jane', activityName: 'Coffee', proposedTime: 'Saturday, Jan 15 at 2:00 PM' },
 } satisfies TemplateEntry

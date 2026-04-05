@@ -30,8 +30,8 @@ const ActivityInviteEmail = ({ receiverName, senderName, activityName, activityT
 )
 
 export const template = {
-  component: ActivityInviteEmail,
-  subject: (data: Record<string, any>) => `${data.senderName || 'A friend'} invited you to ${data.activityName || 'an activity'}!`,
+  component: ActivityInviteEmail as React.ComponentType<Record<string, unknown>>,
+  subject: (data: Record<string, unknown>) => `${data.senderName || 'A friend'} invited you to ${data.activityName || 'an activity'}!`,
   displayName: 'Activity invite',
   previewData: { receiverName: 'Jane', senderName: 'John', activityName: 'Coffee at Blue Bottle', activityType: 'coffee', proposedTime: 'Saturday, Jan 15 at 2:00 PM', message: 'Let\'s catch up!' },
 } satisfies TemplateEntry

@@ -24,7 +24,7 @@ const OverdueTaskReminderEmail = ({ name, taskCount, tasks }: Props) => (
   </Html>
 )
 
-export const template = { component: OverdueTaskReminderEmail, subject: (data: Record<string, any>) => `📋 Your incomplete tasks from yesterday (${data.taskCount || 0})`, displayName: 'Overdue task reminder', previewData: { name: 'Jane', taskCount: 3, tasks: ['Review report', 'Call dentist', 'Buy groceries'] } } satisfies TemplateEntry
+export const template = { component: OverdueTaskReminderEmail as React.ComponentType<Record<string, unknown>>, subject: (data: Record<string, unknown>) => `📋 Your incomplete tasks from yesterday (${data.taskCount || 0})`, displayName: 'Overdue task reminder', previewData: { name: 'Jane', taskCount: 3, tasks: ['Review report', 'Call dentist', 'Buy groceries'] } } satisfies TemplateEntry
 
 const main = { backgroundColor: '#f1f5f9', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: '40px 20px' }
 const container = { backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden' as const, maxWidth: '600px', margin: '0 auto' }

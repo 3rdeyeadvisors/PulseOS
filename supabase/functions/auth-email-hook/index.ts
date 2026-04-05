@@ -26,8 +26,8 @@ const EMAIL_SUBJECTS: Record<string, string> = {
 }
 
 // Template mapping
-const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
-  signup: SignupEmail,
+const EMAIL_TEMPLATES: Record<string, React.ComponentType<Record<string, unknown>>> = {
+  signup: SignupEmail as React.ComponentType<Record<string, unknown>>,
   invite: InviteEmail,
   magiclink: MagicLinkEmail,
   recovery: RecoveryEmail,
@@ -142,8 +142,8 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Verify signature + timestamp, then parse payload.
-  let payload: any
-  let run_id = ''
+  let payload: { run_id: string; version: string; data: { action_type: string; email: string; url: string; token: string; new_email: string } };
+  let run_id = '';
   try {
     const verified = await verifyWebhookRequest({
       req,

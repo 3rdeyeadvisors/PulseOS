@@ -22,7 +22,7 @@ const InactiveReminderEmail = ({ name, daysSinceActive }: Props) => (
   </Html>
 )
 
-export const template = { component: InactiveReminderEmail, subject: (data: Record<string, any>) => `We miss you, ${data.name || 'there'}! 👋`, displayName: 'Inactive reminder', previewData: { name: 'Jane', daysSinceActive: 5 } } satisfies TemplateEntry
+export const template = { component: InactiveReminderEmail as React.ComponentType<Record<string, unknown>>, subject: (data: Record<string, unknown>) => `We miss you, ${data.name || 'there'}! 👋`, displayName: 'Inactive reminder', previewData: { name: 'Jane', daysSinceActive: 5 } } satisfies TemplateEntry
 
 const main = { backgroundColor: '#f1f5f9', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: '40px 20px' }
 const container = { backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden' as const, maxWidth: '600px', margin: '0 auto' }
